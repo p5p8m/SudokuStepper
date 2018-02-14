@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   targetNamespace="http://www.example.org/SudokuStepper" xmlns:tns="http://www.example.org/SudokuStepper"
+   attributeFormDefault="unqualified" elementFormDefault="qualified">
+   <xs:simpleType name="rangeValue">
+      <xs:restriction base="xs:byte">
+         <xs:minInclusive value="1"></xs:minInclusive>
+         <xs:maxInclusive value="9"></xs:maxInclusive>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="cellContent">
+      <xs:simpleContent>
+        <xs:extension base="tns:rangeValue">
+          <xs:attribute type="tns:rangeValue" name="row" use="required"/>
+          <xs:attribute type="tns:rangeValue" name="col" use="required"/>
+        </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:complexType name="cellContents">
+      <xs:sequence>
+        <xs:element name="content" type="tns:cellContent" maxOccurs="unbounded" minOccurs="0">
+        </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="sudoku">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="initial" type="tns:cellContents"
+               minOccurs="0" maxOccurs="1">
+            </xs:element>
+            <xs:element name="solution" type="tns:cellContents"
+               minOccurs="0" maxOccurs="1">
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:string" use="required"></xs:attribute>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>
