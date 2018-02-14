@@ -1,0 +1,31 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %pluginName
+Bundle-SymbolicName: org.eclipse.swt;singleton:=true
+Bundle-Version: 3.106.2.v20171129-0543
+Bundle-ClassPath: org.eclipse.swt_3.106.2.v20171129-0543.jar
+Bundle-Vendor: %providerName
+Bundle-Localization: plugin
+Export-Package: org.eclipse.swt,
+  org.eclipse.swt.accessibility,
+  org.eclipse.swt.awt,
+  org.eclipse.swt.browser,
+  org.eclipse.swt.custom,
+  org.eclipse.swt.dnd,
+  org.eclipse.swt.events,
+  org.eclipse.swt.graphics,
+  org.eclipse.swt.internal;x-friends:="org.eclipse.ui",
+  org.eclipse.swt.internal.image;x-internal:=true,
+  org.eclipse.swt.layout,
+  org.eclipse.swt.opengl,
+  org.eclipse.swt.printing,
+  org.eclipse.swt.program,
+  org.eclipse.swt.widgets
+Build-Jdk: 1.8.0_131
+Eclipse-ExtensibleAPI: true
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Eclipse-SourceReferences: scm:git:git://git.eclipse.org/gitroot/platform/eclipse.platform.swt.git;path="bundles/org.eclipse.swt";tag="M20171129-0910";commitId=a01941aee7e6318ece714d38cce83fbeaecd2254
+Created-By: Apache Maven 3.3.3
+Built-By: genie.releng
+DynamicImport-Package: org.eclipse.swt.accessibility2, org.mozilla.xpcom
+Archiver-Version: Plexus Archiver
