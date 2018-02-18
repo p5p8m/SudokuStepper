@@ -18,6 +18,7 @@ public class FreezeSudokuAction extends SudokuAction
         System.out.println("FreezeSudokuAction.run");
         try
         {
+            app.setState(AppState.CREATING);
             app.freeze();
         }
         catch (Exception ex)
@@ -26,6 +27,10 @@ public class FreezeSudokuAction extends SudokuAction
             errorBox.setMessage("Could not freeeze new Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
                     + "\n" + ex.toString());
             errorBox.open();
+        }
+        finally
+        {
+            app.setState(AppState.EMPTY);
         }
     }
 

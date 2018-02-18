@@ -25,6 +25,7 @@ public class SolveSudokuAction extends SudokuAction
         Values sudoku = app.getSudokuPb();
         try
         {
+            app.setState(AppState.SOLVING);
             boolean updated = false;
             do
             {
@@ -35,8 +36,8 @@ public class SolveSudokuAction extends SudokuAction
                 }
             }
             while (updated);
-            app.updateSudokuFields(); // needed to make sure conflicts are represented since the check is not
-                                      // performed at every stage
+            app.updateSudokuFields(); // needed to make sure conflicts are represented since the check
+                                      // is not performed at every stage
         }
         catch (Exception ex)
         {
@@ -44,6 +45,10 @@ public class SolveSudokuAction extends SudokuAction
             errorBox.setMessage("Could not solve Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n"
                     + ex.toString());
             errorBox.open();
+        }
+        finally
+        {
+            app.setState(AppState.EMPTY);
         }
     }
 

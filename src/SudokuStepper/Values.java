@@ -102,8 +102,18 @@ public class Values
     private List<SolutionListener>   solutionListeners   = new ArrayList<SolutionListener>();
     private List<CandidatesListener> candidatesListeners = new ArrayList<CandidatesListener>();
     private List<SavedListener>      savedListeners      = new ArrayList<SavedListener>();
+
     // private List<NewStartListener> newStartListeners = new
     // ArrayList<NewStartListener>();
+    public boolean isSaved()
+    {
+        return saved;
+    }
+
+    public void setSaved(boolean saved)
+    {
+        this.saved = saved;
+    }
 
     public String getName()
     {
@@ -113,6 +123,18 @@ public class Values
             retVal = StringUtils.EMPTY;
         }
         return (retVal);
+    }
+
+    public void setName(String input)
+    {
+        if (input == null)
+        {
+            sudokuName = StringUtils.EMPTY;
+        }
+        else
+        {
+            sudokuName = input.trim();
+        }
     }
 
     public String getInputFile()
@@ -150,7 +172,7 @@ public class Values
             sudoku[row][col].solution = val;
             sudoku[row][col].isInput = true;
             sudoku[row][col].candidates.clear();
-            saved = false;
+            setSaved(false);
         }
         catch (Exception ex)
         {
@@ -179,6 +201,7 @@ public class Values
     // }
 
     // returns true if an update has occured, false else
+    // To be used when solving a sudoku
     public boolean eliminateCandidate(int row, int col, LegalValues val)
     {
         boolean retVal = false;
@@ -199,15 +222,153 @@ public class Values
                     listener.solutionUpdated(row, col);
                 }
             }
-            saved = false;
+            setSaved(false);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(saved);
+                listener.savedUpdated(isSaved());
             }
             retVal = true;
         }
         return (retVal);
     }
+
+    // remove from the value just set in the given cell the list of candidates from
+    // all influenced cells
+    // public void updateCandidateList(int row, int col, LegalValues val)
+    // {
+    // if (sudoku[row][col].solution != null)
+    // { // First undo the value restrictions due to the previous value, but only
+    // where
+    // // not another cell continues justifying them
+    // LegalValues oldVal = sudoku[row][col].solution;
+    // // Same column
+    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+    // {
+    // if (!sudoku[rowInCol][col].candidates.contains(oldVal) &&
+    // isValueACandidate(rowInCol, col, oldVal))
+    // {
+    // sudoku[rowInCol][col].candidates.add(oldVal);
+    // }
+    // }
+    // // Same row
+    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+    // {
+    // if (!sudoku[row][colInRow].candidates.contains(oldVal) &&
+    // isValueACandidate(row, colInRow, oldVal))
+    // {
+    // sudoku[row][colInRow].candidates.add(oldVal);
+    // }
+    // }
+    // // Same block
+    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
+    // rowInBlock < AppMain.RECTLENGTH
+    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+    // {
+    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
+    // colInBlock < AppMain.RECTLENGTH
+    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+    // {
+    // if (!sudoku[rowInBlock][colInBlock].candidates.contains(oldVal)
+    // && isValueACandidate(rowInBlock, colInBlock, oldVal))
+    // {
+    // sudoku[rowInBlock][colInBlock].candidates.add(oldVal);
+    // }
+    // }
+    // }
+    // }
+    // if (val != null)
+    // {
+    // reduceInfluencedCellCandidates(row, col, val);
+    // }
+    // }
+
+    // Check if the value is a possible candidate based on the values already set in
+    // all influencing cells, val should not be null
+    // private boolean isValueACandidate(int row, int col, LegalValues val)
+    // {
+    // boolean retVal = true;
+    // // Same column
+    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+    // {
+    // if (row != rowInCol && val.equals(sudoku[rowInCol][col].solution))
+    // {
+    // retVal = false;
+    // break;
+    // }
+    // }
+    // // Same row
+    // if (retVal)
+    // {
+    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+    // {
+    // if (col != colInRow && val.equals(sudoku[row][colInRow].solution))
+    // {
+    // retVal = false;
+    // break;
+    // }
+    // }
+    // }
+    // // Same block
+    // if (retVal)
+    // {
+    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
+    // rowInBlock < AppMain.RECTLENGTH
+    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+    // {
+    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
+    // colInBlock < AppMain.RECTLENGTH
+    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+    // {
+    // if ((col != colInBlock || row != rowInBlock) &&
+    // val.equals(sudoku[rowInBlock][colInBlock].solution))
+    // {
+    // retVal = false;
+    // break;
+    // }
+    // }
+    // }
+    // }
+    // return (retVal);
+    // }
+
+    // remove unconditionally from the value just set in the given cell the list of
+    // candidates from
+    // all influenced cells
+    // private void reduceInfluencedCellCandidates(int row, int col, LegalValues
+    // val)
+    // {
+    // // Same column
+    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+    // {
+    // if (sudoku[rowInCol][col].candidates.contains(val))
+    // {
+    // sudoku[rowInCol][col].candidates.remove(val);
+    // }
+    // }
+    // // Same row
+    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+    // {
+    // if (sudoku[row][colInRow].candidates.contains(val))
+    // {
+    // sudoku[row][colInRow].candidates.remove(val);
+    // }
+    // }
+    // // Same block
+    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
+    // rowInBlock < AppMain.RECTLENGTH
+    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+    // {
+    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
+    // colInBlock < AppMain.RECTLENGTH
+    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+    // {
+    // if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
+    // {
+    // sudoku[rowInBlock][colInBlock].candidates.remove(val);
+    // }
+    // }
+    // }
+    // }
 
     public void reset()
     {
@@ -284,10 +445,10 @@ public class Values
                 }
             }
             inputFile = fromFile;
-            saved = true;
+            setSaved(true);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(saved);
+                listener.savedUpdated(isSaved());
             }
             System.out.println("----------------------------");
         }
@@ -299,6 +460,14 @@ public class Values
     public List<List<int[]>> areContentsLegal()
     {
         List<List<int[]>> retVal = new ArrayList<List<int[]>>();
+        // First reset from a possible previous run
+        for (int row = 0; row < Values.DIMENSION; row++)
+        {
+            for (int col = 0; col < Values.DIMENSION; col++)
+            {
+                getCell(row, col).isAConflict = false;
+            }
+        }
         for (int row = 0; row < Values.DIMENSION; row++)
         {
             for (int col = 0; col < Values.DIMENSION; col++)
@@ -454,10 +623,10 @@ public class Values
                 }
             }
             toString(newDoc, outputFile);
-            saved = true;
+            setSaved(true);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(saved);
+                listener.savedUpdated(isSaved());
             }
             /*
              * new XmlAdapter(new FileOutputStream(fileName), new OutputFormat() { {
@@ -489,4 +658,5 @@ public class Values
         Result dest = new StreamResult(new File(this.inputFile));
         aTransformer.transform(src, dest);
     }
+
 }

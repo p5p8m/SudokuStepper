@@ -49,14 +49,23 @@ import org.eclipse.swt.events.SelectionListener;
 public class AppMain extends ApplicationWindow implements SolutionListener, CandidatesListener, SavedListener
 {
     private Action           action;
-    private Values           mySudoku            = null;
+    private Values           mySudoku              = null;
     // remember the last candidate whose status was changed
-    private Text             lastUpdatedCandText = null;
-    private Font             solutionFont        = null; // SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD);
-    private Font             solutionSmallFont   = null; // SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL);
+    private Text             lastUpdatedCandText   = null;
+    private Font             solutionFont          = null;                 // SWTResourceManager.getFont("Segoe UI", 30,
+                                                                           // SWT.BOLD);
+    private Font             solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI", 8,
+                                                                           // SWT.NORMAL);
 
-    private static final int INITIAL_WIDTH       = 552;
-    private static final int INITIAL_HEIGHT      = 752;
+    private static final int INITIAL_WIDTH         = 552;
+    private static final int INITIAL_HEIGHT        = 820;
+    private static final int NAME_BOX_HEIGHT       = 55;
+    private static final int TOP_MARGIN            = 5;
+    private static final int COLOR_INPUT_BCKGRD    = SWT.COLOR_WHITE;
+    private static final int COLOR_INPUT_FOREGRD   = SWT.COLOR_BLACK;
+    private static final int COLOR_CONFLICT_BCKGRD = SWT.COLOR_RED;
+    private static final int COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
+    private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
 
     /**
      * Create the application window.
@@ -85,6 +94,13 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         {
             solutionSmallFont.dispose();
         }
+    }
+
+    private AppState status = AppState.EMPTY;
+
+    public void setState(AppState val)
+    {
+        status = val;
     }
 
     private Display myDisplay;
@@ -128,7 +144,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     // first key is the row (1...9), second key is the column(1...9)
     private Map<Integer, Map<Integer, SolNCandTexts>> uiFields        = new HashMap<Integer, Map<Integer, SolNCandTexts>>(
             RECTLENGTH);
-    private Group                                     grpSudokublocks = null;
+    private Group                                     grpSudokuBlocks = null;
 
     /**
      * Create contents of the application window.
@@ -143,19 +159,19 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         Composite OverallContainer = new Composite(parent, SWT.NONE);
         OverallContainer.setLayout(new FormLayout());
 
-        grpSudokublocks = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
+        grpSudokuBlocks = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
         FormData fd_grpSudokublocks = new FormData();
         fd_grpSudokublocks.right = new FormAttachment(100, -3);
-        fd_grpSudokublocks.top = new FormAttachment(0, 3);
+        fd_grpSudokublocks.top = new FormAttachment(0, TOP_MARGIN);
         fd_grpSudokublocks.left = new FormAttachment(0, 3);
-        grpSudokublocks.setLayoutData(fd_grpSudokublocks);
-        grpSudokublocks.setText(StringUtils.EMPTY);
-        grpSudokublocks.setLayout(new GridLayout(RECTLENGTH, true));
+        grpSudokuBlocks.setLayoutData(fd_grpSudokublocks);
+        grpSudokuBlocks.setText(StringUtils.EMPTY);
+        grpSudokuBlocks.setLayout(new GridLayout(RECTLENGTH, true));
         for (int blockRow = 1; blockRow <= RECTLENGTH; blockRow++)
         {
             for (int blockCol = 1; blockCol <= RECTLENGTH; blockCol++)
             {
-                Composite cellComposite = new Composite(grpSudokublocks, SWT.NONE);
+                Composite cellComposite = new Composite(grpSudokuBlocks, SWT.NONE);
                 cellComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
                 cellComposite.setLayout(new GridLayout(RECTLENGTH, false));
                 for (int row = 1; row <= RECTLENGTH; row++)
@@ -189,6 +205,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                         Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
 
                         String[] items = new String[LegalValues.values().length];
+                        // You need to set a list of items to avoid an exception
                         int valInd = 0;
                         for (LegalValues val : LegalValues.values())
                         {
@@ -240,13 +257,14 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                                 }
                             }
                         });
+                        combo.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
                         uiFields.get(totalRow).get(totalCol).input = combo;
 
                         Composite composite_1110 = new Composite(composite_111, SWT.NONE);
                         composite_1110.setBackground(SWTResourceManager.getColor(SWT.COLOR_BLUE));
                         GridLayout gl_composite_1110 = new GridLayout(RECTLENGTH, false);
-                        gl_composite_1110.horizontalSpacing = 0;
-                        gl_composite_1110.verticalSpacing = 0;
+                        gl_composite_1110.horizontalSpacing = 2;
+                        gl_composite_1110.verticalSpacing = 1;
                         gl_composite_1110.marginWidth = 0;
                         gl_composite_1110.marginHeight = 0;
                         composite_1110.setLayout(gl_composite_1110);
@@ -269,178 +287,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 }
             }
         }
-        /*
-         * Composite composite_11 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_11.setBackground(SWTResourceManager.getColor(SWT.COLOR_RED));
-         * composite_11.setLayout(new GridLayout(3, false));
-         * 
-         * Composite composite_111 = new Composite(composite_11, SWT.NONE);
-         * composite_111.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * StackLayout layout = new StackLayout(); composite_111.setLayout(layout); Text
-         * text_111 = new Text(composite_111, SWT.BORDER | SWT.CENTER);
-         * text_111.setBackground(SWTResourceManager.getColor(255, 255, 0));
-         * text_111.setToolTipText("ABCD");
-         * text_111.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_111.setText("1"); layout.topControl = text_111; Composite composite_1110
-         * = new Composite(composite_111, SWT.NONE);
-         * composite_1110.setBackground(SWTResourceManager.getColor(SWT.COLOR_BLUE));
-         * GridLayout gl_composite_1110 = new GridLayout(3, false);
-         * gl_composite_1110.horizontalSpacing = 0; gl_composite_1110.verticalSpacing =
-         * 0; gl_composite_1110.marginWidth = 0; gl_composite_1110.marginHeight = 0;
-         * composite_1110.setLayout(gl_composite_1110);
-         * 
-         * Text text_1111 = new Text(composite_1110, SWT.BORDER | SWT.READ_ONLY);
-         * text_1111.setBackground(SWTResourceManager.getColor(SWT.COLOR_DARK_GRAY));
-         * text_1111.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1,
-         * 1)); text_1111.setFont(SWTResourceManager.getFont("Segoe UI", 8,
-         * SWT.NORMAL)); text_1111.setText("1"); text_1111.setToolTipText("01234"); Text
-         * text_1112 = new Text(composite_1110, SWT.BORDER);
-         * text_1112.setFont(SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL));
-         * text_1112.setText("2"); Text text_1113 = new Text(composite_1110,
-         * SWT.BORDER); text_1113.setFont(SWTResourceManager.getFont("Segoe UI", 8,
-         * SWT.NORMAL)); text_1113.setText("3"); Text text_1114 = new
-         * Text(composite_1110, SWT.BORDER);
-         * text_1114.setFont(SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL));
-         * text_1114.setText("4"); Text text_1115 = new Text(composite_1110,
-         * SWT.BORDER); text_1115.setFont(SWTResourceManager.getFont("Segoe UI", 8,
-         * SWT.NORMAL)); text_1115.setText("5"); Text text_1116 = new
-         * Text(composite_1110, SWT.BORDER);
-         * text_1116.setFont(SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL));
-         * text_1116.setText("6"); Text text_1117 = new Text(composite_1110,
-         * SWT.BORDER); text_1117.setFont(SWTResourceManager.getFont("Segoe UI", 8,
-         * SWT.NORMAL)); text_1117.setText("7"); Text text_1118 = new
-         * Text(composite_1110, SWT.BORDER);
-         * text_1118.setFont(SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL));
-         * text_1118.setText("8"); Text text_1119 = new Text(composite_1110,
-         * SWT.BORDER); text_1119.setFont(SWTResourceManager.getFont("Segoe UI", 8,
-         * SWT.NORMAL)); text_1119.setText("9");
-         * 
-         * Text text_112 = new Text(composite_11, SWT.BORDER);
-         * text_112.setBackground(SWTResourceManager.getColor(255, 255, 0));
-         * text_112.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_112.setText("2"); text_112.setToolTipText("EFGH"); Text text_113 = new
-         * Text(composite_11, SWT.BORDER);
-         * text_113.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_113.setText("3"); Text text_114 = new Text(composite_11, SWT.BORDER);
-         * text_114.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_114.setText("4"); Text text_115 = new Text(composite_11, SWT.BORDER);
-         * text_115.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_115.setText("5"); Text text_116 = new Text(composite_11, SWT.BORDER);
-         * text_116.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_116.setText("6"); Text text_117 = new Text(composite_11, SWT.BORDER);
-         * text_117.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_117.setText("7"); Text text_118 = new Text(composite_11, SWT.BORDER);
-         * text_118.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_118.setText("8"); Text text_119 = new Text(composite_11, SWT.BORDER);
-         * text_119.setFont(SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD));
-         * text_119.setText("9");
-         * 
-         * Composite composite_12 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_12.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_12.setLayout(new GridLayout(3, false)); Text text_121 = new
-         * Text(composite_12, SWT.BORDER); text_121.setText("1"); Text text_122 = new
-         * Text(composite_12, SWT.BORDER); text_122.setText("2"); Text text_123 = new
-         * Text(composite_12, SWT.BORDER); text_123.setText("3"); Text text_124 = new
-         * Text(composite_12, SWT.BORDER); text_124.setText("4"); Text text_125 = new
-         * Text(composite_12, SWT.BORDER); text_125.setText("5"); Text text_126 = new
-         * Text(composite_12, SWT.BORDER); text_126.setText("6"); Text text_127 = new
-         * Text(composite_12, SWT.BORDER); text_127.setText("7"); Text text_128 = new
-         * Text(composite_12, SWT.BORDER); text_128.setText("8"); Text text_129 = new
-         * Text(composite_12, SWT.BORDER); text_129.setText("9");
-         * 
-         * Composite composite_13 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_13.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_13.setLayout(new GridLayout(3, false)); Text text_131 = new
-         * Text(composite_13, SWT.BORDER); text_131.setText("1"); Text text_132 = new
-         * Text(composite_13, SWT.BORDER); text_132.setText("2"); Text text_133 = new
-         * Text(composite_13, SWT.BORDER); text_133.setText("3"); Text text_134 = new
-         * Text(composite_13, SWT.BORDER); text_134.setText("4"); Text text_135 = new
-         * Text(composite_13, SWT.BORDER); text_135.setText("5"); Text text_136 = new
-         * Text(composite_13, SWT.BORDER); text_136.setText("6"); Text text_137 = new
-         * Text(composite_13, SWT.BORDER); text_137.setText("7"); Text text_138 = new
-         * Text(composite_13, SWT.BORDER); text_138.setText("8"); Text text_139 = new
-         * Text(composite_13, SWT.BORDER); text_139.setText("9");
-         * 
-         * Composite composite_21 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_21.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_21.setLayout(new GridLayout(3, false)); Text text_211 = new
-         * Text(composite_21, SWT.BORDER); text_211.setText("1"); Text text_212 = new
-         * Text(composite_21, SWT.BORDER); text_212.setText("2"); Text text_213 = new
-         * Text(composite_21, SWT.BORDER); text_213.setText("3"); Text text_214 = new
-         * Text(composite_21, SWT.BORDER); text_214.setText("4"); Text text_215 = new
-         * Text(composite_21, SWT.BORDER); text_215.setText("5"); Text text_216 = new
-         * Text(composite_21, SWT.BORDER); text_216.setText("6"); Text text_217 = new
-         * Text(composite_21, SWT.BORDER); text_217.setText("7"); Text text_218 = new
-         * Text(composite_21, SWT.BORDER); text_218.setText("8"); Text text_219 = new
-         * Text(composite_21, SWT.BORDER); text_219.setText("9");
-         * 
-         * Composite composite_22 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_22.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_22.setLayout(new GridLayout(3, false)); Text text_221 = new
-         * Text(composite_22, SWT.BORDER); text_221.setText("1"); Text text_222 = new
-         * Text(composite_22, SWT.BORDER); text_222.setText("2"); Text text_223 = new
-         * Text(composite_22, SWT.BORDER); text_223.setText("3"); Text text_224 = new
-         * Text(composite_22, SWT.BORDER); text_224.setText("4"); Text text_225 = new
-         * Text(composite_22, SWT.BORDER); text_225.setText("5"); Text text_226 = new
-         * Text(composite_22, SWT.BORDER); text_226.setText("6"); Text text_227 = new
-         * Text(composite_22, SWT.BORDER); text_227.setText("7"); Text text_228 = new
-         * Text(composite_22, SWT.BORDER); text_228.setText("8"); Text text_229 = new
-         * Text(composite_22, SWT.BORDER); text_229.setText("9");
-         * 
-         * Composite composite_23 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_23.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_23.setLayout(new GridLayout(3, false)); Text text_231 = new
-         * Text(composite_23, SWT.BORDER); text_231.setText("1"); Text text_232 = new
-         * Text(composite_23, SWT.BORDER); text_232.setText("2"); Text text_233 = new
-         * Text(composite_23, SWT.BORDER); text_233.setText("3"); Text text_234 = new
-         * Text(composite_23, SWT.BORDER); text_234.setText("4"); Text text_235 = new
-         * Text(composite_23, SWT.BORDER); text_235.setText("5"); Text text_236 = new
-         * Text(composite_23, SWT.BORDER); text_236.setText("6"); Text text_237 = new
-         * Text(composite_23, SWT.BORDER); text_237.setText("7"); Text text_238 = new
-         * Text(composite_23, SWT.BORDER); text_238.setText("8"); Text text_239 = new
-         * Text(composite_23, SWT.BORDER); text_239.setText("9");
-         * 
-         * Composite composite_31 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_31.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_31.setLayout(new GridLayout(3, false)); Text text_311 = new
-         * Text(composite_31, SWT.BORDER); text_311.setText("1"); Text text_312 = new
-         * Text(composite_31, SWT.BORDER); text_312.setText("2"); Text text_313 = new
-         * Text(composite_31, SWT.BORDER); text_313.setText("3"); Text text_314 = new
-         * Text(composite_31, SWT.BORDER); text_314.setText("4"); Text text_315 = new
-         * Text(composite_31, SWT.BORDER); text_315.setText("5"); Text text_316 = new
-         * Text(composite_31, SWT.BORDER); text_316.setText("6"); Text text_317 = new
-         * Text(composite_31, SWT.BORDER); text_317.setText("7"); Text text_318 = new
-         * Text(composite_31, SWT.BORDER); text_318.setText("8"); Text text_319 = new
-         * Text(composite_31, SWT.BORDER); text_319.setText("9");
-         * 
-         * Composite composite_32 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_32.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_32.setLayout(new GridLayout(3, false)); Text text_321 = new
-         * Text(composite_32, SWT.BORDER); text_321.setText("1"); Text text_322 = new
-         * Text(composite_32, SWT.BORDER); text_322.setText("2"); Text text_323 = new
-         * Text(composite_32, SWT.BORDER); text_323.setText("3"); Text text_324 = new
-         * Text(composite_32, SWT.BORDER); text_324.setText("4"); Text text_325 = new
-         * Text(composite_32, SWT.BORDER); text_325.setText("5"); Text text_326 = new
-         * Text(composite_32, SWT.BORDER); text_326.setText("6"); Text text_327 = new
-         * Text(composite_32, SWT.BORDER); text_327.setText("7"); Text text_328 = new
-         * Text(composite_32, SWT.BORDER); text_328.setText("8"); Text text_329 = new
-         * Text(composite_32, SWT.BORDER); text_329.setText("9");
-         * 
-         * Composite composite_33 = new Composite(grpSudokublocks, SWT.NONE);
-         * composite_33.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
-         * composite_33.setLayout(new GridLayout(3, false)); Text text_331 = new
-         * Text(composite_33, SWT.BORDER); text_331.setText("1"); Text text_332 = new
-         * Text(composite_33, SWT.BORDER); text_332.setText("2"); Text text_333 = new
-         * Text(composite_33, SWT.BORDER); text_333.setText("3"); Text text_334 = new
-         * Text(composite_33, SWT.BORDER); text_334.setText("4"); Text text_335 = new
-         * Text(composite_33, SWT.BORDER); text_335.setText("5"); Text text_336 = new
-         * Text(composite_33, SWT.BORDER); text_336.setText("6"); Text text_337 = new
-         * Text(composite_33, SWT.BORDER); text_337.setText("7"); Text text_338 = new
-         * Text(composite_33, SWT.BORDER); text_338.setText("8"); Text text_339 = new
-         * Text(composite_33, SWT.BORDER); text_339.setText("9"); new
-         * Label(grpSudokublocks, SWT.NONE); new Label(grpSudokublocks, SWT.NONE); new
-         * Label(grpSudokublocks, SWT.NONE);
-         */
         Group grpButtons = new Group(OverallContainer, SWT.NONE);
         fd_grpSudokublocks.bottom = new FormAttachment(grpButtons, -6);
         FormData fd_grpButtons = new FormData();
@@ -457,19 +303,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         rl_grpButtons.fill = true;
         grpButtons.setLayout(rl_grpButtons);
         AppMain app = this;
-        btnSolve = new Button(grpButtons, SWT.NONE);
-        btnSolve.addSelectionListener(new SelectionAdapter()
-        {
-
-            @Override
-            public void widgetSelected(SelectionEvent e)
-            {
-                System.out.println("Pressed Solve");
-                solveSudokuAction.run();
-            }
-        });
-        btnSolve.setText("Solve");
-        btnSolve.setEnabled(false);
         btnFreeze = new Button(grpButtons, SWT.NONE);
         btnFreeze.addSelectionListener(new SelectionAdapter()
         {
@@ -483,9 +316,22 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         });
         btnFreeze.setText("Freeze");
         btnFreeze.setEnabled(false);
+        btnSolve = new Button(grpButtons, SWT.NONE);
+        btnSolve.addSelectionListener(new SelectionAdapter()
+        {
 
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                System.out.println("Pressed Solve");
+                solveSudokuAction.run();
+            }
+        });
+        btnSolve.setText("Solve");
+        btnSolve.setEnabled(false);
         Button btnSlideShow = new Button(grpButtons, SWT.NONE);
         btnSlideShow.setText("Slide Show");
+        btnSlideShow.setEnabled(false);
 
         // Menus
         // Menu menuBar = new Menu(myShell, SWT.BAR);
@@ -745,9 +591,9 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
     }
 
-    public void updateSudokuFields()
+    void updateSudokuFields()
     {
-        grpSudokublocks.setText(mySudoku.getName());
+        grpSudokuBlocks.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         List<List<int[]>> conflicts = mySudoku.areContentsLegal();
         freeze();
@@ -843,5 +689,29 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             cand.setVisible(false);
             cand.getParent().setVisible(false);
         }
+    }
+
+    boolean canDiscardOldSudokuIfAnyExists()
+    {
+        boolean reallyDo = true;
+        if (mySudoku != null && !mySudoku.isSaved())
+        {
+            MessageBox questionBox = new MessageBox(new Shell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+            questionBox.setText("About to switch to another sudoku");
+            questionBox.setMessage("The sudoku " + mySudoku.getName()
+                    + " has not been saved. Do you want to continue and discard it?");
+            int response = questionBox.open();
+            switch (response)
+            {
+            case SWT.YES:
+                reallyDo = true;
+                break;
+            case SWT.NO:
+            default:
+                reallyDo = false;
+                break;
+            }
+        }
+        return reallyDo;
     }
 }

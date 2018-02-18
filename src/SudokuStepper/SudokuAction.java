@@ -7,7 +7,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-public class SudokuAction extends Action
+public abstract class SudokuAction extends Action
 {
     protected AppMain app;
     protected Shell   shell;
@@ -25,6 +25,6 @@ public class SudokuAction extends Action
     public void run()
     {
         System.out.println("SudokuAction.run");
-        app.updateSudokuFields();
+        // app.updateSudokuFields();
     }
 }

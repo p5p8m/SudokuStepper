@@ -24,10 +24,14 @@ public class NewSudokuAction extends SudokuAction
         System.out.println("NewSudokuAction.run");
         try
         {
-            Values sudoku = new Values();
-            app.setSudokuPb(sudoku);
-            app.updateSudokuFields();
-            app.initGuiForNew();
+            app.setState(AppState.CREATING);
+            boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
+            if (reallyDo)
+            {
+                app.setSudokuPb(new Values());
+                app.updateSudokuFields();
+                app.initGuiForNew();
+            }
         }
         catch (Exception ex)
         {
@@ -35,6 +39,10 @@ public class NewSudokuAction extends SudokuAction
             errorBox.setMessage("Could not create new Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
                     + "\n" + ex.toString());
             errorBox.open();
+        }
+        finally
+        {
+            app.setState(AppState.EMPTY);
         }
     }
 

@@ -39,38 +39,43 @@ public class OpenSudokuAction extends SudokuAction
         System.out.println("OpenSudokuAction.run");
         try
         {
-            // Display a file selection box
-            FileDialog dialog = new FileDialog(new Shell(), SWT.OPEN);
-            String[] filterNames = new String[]
-            { "XML Files", "All Files (*)" };
-            String[] filterExtensions = new String[]
-            { "*.xml", "*" };
-            String filterPath = "/";
-            String platform = SWT.getPlatform();
-            if (platform.equals("win32"))
+            boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
+            if (reallyDo)
             {
-                filterNames = new String[]
-                { "XML Files", "All Files (*.*)" };
-                filterExtensions = new String[]
-                { "*.xml", "*.*" };
-                filterPath = "c:\\";
-            }
-            dialog.setFilterNames(filterNames);
-            dialog.setFilterExtensions(filterExtensions);
-            dialog.setFilterPath(filterPath);
-            dialog.setFileName("myfile");
-            String fileToOpen = dialog.open();
-            if (fileToOpen != null)
-            {
-                System.out.println("Open file: " + fileToOpen);
-                // add check if previous sudoku is saved
-                app.setSudokuPb(new Values());
-                app.getSudokuPb().read(fileToOpen);
-                app.updateSudokuFields();
-            }
-            else
-            {
-                System.out.println("Open aborted by user");
+                // Display a file selection box
+                FileDialog dialog = new FileDialog(new Shell(), SWT.OPEN);
+                String[] filterNames = new String[]
+                { "XML Files", "All Files (*)" };
+                String[] filterExtensions = new String[]
+                { "*.xml", "*" };
+                String filterPath = "/";
+                String platform = SWT.getPlatform();
+                if (platform.equals("win32"))
+                {
+                    filterNames = new String[]
+                    { "XML Files", "All Files (*.*)" };
+                    filterExtensions = new String[]
+                    { "*.xml", "*.*" };
+                    filterPath = "c:\\";
+                }
+                dialog.setFilterNames(filterNames);
+                dialog.setFilterExtensions(filterExtensions);
+                dialog.setFilterPath(filterPath);
+                dialog.setFileName("myfile");
+                String fileToOpen = dialog.open();
+                if (fileToOpen != null)
+                {
+                    System.out.println("Open file: " + fileToOpen);
+                    // add check if previous sudoku is saved
+                    app.setState(AppState.OPENING);
+                    app.setSudokuPb(new Values());
+                    app.getSudokuPb().read(fileToOpen);
+                    app.updateSudokuFields();
+                }
+                else
+                {
+                    System.out.println("Open aborted by user");
+                }
             }
         }
         catch (Exception ex)
@@ -79,6 +84,10 @@ public class OpenSudokuAction extends SudokuAction
             errorBox.setMessage("Could not load Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n"
                     + ex.toString());
             errorBox.open();
+        }
+        finally
+        {
+            app.setState(AppState.EMPTY);
         }
     }
 }
