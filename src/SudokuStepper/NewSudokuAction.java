@@ -27,9 +27,9 @@ public class NewSudokuAction extends SudokuAction
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
-                app.setState(AppState.CREATING);
                 app.setSudokuPb(new Values());
                 app.updateSudokuFields();
+                app.setState(AppState.CREATING);
                 app.initGuiForNew();
             }
         }

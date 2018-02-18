@@ -594,6 +594,18 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
     void initGuiForNew()
     {
+        // It is important to first relayout and then set the uiFields
+        freezeSudokuAction.setEnabled(true);
+        solveSudokuAction.setEnabled(false);
+        btnFreeze.setEnabled(true);
+        btnSolve.setEnabled(false);
+        grpSudokuName.setVisible(true);
+        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
+        txtName.setText(StringUtils.EMPTY);
+        txtName.setEditable(true);
+        grpSudokuBlocks.getParent().layout(true, true);
+        grpSudokuBlocks.redraw();
+        grpSudokuBlocks.update();
         for (Integer row : uiFields.keySet())
         {
             for (Integer col : uiFields.get(row).keySet())
@@ -614,6 +626,17 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
     void freeze()
     {
+        // It is important to first relayout and then set the uiFields
+        freezeSudokuAction.setEnabled(false);
+        btnFreeze.setEnabled(false);
+        solveSudokuAction.setEnabled(true);
+        btnSolve.setEnabled(true);
+        grpSudokuName.setVisible(false);
+        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
+        txtName.setEditable(false);
+        grpSudokuBlocks.getParent().layout(true, true);
+        grpSudokuBlocks.redraw();
+        grpSudokuBlocks.update();
         for (Integer row : uiFields.keySet())
         {
             for (Integer col : uiFields.get(row).keySet())
@@ -631,17 +654,15 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                     for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
                     {
                         Text cand = uiField.candidates.get(ind);
-                        boolean visible = Integer.toString(mySudoku.getCell(row, col).candidates.get(ind).val())
-                                .equals(cand.getText());
+                        String candidate = cand.getText();
+                        Boolean visible = candidate != null && mySudoku.getCell(row, col).candidates
+                                .contains(LegalValues.from(Integer.parseInt(candidate)));
                         cand.setVisible(visible);
                         cand.getParent().setVisible(visible);
                     }
                 }
             }
         }
-        freezeSudokuAction.setEnabled(false);
-        btnFreeze.setEnabled(false);
-
     }
 
     void updateSudokuFields()
