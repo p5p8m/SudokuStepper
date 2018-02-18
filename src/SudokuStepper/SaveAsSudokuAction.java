@@ -57,8 +57,11 @@ public class SaveAsSudokuAction extends SaveSudokuAction
             dialog.setFileName("myfile");
             String fileToWrite = dialog.open();
             System.out.println("Open file: " + fileToWrite);
-            app.getSudokuPb().save(fileToWrite);
-            app.updateSudokuFields();
+            if (fileToWrite != null)
+            {
+                app.getSudokuPb().save(fileToWrite);
+                app.updateSudokuFields();
+            }
         }
         catch (Exception ex)
         {
