@@ -651,12 +651,13 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                     uiField.solution.setVisible(false);
                     uiField.input.setText(StringUtils.EMPTY);
                     uiField.input.setVisible(false);
+                    Boolean visible = true;
                     for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
                     {
                         Text cand = uiField.candidates.get(ind);
-                        String candidate = cand.getText();
-                        Boolean visible = candidate != null && mySudoku.getCell(row, col).candidates
-                                .contains(LegalValues.from(Integer.parseInt(candidate)));
+                        // String candidate = cand.getText();
+                        // Boolean visible = candidate != null && mySudoku.getCell(row, col).candidates
+                        // .contains(LegalValues.from(Integer.parseInt(candidate)));
                         cand.setVisible(visible);
                         cand.getParent().setVisible(visible);
                     }
