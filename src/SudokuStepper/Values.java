@@ -234,141 +234,130 @@ public class Values
 
     // remove from the value just set in the given cell the list of candidates from
     // all influenced cells
-    // public void updateCandidateList(int row, int col, LegalValues val)
-    // {
-    // if (sudoku[row][col].solution != null)
-    // { // First undo the value restrictions due to the previous value, but only
-    // where
-    // // not another cell continues justifying them
-    // LegalValues oldVal = sudoku[row][col].solution;
-    // // Same column
-    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
-    // {
-    // if (!sudoku[rowInCol][col].candidates.contains(oldVal) &&
-    // isValueACandidate(rowInCol, col, oldVal))
-    // {
-    // sudoku[rowInCol][col].candidates.add(oldVal);
-    // }
-    // }
-    // // Same row
-    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
-    // {
-    // if (!sudoku[row][colInRow].candidates.contains(oldVal) &&
-    // isValueACandidate(row, colInRow, oldVal))
-    // {
-    // sudoku[row][colInRow].candidates.add(oldVal);
-    // }
-    // }
-    // // Same block
-    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
-    // rowInBlock < AppMain.RECTLENGTH
-    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
-    // {
-    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
-    // colInBlock < AppMain.RECTLENGTH
-    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
-    // {
-    // if (!sudoku[rowInBlock][colInBlock].candidates.contains(oldVal)
-    // && isValueACandidate(rowInBlock, colInBlock, oldVal))
-    // {
-    // sudoku[rowInBlock][colInBlock].candidates.add(oldVal);
-    // }
-    // }
-    // }
-    // }
-    // if (val != null)
-    // {
-    // reduceInfluencedCellCandidates(row, col, val);
-    // }
-    // }
+    public void updateCandidateList(int row, int col, LegalValues val)
+    {
+        if (sudoku[row][col].solution != null)
+        { // First undo the value restrictions due to the previous value, but only where
+          // not another cell continues justifying them
+            LegalValues oldVal = sudoku[row][col].solution;
+            // Same column
+            for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+            {
+                if (!sudoku[rowInCol][col].candidates.contains(oldVal) && isValueACandidate(rowInCol, col, oldVal))
+                {
+                    sudoku[rowInCol][col].candidates.add(oldVal);
+                }
+            }
+            // Same row
+            for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+            {
+                if (!sudoku[row][colInRow].candidates.contains(oldVal) && isValueACandidate(row, colInRow, oldVal))
+                {
+                    sudoku[row][colInRow].candidates.add(oldVal);
+                }
+            }
+            // Same block
+            for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
+                    * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+            {
+                for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
+                        * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+                {
+                    if (!sudoku[rowInBlock][colInBlock].candidates.contains(oldVal)
+                            && isValueACandidate(rowInBlock, colInBlock, oldVal))
+                    {
+                        sudoku[rowInBlock][colInBlock].candidates.add(oldVal);
+                    }
+                }
+            }
+        }
+        if (val != null)
+        {
+            reduceInfluencedCellCandidates(row, col, val);
+        }
+    }
 
     // Check if the value is a possible candidate based on the values already set in
     // all influencing cells, val should not be null
-    // private boolean isValueACandidate(int row, int col, LegalValues val)
-    // {
-    // boolean retVal = true;
-    // // Same column
-    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
-    // {
-    // if (row != rowInCol && val.equals(sudoku[rowInCol][col].solution))
-    // {
-    // retVal = false;
-    // break;
-    // }
-    // }
-    // // Same row
-    // if (retVal)
-    // {
-    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
-    // {
-    // if (col != colInRow && val.equals(sudoku[row][colInRow].solution))
-    // {
-    // retVal = false;
-    // break;
-    // }
-    // }
-    // }
-    // // Same block
-    // if (retVal)
-    // {
-    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
-    // rowInBlock < AppMain.RECTLENGTH
-    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
-    // {
-    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
-    // colInBlock < AppMain.RECTLENGTH
-    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
-    // {
-    // if ((col != colInBlock || row != rowInBlock) &&
-    // val.equals(sudoku[rowInBlock][colInBlock].solution))
-    // {
-    // retVal = false;
-    // break;
-    // }
-    // }
-    // }
-    // }
-    // return (retVal);
-    // }
+    private boolean isValueACandidate(int row, int col, LegalValues val)
+    {
+        boolean retVal = true;
+        // Same column
+        for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+        {
+            if (row != rowInCol && val.equals(sudoku[rowInCol][col].solution))
+            {
+                retVal = false;
+                break;
+            }
+        }
+        // Same row
+        if (retVal)
+        {
+            for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+            {
+                if (col != colInRow && val.equals(sudoku[row][colInRow].solution))
+                {
+                    retVal = false;
+                    break;
+                }
+            }
+        }
+        // Same block
+        if (retVal)
+        {
+            for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
+                    * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+            {
+                for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
+                        * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+                {
+                    if ((col != colInBlock || row != rowInBlock) && val.equals(sudoku[rowInBlock][colInBlock].solution))
+                    {
+                        retVal = false;
+                        break;
+                    }
+                }
+            }
+        }
+        return (retVal);
+    }
 
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    // private void reduceInfluencedCellCandidates(int row, int col, LegalValues
-    // val)
-    // {
-    // // Same column
-    // for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
-    // {
-    // if (sudoku[rowInCol][col].candidates.contains(val))
-    // {
-    // sudoku[rowInCol][col].candidates.remove(val);
-    // }
-    // }
-    // // Same row
-    // for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
-    // {
-    // if (sudoku[row][colInRow].candidates.contains(val))
-    // {
-    // sudoku[row][colInRow].candidates.remove(val);
-    // }
-    // }
-    // // Same block
-    // for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH);
-    // rowInBlock < AppMain.RECTLENGTH
-    // * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
-    // {
-    // for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH);
-    // colInBlock < AppMain.RECTLENGTH
-    // * (col / AppMain.RECTLENGTH + 1); colInBlock++)
-    // {
-    // if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
-    // {
-    // sudoku[rowInBlock][colInBlock].candidates.remove(val);
-    // }
-    // }
-    // }
-    // }
+    private void reduceInfluencedCellCandidates(int row, int col, LegalValues val)
+    {
+        // Same column
+        for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+        {
+            if (sudoku[rowInCol][col].candidates.contains(val))
+            {
+                sudoku[rowInCol][col].candidates.remove(val);
+            }
+        }
+        // Same row
+        for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+        {
+            if (sudoku[row][colInRow].candidates.contains(val))
+            {
+                sudoku[row][colInRow].candidates.remove(val);
+            }
+        }
+        // Same block
+        for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
+                * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+        {
+            for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
+                    * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+            {
+                if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
+                {
+                    sudoku[rowInBlock][colInBlock].candidates.remove(val);
+                }
+            }
+        }
+    }
 
     public void reset()
     {

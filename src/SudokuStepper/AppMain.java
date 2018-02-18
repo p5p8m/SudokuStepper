@@ -145,6 +145,8 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     private Map<Integer, Map<Integer, SolNCandTexts>> uiFields        = new HashMap<Integer, Map<Integer, SolNCandTexts>>(
             RECTLENGTH);
     private Group                                     grpSudokuBlocks = null;
+    private Group                                     grpSudokuName   = null;
+    private Text                                      txtName         = null;
 
     /**
      * Create contents of the application window.
@@ -159,6 +161,50 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         Composite OverallContainer = new Composite(parent, SWT.NONE);
         OverallContainer.setLayout(new FormLayout());
 
+        grpSudokuName = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
+        grpSudokuName.setText("Sudoku Name:");
+        grpSudokuName.setLayout(new FormLayout());
+        FormData fd_grpSudokuName = new FormData();
+        fd_grpSudokuName.bottom = new FormAttachment(0, 60);
+        fd_grpSudokuName.right = new FormAttachment(100, -3);
+        fd_grpSudokuName.top = new FormAttachment(0, TOP_MARGIN);
+        fd_grpSudokuName.left = new FormAttachment(0, 3);
+        grpSudokuName.setLayoutData(fd_grpSudokuName);
+        grpSudokuName.setVisible(false);
+
+        // Label lblName = new Label(grpSudokuName, SWT.BORDER | SWT.SHADOW_OUT);
+        // FormData fd_lblName = new FormData();
+        // fd_lblName.bottom = new FormAttachment(0, 25);
+        // fd_lblName.top = new FormAttachment(0, 3);
+        // fd_lblName.left = new FormAttachment(0, 5);
+        // fd_lblName.right = new FormAttachment(0, 100);
+        // lblName.setLayoutData(fd_lblName);
+        // lblName.setText("Sudoku name: ");
+
+        txtName = new Text(grpSudokuName, SWT.BORDER | SWT.SHADOW_OUT);
+        txtName.setEditable(false);
+        txtName.setText(StringUtils.EMPTY);
+        FormData fd_txtName = new FormData();
+        fd_txtName.bottom = new FormAttachment(0, 25);
+        fd_txtName.top = new FormAttachment(0, 3);
+        fd_txtName.left = new FormAttachment(0, 5); // new FormAttachment(lblName, 6);
+        fd_txtName.right = new FormAttachment(100, -3);
+        txtName.setLayoutData(fd_txtName);
+        txtName.addModifyListener(new ModifyListener()
+        {
+            @Override
+            public void modifyText(ModifyEvent arg0)
+            {
+                String input = txtName.getText();
+                if (input != null)
+                {
+                    input = input.trim();
+                }
+                mySudoku.setName(input);
+                grpSudokuBlocks.setText(input);
+            }
+        });
+
         grpSudokuBlocks = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
         FormData fd_grpSudokublocks = new FormData();
         fd_grpSudokublocks.right = new FormAttachment(100, -3);
@@ -172,7 +218,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             for (int blockCol = 1; blockCol <= RECTLENGTH; blockCol++)
             {
                 Composite cellComposite = new Composite(grpSudokuBlocks, SWT.NONE);
-                cellComposite.setBackground(SWTResourceManager.getColor(SWT.COLOR_GREEN));
+                cellComposite.setBackground(myDisplay.getSystemColor(SWT.COLOR_GREEN));
                 cellComposite.setLayout(new GridLayout(RECTLENGTH, false));
                 for (int row = 1; row <= RECTLENGTH; row++)
                 {
@@ -185,7 +231,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                         composite_111.setLayout(gl_composite_111);
                         // Create text for the display of solutions
                         Text solutionText = new Text(composite_111, SWT.BORDER | SWT.CENTER);
-                        solutionText.setBackground(SWTResourceManager.getColor(SWT.COLOR_DARK_YELLOW));
+                        solutionText.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
                         solutionText.setFont(solutionFont);
                         solutionText.setText(Integer.toString(((row - 1) * RECTLENGTH + col)));
                         solutionText.setToolTipText("Input or solution");
@@ -221,47 +267,56 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                             @Override
                             public void modifyText(ModifyEvent arg0)
                             {
-                                String input = combo.getText();
-                                if (input != null)
+                                if (status == AppState.CREATING)
                                 {
-                                    input = input.trim();
-                                }
-                                // combo.setText(input); Infinite stack
-                                if (!input.isEmpty())
-                                {
-                                    boolean found = false;
-                                    for (String valid : combo.getItems())
+                                    String input = combo.getText();
+                                    if (input != null)
                                     {
-                                        if (input.equals(valid))
-                                        {
-                                            found = true;
-                                            break;
-                                        }
+                                        input = input.trim();
                                     }
-                                    if (!found)
+                                    // combo.setText(input); Infinite stack
+                                    if (!input.isEmpty())
                                     {
-                                        setStatus(input + " is an invalid value for this cell!");
-                                        combo.setText(StringUtils.EMPTY);
+                                        boolean found = false;
+                                        for (String valid : combo.getItems())
+                                        {
+                                            if (input.equals(valid))
+                                            {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found)
+                                        {
+                                            setStatus(input + " is an invalid value for this cell!");
+                                            combo.setText(StringUtils.EMPTY);
+                                        }
+                                        else
+                                        {
+                                            LegalValues val = LegalValues.from(Integer.parseInt(input));
+                                            mySudoku.updateCandidateList(totalRow, totalCol, val);
+                                            mySudoku.getCell(totalRow, totalCol).candidates.clear();
+                                            mySudoku.getCell(totalRow, totalCol).solution = val;
+                                            mySudoku.getCell(totalRow, totalCol).isInput = true;
+                                            mySudoku.setSaved(false);
+
+                                        }
                                     }
                                     else
                                     {
-                                        mySudoku.getCell(totalRow, totalCol).candidates.clear();
-                                        mySudoku.getCell(totalRow, totalCol).solution = LegalValues
-                                                .from(Integer.parseInt(input));
-                                        mySudoku.getCell(totalRow, totalCol).isInput = true;
+                                        mySudoku.resetCell(totalRow, totalCol);
                                     }
+                                    List<List<int[]>> conflicts = mySudoku.areContentsLegal();
+                                    inputUpdated();
                                 }
-                                else
-                                {
-                                    mySudoku.resetCell(totalRow, totalCol);
-                                }
+
                             }
                         });
                         combo.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
                         uiFields.get(totalRow).get(totalCol).input = combo;
 
                         Composite composite_1110 = new Composite(composite_111, SWT.NONE);
-                        composite_1110.setBackground(SWTResourceManager.getColor(SWT.COLOR_BLUE));
+                        composite_1110.setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
                         GridLayout gl_composite_1110 = new GridLayout(RECTLENGTH, false);
                         gl_composite_1110.horizontalSpacing = 2;
                         gl_composite_1110.verticalSpacing = 1;
@@ -276,7 +331,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
                                 Text candidateText = new Text(composite_1110, SWT.BORDER | SWT.READ_ONLY);
                                 candidateText.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
-                                candidateText.setBackground(SWTResourceManager.getColor(SWT.COLOR_DARK_GRAY));
+                                candidateText.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
                                 candidateText.setFont(solutionSmallFont);
                                 candidateText.setText(Integer.toString(((rowSub - 1) * RECTLENGTH + colSub)));
                                 // solutionText.setToolTipText("01234");
@@ -545,7 +600,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
                 uiField.solution.setVisible(false);
-                uiField.input.setText(StringUtils.EMPTY);
+                // uiField.input.setText(StringUtils.EMPTY);
                 uiField.input.setVisible(true);
                 for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
                 {
@@ -555,8 +610,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 }
             }
         }
-        freezeSudokuAction.setEnabled(true);
-        btnFreeze.setEnabled(true);
     }
 
     void freeze()
@@ -594,6 +647,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     void updateSudokuFields()
     {
         grpSudokuBlocks.setText(mySudoku.getName());
+        txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         List<List<int[]>> conflicts = mySudoku.areContentsLegal();
         freeze();
@@ -663,26 +717,47 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         myDisplay.readAndDispatch();
     }
 
+    // To be called only when manually creating a sudoku
+    public void inputUpdated()
+    {
+        for (int row = 0; row < RECTLENGTH * RECTLENGTH; row++)
+        {
+            for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
+            {
+                uiFields.get(row).get(col).input.setVisible(true);
+                uiFields.get(row).get(col).solution.setVisible(false);
+                setSolutionNInputBckgrdColor(row, col);
+            }
+        }
+    }
+
     public void solutionUpdated(int row, int col)
     {
         uiFields.get(row).get(col).input.setVisible(false);
         uiFields.get(row).get(col).solution.setVisible(true);
         uiFields.get(row).get(col).solution.setText(Integer.toString(mySudoku.getCell(row, col).solution.val()));
+        setSolutionNInputBckgrdColor(row, col);
+    }
+
+    private void setSolutionNInputBckgrdColor(int row, int col)
+    {
         if (mySudoku.getCell(row, col).isInput)
         {
-            uiFields.get(row).get(col).solution.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
+            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(COLOR_SOLT_FOREGRD));
         }
         else
         {
-            uiFields.get(row).get(col).solution.setForeground(getDisplay().getSystemColor(SWT.COLOR_WHITE));
+            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(SWT.COLOR_WHITE));
         }
         if (mySudoku.getCell(row, col).isAConflict)
         {
-            uiFields.get(row).get(col).solution.setBackground(getDisplay().getSystemColor(SWT.COLOR_RED));
+            uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
+            uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
         }
         else
         {
-            uiFields.get(row).get(col).solution.setBackground(SWTResourceManager.getColor(SWT.COLOR_DARK_YELLOW));
+            uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
+            uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
         }
         for (Text cand : uiFields.get(row).get(col).candidates)
         {

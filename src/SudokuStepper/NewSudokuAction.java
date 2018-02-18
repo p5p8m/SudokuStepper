@@ -24,10 +24,10 @@ public class NewSudokuAction extends SudokuAction
         System.out.println("NewSudokuAction.run");
         try
         {
-            app.setState(AppState.CREATING);
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
+                app.setState(AppState.CREATING);
                 app.setSudokuPb(new Values());
                 app.updateSudokuFields();
                 app.initGuiForNew();
@@ -39,10 +39,11 @@ public class NewSudokuAction extends SudokuAction
             errorBox.setMessage("Could not create new Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
                     + "\n" + ex.toString());
             errorBox.open();
+            app.setState(AppState.EMPTY);
         }
         finally
         {
-            app.setState(AppState.EMPTY);
+            // Do not reset until "Freeze" is pressed app.setState(AppState.EMPTY);
         }
     }
 
