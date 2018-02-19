@@ -10,15 +10,15 @@ import org.eclipse.swt.widgets.Shell;
 public abstract class SudokuAction extends Action
 {
     protected AppMain app;
-    protected Shell   shell;
-    protected Display display;
+    // protected Shell shell;
+    // protected Display display;
 
     public SudokuAction(AppMain appMain)
     {
         super();
         this.app = appMain;
-        this.display = app.getDisplay();
-        this.shell = app.getShell();
+        // this.display = app.getDisplay();
+        // this.shell = app.getShell();
     }
 
     @Override

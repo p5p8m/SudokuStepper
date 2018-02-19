@@ -12,39 +12,32 @@ import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Combo;
-import org.eclipse.jface.layout.TableColumnLayout;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.custom.TableCursor;
-import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.custom.StackLayout;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FormAttachment;
+import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 public class AppMain extends ApplicationWindow implements SolutionListener, CandidatesListener, SavedListener
 {
@@ -68,24 +61,86 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
 
     /**
+     * Launch the application.
+     * 
+     * @param args
+     */
+    public static void main(String args[])
+    {
+        try
+        {
+            AppMain window = new AppMain();
+            window.setBlockOnOpen(true);
+            window.open();
+            window.dispose();
+            // never called: Display.getCurrent().dispose(); // display.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Create the application window.
      */
     public AppMain()
     {
         super(null);
         // addToolBar(SWT.NONE);
+        renameSudokuAction = new RenameSudokuAction(this);
+        newSudokuAction = new NewSudokuAction(this);
+        openSudokuAction = new OpenSudokuAction(this);
+        saveSudokuAction = new SaveSudokuAction(this);
+        saveAsSudokuAction = new SaveAsSudokuAction(this);
+        solveSudokuAction = new SolveSudokuAction(this);
+        exitSudokuAction = new ExitSudokuAction(this);
+        freezeSudokuAction = new FreezeSudokuAction(this);
         addMenuBar();
         addStatusLine();
         this.myDisplay = new Display();
-        this.myShell = new Shell(myDisplay);
+        this.myShell = new Shell(myDisplay, SWT.CLOSE | SWT.TITLE | SWT.MIN | SWT.MAX | SWT.RESIZE);
+        myShell.addListener(SWT.Close, new Listener()
+        {
+            // Does not seem to be ever called in tests
+            public void handleEvent(Event event)
+            {
+                System.out.println("Running close listener");
+                exitSudokuAction.run();
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            @Override
+            public void run()
+            {
+                System.out.println("Running Shutdown Hook");
+            }
+        });
         solutionFont = SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD);
         solutionSmallFont = SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL);
         createActions();
     }
 
+    @Override
+    protected boolean canHandleShellCloseEvent()
+    {
+        System.out.println("Running canHandleShellCloseEvent");
+        exitSudokuAction.run();
+        // If it returns from this method the user has answered "No" thus return false
+        return false;
+    }
+
+    void terminate()
+    {
+        System.out.println("Running AppMain.terminate");
+        this.dispose();
+        System.exit(0);
+    }
+
     public void dispose()
     {
-        System.out.println("AppMain.Dispose");
+        System.out.println("AppMain.dispose");
         if (solutionFont != null)
         {
             solutionFont.dispose();
@@ -469,13 +524,14 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         System.out.println("createActions");
     }
 
-    private Action renameSudokuAction = new RenameSudokuAction(this);
-    private Action newSudokuAction    = new NewSudokuAction(this);
-    private Action openSudokuAction   = new OpenSudokuAction(this);
-    private Action saveSudokuAction   = new SaveSudokuAction(this);
-    private Action saveAsSudokuAction = new SaveAsSudokuAction(this);
-    private Action solveSudokuAction  = new SolveSudokuAction(this);
-    private Action freezeSudokuAction = new FreezeSudokuAction(this);
+    private Action renameSudokuAction = null;
+    private Action newSudokuAction    = null;
+    private Action openSudokuAction   = null;
+    private Action saveSudokuAction   = null;
+    private Action saveAsSudokuAction = null;
+    private Action solveSudokuAction  = null;
+    private Action exitSudokuAction   = null;
+    private Action freezeSudokuAction = null;
     private Button btnSolve           = null;
     private Button btnFreeze          = null;
 
@@ -513,12 +569,16 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         fileMenuMgr.add(fileSaveMgr);
         fileMenuMgr.add(saveSudokuAction);
         saveSudokuAction.setEnabled(false);
-
         MenuManager fileSaveAsMgr = new MenuManager("Save As");
         fileSaveAsMgr.setVisible(true);
         fileMenuMgr.add(fileSaveAsMgr);
         fileMenuMgr.add(saveAsSudokuAction);
         saveAsSudokuAction.setEnabled(false);
+        MenuManager fileExitMgr = new MenuManager("Exit");
+        fileExitMgr.setVisible(true);
+        fileMenuMgr.add(fileExitMgr);
+        fileMenuMgr.add(exitSudokuAction);
+        saveSudokuAction.setEnabled(true);
 
         MenuManager actionMenuMgr = new MenuManager("Action");
         actionMenuMgr.setVisible(true);
@@ -570,26 +630,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         StatusLineManager statusLineManager = new StatusLineManager();
         statusLineManager.setErrorMessage("AAAAA");
         return statusLineManager;
-    }
-
-    /**
-     * Launch the application.
-     * 
-     * @param args
-     */
-    public static void main(String args[])
-    {
-        try
-        {
-            AppMain window = new AppMain();
-            window.setBlockOnOpen(true);
-            window.open();
-            Display.getCurrent().dispose(); // display.dispose();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
     }
 
     void initGuiForNew()

@@ -40,5 +40,4 @@ public class RenameSudokuAction extends SudokuAction
             errorBox.open();
         }
     }
-
 }
