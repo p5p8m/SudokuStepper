@@ -363,6 +363,10 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                                     }
                                     List<List<int[]>> conflicts = mySudoku.areContentsLegal();
                                     inputUpdated();
+                                    boolean freezeAllowed = conflicts.size() == 0
+                                            && mySudoku.getNumberOfSolutions() > 0;
+                                    btnFreeze.setEnabled(freezeAllowed);
+                                    freezeSudokuAction.setEnabled(freezeAllowed);
                                 }
 
                             }
@@ -635,9 +639,9 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     void initGuiForNew()
     {
         // It is important to first relayout and then set the uiFields
-        freezeSudokuAction.setEnabled(true);
+        freezeSudokuAction.setEnabled(false);
         solveSudokuAction.setEnabled(false);
-        btnFreeze.setEnabled(true);
+        btnFreeze.setEnabled(false);
         btnSolve.setEnabled(false);
         grpSudokuName.setVisible(true);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);

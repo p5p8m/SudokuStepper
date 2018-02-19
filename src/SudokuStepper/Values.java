@@ -1,6 +1,7 @@
 package SudokuStepper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.*;
 import java.io.File;
@@ -525,6 +526,13 @@ public class Values
             }
         }
         return (retVal);
+    }
+
+    int getNumberOfSolutions()
+    {
+        Stream<? super SingleCellValue> stream = Arrays.stream(this.sudoku).flatMap(x -> Arrays.stream(x));
+        long retVal = stream.filter(x -> ((SingleCellValue) x).solution != null).count();
+        return ((int) retVal);
     }
 
     private boolean validateXmlSchema(String xmlPath)
