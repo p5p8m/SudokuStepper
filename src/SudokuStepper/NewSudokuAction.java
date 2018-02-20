@@ -28,8 +28,8 @@ public class NewSudokuAction extends SudokuAction
             if (reallyDo)
             {
                 app.setSudokuPb(new Values());
-                app.updateSudokuFields();
                 app.setState(AppState.CREATING);
+                app.updateSudokuFields();
                 app.initGuiForNew();
             }
         }

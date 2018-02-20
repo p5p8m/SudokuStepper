@@ -27,6 +27,7 @@ public class SolveSudokuAction extends SudokuAction
         {
             app.setState(AppState.SOLVING);
             boolean updated = false;
+            boolean errorDetected = false;
             do
             {
                 updated = removeImpossibleCands(sudoku);
@@ -34,10 +35,23 @@ public class SolveSudokuAction extends SudokuAction
                 {
                     updated |= detectUniqueMatches(sudoku);
                 }
+                errorDetected = !sudoku.areContentsLegal().isEmpty();
             }
-            while (updated);
+            while (updated && !errorDetected);
             app.updateSudokuFields(); // needed to make sure conflicts are represented since the check
                                       // is not performed at every stage
+            if (errorDetected)
+            {
+                MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                errorBox.setMessage("Could not solve Sudoku\n'" + sudoku.getName() + "' without contradictions.");
+                errorBox.open();
+            }
+            else if (sudoku.getNumberOfSolutions() != Values.DIMENSION * Values.DIMENSION)
+            {
+                MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                errorBox.setMessage("Could not find a solution for the sudoku\n'" + sudoku.getName() + "'");
+                errorBox.open();
+            }
         }
         catch (Exception ex)
         {

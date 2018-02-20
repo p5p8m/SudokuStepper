@@ -440,9 +440,7 @@ public class Values
             {
                 listener.savedUpdated(isSaved());
             }
-            System.out.println("----------------------------");
         }
-
     }
 
     // Returns a list of conflicts, if the list is empty there are no conflicts

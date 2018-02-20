@@ -19,7 +19,8 @@ public class FreezeSudokuAction extends SudokuAction
         try
         {
             app.setState(AppState.EMPTY); // Disables the modifyListener on the combo box
-            app.freeze();
+            app.getSudokuPb().setSaved(false);
+            app.updateSudokuFields();
         }
         catch (Exception ex)
         {

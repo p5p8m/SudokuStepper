@@ -348,6 +348,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                                         }
                                         else
                                         {
+                                            setStatus(StringUtils.EMPTY);
                                             LegalValues val = LegalValues.from(Integer.parseInt(input));
                                             mySudoku.updateCandidateList(totalRow, totalCol, val);
                                             mySudoku.getCell(totalRow, totalCol).candidates.clear();
@@ -582,7 +583,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         fileExitMgr.setVisible(true);
         fileMenuMgr.add(fileExitMgr);
         fileMenuMgr.add(exitSudokuAction);
-        saveSudokuAction.setEnabled(true);
+        exitSudokuAction.setEnabled(true);
 
         MenuManager actionMenuMgr = new MenuManager("Action");
         actionMenuMgr.setVisible(true);
@@ -655,6 +656,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             for (Integer col : uiFields.get(row).keySet())
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
+                setSolutionNInputBckgrdColor(row, col);
                 uiField.solution.setVisible(false);
                 // uiField.input.setText(StringUtils.EMPTY);
                 uiField.input.setVisible(true);
@@ -732,7 +734,8 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         solveSudokuAction.setEnabled(true);
         // freezeSudokuAction.setEnabled(false);
         btnSolve.setEnabled(true);
-        saveAsSudokuAction.setEnabled(true);
+        saveAsSudokuAction.setEnabled(status != AppState.CREATING);
+        condEnableSaveSudokuAction(mySudoku.isSaved());
     }
 
     /**
@@ -772,7 +775,13 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
     public void savedUpdated(boolean saved)
     {
-        if (saved)
+        condEnableSaveSudokuAction(saved);
+        myDisplay.readAndDispatch();
+    }
+
+    private void condEnableSaveSudokuAction(boolean saved)
+    {
+        if (saved || status == AppState.CREATING || mySudoku == null || mySudoku.getInputFile().isEmpty())
         {
             saveSudokuAction.setEnabled(false);
         }
@@ -780,7 +789,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         {
             saveSudokuAction.setEnabled(true);
         }
-        myDisplay.readAndDispatch();
     }
 
     // To be called only when manually creating a sudoku
