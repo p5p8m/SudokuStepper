@@ -60,7 +60,7 @@ public class SaveAsSudokuAction extends SaveSudokuAction
             if (fileToWrite != null)
             {
                 app.getSudokuPb().save(fileToWrite);
-                app.updateSudokuFields();
+                app.updateSudokuFields(true);
             }
         }
         catch (Exception ex)

@@ -70,7 +70,7 @@ public class OpenSudokuAction extends SudokuAction
                     app.setState(AppState.OPENING);
                     app.setSudokuPb(new Values());
                     app.getSudokuPb().read(fileToOpen);
-                    app.updateSudokuFields();
+                    app.updateSudokuFields(false);
                 }
                 else
                 {

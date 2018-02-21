@@ -156,6 +156,14 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     public void setState(AppState val)
     {
         status = val;
+        if (val == AppState.SOLVING || mySudoku == null)
+        {
+            setSolveEnabled(false);
+        }
+        else if (val == AppState.EMPTY && mySudoku != null)
+        {
+            setSolveEnabled(true);
+        }
     }
 
     private Display myDisplay;
@@ -443,7 +451,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             }
         });
         btnSolve.setText("Solve");
-        btnSolve.setEnabled(false);
+        setSolveEnabled(false);
         Button btnSlideShow = new Button(grpButtons, SWT.NONE);
         btnSlideShow.setText("Slide Show");
         btnSlideShow.setEnabled(false);
@@ -476,6 +484,18 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         // helpGetHelpItem.addSelectionListener(new helpGetHelpItemListener());
 
         return OverallContainer;
+    }
+
+    private void setSolveEnabled(boolean enabled)
+    {
+        if (btnSolve != null)
+        {
+            btnSolve.setEnabled(enabled);
+        }
+        if (solveSudokuAction != null)
+        {
+            solveSudokuAction.setEnabled(enabled);
+        }
     }
 
     class fileExitItemListener implements SelectionListener
@@ -637,13 +657,31 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         return statusLineManager;
     }
 
+    void startRenamingGui()
+    {
+        grpSudokuName.setVisible(true);
+        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
+        if (mySudoku != null && mySudoku.getName() != null)
+        {
+            txtName.setText(mySudoku.getName());
+        }
+        else
+        {
+            txtName.setText(StringUtils.EMPTY);
+        }
+        txtName.setEditable(true);
+        grpSudokuBlocks.getParent().layout(true, true);
+        grpSudokuBlocks.redraw();
+        grpSudokuBlocks.update();
+        grpSudokuBlocks.setEnabled(false);
+    }
+
     void initGuiForNew()
     {
         // It is important to first relayout and then set the uiFields
         freezeSudokuAction.setEnabled(false);
-        solveSudokuAction.setEnabled(false);
         btnFreeze.setEnabled(false);
-        btnSolve.setEnabled(false);
+        setSolveEnabled(false);
         grpSudokuName.setVisible(true);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
         txtName.setText(StringUtils.EMPTY);
@@ -670,13 +708,12 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         }
     }
 
-    void freeze()
+    void freeze(boolean keepCandidatesVisibility)
     {
         // It is important to first relayout and then set the uiFields
         freezeSudokuAction.setEnabled(false);
         btnFreeze.setEnabled(false);
-        solveSudokuAction.setEnabled(true);
-        btnSolve.setEnabled(true);
+        setSolveEnabled(true);
         grpSudokuName.setVisible(false);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
         txtName.setEditable(false);
@@ -704,21 +741,24 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                         // String candidate = cand.getText();
                         // Boolean visible = candidate != null && mySudoku.getCell(row, col).candidates
                         // .contains(LegalValues.from(Integer.parseInt(candidate)));
-                        cand.setVisible(visible);
-                        cand.getParent().setVisible(visible);
+                        if (!keepCandidatesVisibility)
+                        {
+                            cand.setVisible(visible);
+                            cand.getParent().setVisible(visible);
+                        }
                     }
                 }
             }
         }
     }
 
-    void updateSudokuFields()
+    void updateSudokuFields(boolean keepCandidatesVisibility)
     {
         grpSudokuBlocks.setText(mySudoku.getName());
         txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         List<List<int[]>> conflicts = mySudoku.areContentsLegal();
-        freeze();
+        freeze(keepCandidatesVisibility);
         if (!conflicts.isEmpty())
         {
             for (List<int[]> conflict : conflicts)
@@ -731,11 +771,11 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             errorBox.setMessage("There are illegal values in the sudoku");
             errorBox.open();
         }
-        solveSudokuAction.setEnabled(true);
+        setSolveEnabled(true);
         // freezeSudokuAction.setEnabled(false);
-        btnSolve.setEnabled(true);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
         condEnableSaveSudokuAction(mySudoku.isSaved());
+        renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);
     }
 
     /**
@@ -763,20 +803,33 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     @Override
     public void candidatesUpdated(int row, int col, LegalValues val)
     {
-        // Better is to look for the text contents and mask the one
-        for (Text candText : uiFields.get(row).get(col).candidates)
+        myDisplay.asyncExec(new Runnable()
         {
-            if (Integer.toString(val.val()).equals(candText.getText()))
+            public void run()
             {
-                candText.setVisible(false);
+                // Better is to look for the text contents and mask the one
+                for (Text candText : uiFields.get(row).get(col).candidates)
+                {
+                    if (Integer.toString(val.val()).equals(candText.getText()))
+                    {
+                        candText.setVisible(false);
+                    }
+                }
             }
-        }
+        });
     }
 
     public void savedUpdated(boolean saved)
     {
-        condEnableSaveSudokuAction(saved);
-        myDisplay.readAndDispatch();
+        myDisplay.asyncExec(new Runnable()
+        {
+            public void run()
+            {
+
+                condEnableSaveSudokuAction(saved);
+                myDisplay.readAndDispatch();
+            }
+        });
     }
 
     private void condEnableSaveSudokuAction(boolean saved)
@@ -807,10 +860,17 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
 
     public void solutionUpdated(int row, int col)
     {
-        uiFields.get(row).get(col).input.setVisible(false);
-        uiFields.get(row).get(col).solution.setVisible(true);
-        uiFields.get(row).get(col).solution.setText(Integer.toString(mySudoku.getCell(row, col).solution.val()));
-        setSolutionNInputBckgrdColor(row, col);
+        myDisplay.asyncExec(new Runnable()
+        {
+            public void run()
+            {
+                uiFields.get(row).get(col).input.setVisible(false);
+                uiFields.get(row).get(col).solution.setVisible(true);
+                uiFields.get(row).get(col).solution
+                        .setText(Integer.toString(mySudoku.getCell(row, col).solution.val()));
+                setSolutionNInputBckgrdColor(row, col);
+            }
+        });
     }
 
     private void setSolutionNInputBckgrdColor(int row, int col)

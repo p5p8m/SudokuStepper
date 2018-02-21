@@ -10,7 +10,7 @@ package SudokuStepper;
 
 public enum AppState
 {
-    EMPTY(0), CREATING(1), OPENING(2), SOLVING(3);
+    EMPTY(0), CREATING(1), OPENING(2), SOLVING(3), RENAMING(4);
     private final int val;
 
     private AppState(int value)

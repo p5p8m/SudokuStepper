@@ -20,17 +20,8 @@ public class RenameSudokuAction extends SudokuAction
         System.out.println("RenameSudokuAction.run");
         try
         {
-            app.getSudokuPb().eliminateCandidate(0, 2, LegalValues.FIVE);
-            app.getSudokuPb().eliminateCandidate(0, 2, LegalValues.SIX);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.ONE);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.TWO);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.THREE);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.FOUR);
-            // FIVE remains
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.SIX);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.SEVEN);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.EIGHT);
-            app.getSudokuPb().eliminateCandidate(3, 1, LegalValues.NINE);
+            app.setState(AppState.RENAMING);
+            app.startRenamingGui();
         }
         catch (Exception ex)
         {

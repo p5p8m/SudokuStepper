@@ -201,7 +201,7 @@ public class Values
     // newStartListeners.add(listener);
     // }
 
-    // returns true if an update has occured, false else
+    // returns true if an update has occurred, false else
     // To be used when solving a sudoku
     public boolean eliminateCandidate(int row, int col, LegalValues val)
     {
@@ -222,6 +222,7 @@ public class Values
                 {
                     listener.solutionUpdated(row, col);
                 }
+                reduceInfluencedCellCandidates(row, col, sudoku[row][col].solution);
             }
             setSaved(false);
             for (SavedListener listener : savedListeners)
@@ -327,14 +328,19 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    private void reduceInfluencedCellCandidates(int row, int col, LegalValues val)
+    void reduceInfluencedCellCandidates(int row, int col, LegalValues val)
     {
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
             if (sudoku[rowInCol][col].candidates.contains(val))
             {
-                sudoku[rowInCol][col].candidates.remove(val);
+                eliminateCandidate(rowInCol, col, val);
+                // sudoku[rowInCol][col].candidates.remove(val);
+                // for (CandidatesListener listener : candidatesListeners)
+                // {
+                // listener.candidatesUpdated(rowInCol, col, val);
+                // }
             }
         }
         // Same row
@@ -342,7 +348,12 @@ public class Values
         {
             if (sudoku[row][colInRow].candidates.contains(val))
             {
-                sudoku[row][colInRow].candidates.remove(val);
+                eliminateCandidate(row, colInRow, val);
+                // sudoku[row][colInRow].candidates.remove(val);
+                // for (CandidatesListener listener : candidatesListeners)
+                // {
+                // listener.candidatesUpdated(row, colInRow, val);
+                // }
             }
         }
         // Same block
@@ -354,7 +365,12 @@ public class Values
             {
                 if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
                 {
-                    sudoku[rowInBlock][colInBlock].candidates.remove(val);
+                    eliminateCandidate(rowInBlock, colInBlock, val);
+                    // sudoku[rowInBlock][colInBlock].candidates.remove(val);
+                    // for (CandidatesListener listener : candidatesListeners)
+                    // {
+                    // listener.candidatesUpdated(rowInBlock, colInBlock, val);
+                    // }
                 }
             }
         }

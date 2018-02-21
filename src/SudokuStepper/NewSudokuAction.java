@@ -29,7 +29,7 @@ public class NewSudokuAction extends SudokuAction
             {
                 app.setSudokuPb(new Values());
                 app.setState(AppState.CREATING);
-                app.updateSudokuFields();
+                app.updateSudokuFields(false);
                 app.initGuiForNew();
             }
         }
