@@ -203,7 +203,10 @@ public class Values
 
     // returns true if an update has occurred, false else
     // To be used when solving a sudoku
-    public boolean eliminateCandidate(int row, int col, LegalValues val)
+    // alsoSetSolution: if true candidates lists with only one member are converted
+    // to a solution, this is for SOLVING only
+
+    public boolean eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution)
     {
         boolean retVal = false;
         if (sudoku[row][col].candidates.contains(val))
@@ -215,14 +218,17 @@ public class Values
             }
             if (sudoku[row][col].candidates.size() == 1)
             {
-                sudoku[row][col].solution = sudoku[row][col].candidates.get(0);
-                sudoku[row][col].isInput = false;
-                sudoku[row][col].candidates.clear();
-                for (SolutionListener listener : solutionListeners)
+                if (alsoSetSolution)
                 {
-                    listener.solutionUpdated(row, col);
+                    sudoku[row][col].solution = sudoku[row][col].candidates.get(0);
+                    sudoku[row][col].isInput = false;
+                    sudoku[row][col].candidates.clear();
+                    for (SolutionListener listener : solutionListeners)
+                    {
+                        listener.solutionUpdated(row, col);
+                    }
                 }
-                reduceInfluencedCellCandidates(row, col, sudoku[row][col].solution);
+                reduceInfluencedCellCandidates(row, col, sudoku[row][col].solution, alsoSetSolution);
             }
             setSaved(false);
             for (SavedListener listener : savedListeners)
@@ -275,7 +281,7 @@ public class Values
         }
         if (val != null)
         {
-            reduceInfluencedCellCandidates(row, col, val);
+            reduceInfluencedCellCandidates(row, col, val, false);
         }
     }
 
@@ -328,14 +334,14 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    void reduceInfluencedCellCandidates(int row, int col, LegalValues val)
+    void reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution)
     {
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
             if (sudoku[rowInCol][col].candidates.contains(val))
             {
-                eliminateCandidate(rowInCol, col, val);
+                eliminateCandidate(rowInCol, col, val, alsoSetSolution);
                 // sudoku[rowInCol][col].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -348,7 +354,7 @@ public class Values
         {
             if (sudoku[row][colInRow].candidates.contains(val))
             {
-                eliminateCandidate(row, colInRow, val);
+                eliminateCandidate(row, colInRow, val, alsoSetSolution);
                 // sudoku[row][colInRow].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -365,7 +371,7 @@ public class Values
             {
                 if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
                 {
-                    eliminateCandidate(rowInBlock, colInBlock, val);
+                    eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution);
                     // sudoku[rowInBlock][colInBlock].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
                     // {

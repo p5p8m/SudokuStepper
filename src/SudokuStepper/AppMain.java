@@ -374,8 +374,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                                     inputUpdated();
                                     boolean freezeAllowed = conflicts.size() == 0
                                             && mySudoku.getNumberOfSolutions() > 0;
-                                    btnFreeze.setEnabled(freezeAllowed);
-                                    freezeSudokuAction.setEnabled(freezeAllowed);
+                                    setFreezeEnabled(freezeAllowed);
                                 }
 
                             }
@@ -438,7 +437,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             }
         });
         btnFreeze.setText("Freeze");
-        btnFreeze.setEnabled(false);
+        setFreezeEnabled(false);
         btnSolve = new Button(grpButtons, SWT.NONE);
         btnSolve.addSelectionListener(new SelectionAdapter()
         {
@@ -495,6 +494,18 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         if (solveSudokuAction != null)
         {
             solveSudokuAction.setEnabled(enabled);
+        }
+    }
+
+    private void setFreezeEnabled(boolean enabled)
+    {
+        if (btnFreeze != null)
+        {
+            btnFreeze.setEnabled(enabled);
+        }
+        if (freezeSudokuAction != null)
+        {
+            freezeSudokuAction.setEnabled(enabled);
         }
     }
 
@@ -612,13 +623,13 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         freezeSolveMgr.setVisible(true);
         actionMenuMgr.add(freezeSolveMgr);
         actionMenuMgr.add(freezeSudokuAction);
-        freezeSudokuAction.setEnabled(false);
+        setFreezeEnabled(false);
 
         MenuManager actionSolveMgr = new MenuManager("Solve");
         actionSolveMgr.setVisible(true);
         actionMenuMgr.add(actionSolveMgr);
         actionMenuMgr.add(solveSudokuAction);
-        solveSudokuAction.setEnabled(false);
+        setSolveEnabled(false);
 
         MenuManager actionRenameMgr = new MenuManager("Rename");
         actionRenameMgr.setVisible(true);
@@ -673,14 +684,16 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         grpSudokuBlocks.getParent().layout(true, true);
         grpSudokuBlocks.redraw();
         grpSudokuBlocks.update();
-        grpSudokuBlocks.setEnabled(false);
+        // grpSudokuBlocks.setEnabled(false);
+        setSolveEnabled(false);
+        setFreezeEnabled(true);
+        renameSudokuAction.setEnabled(false);
     }
 
     void initGuiForNew()
     {
         // It is important to first relayout and then set the uiFields
-        freezeSudokuAction.setEnabled(false);
-        btnFreeze.setEnabled(false);
+        setFreezeEnabled(false);
         setSolveEnabled(false);
         grpSudokuName.setVisible(true);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
@@ -711,8 +724,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     void freeze(boolean keepCandidatesVisibility)
     {
         // It is important to first relayout and then set the uiFields
-        freezeSudokuAction.setEnabled(false);
-        btnFreeze.setEnabled(false);
+        setFreezeEnabled(false);
         setSolveEnabled(true);
         grpSudokuName.setVisible(false);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
@@ -772,7 +784,6 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
             errorBox.open();
         }
         setSolveEnabled(true);
-        // freezeSudokuAction.setEnabled(false);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
         condEnableSaveSudokuAction(mySudoku.isSaved());
         renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);

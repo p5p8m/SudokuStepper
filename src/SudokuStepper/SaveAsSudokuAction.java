@@ -54,7 +54,13 @@ public class SaveAsSudokuAction extends SaveSudokuAction
             dialog.setFilterNames(filterNames);
             dialog.setFilterExtensions(filterExtensions);
             dialog.setFilterPath(filterPath);
-            dialog.setFileName("myfile");
+            String proposal = "myfile";
+            if (app != null && app.getSudokuPb() != null && app.getSudokuPb().getName() != null
+                    && !app.getSudokuPb().getName().isEmpty())
+            {
+                proposal = app.getSudokuPb().getName() + ".xml";
+            }
+            dialog.setFileName(proposal);
             String fileToWrite = dialog.open();
             System.out.println("Open file: " + fileToWrite);
             if (fileToWrite != null)
