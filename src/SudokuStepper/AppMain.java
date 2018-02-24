@@ -190,6 +190,28 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         mySudoku = newSudoku;
         if (mySudoku != null)
         {
+            for (int row = 0; row < RECTLENGTH * RECTLENGTH; row++)
+            {
+                for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
+                {
+                    SolNCandTexts uiField = uiFields.get(row).get(col);
+                    LegalValues value = mySudoku.getCell(row, col).solution;
+                    if (value != null)
+                    {
+                        uiField.solution.setText(Integer.toString(value.val()));
+                    }
+                    else
+                    {
+                        uiField.solution.setText(StringUtils.EMPTY);
+                    }
+                    uiField.input.setText(StringUtils.EMPTY);
+                    for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
+                    { // Eliminate single settings from other sudokus
+                        uiField.candidates.get(ind).setVisible(true);
+                    }
+                    // uiField.candidates.get(0).getParent().setVisible(true);;
+                }
+            }
             mySudoku.addCandidatesListener(this);
             mySudoku.addSolutionListener(this);
             mySudoku.addSavedListener(this);
@@ -310,6 +332,20 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                             uiFields.get(totalRow).put(totalCol, new SolNCandTexts());
                         }
                         uiFields.get(totalRow).get(totalCol).solution = solutionText;
+                        uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new Listener()
+                        {
+                            public void handleEvent(Event e)
+                            {
+                                System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: " + totalCol);
+                            }
+                        });
+                        uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new Listener()
+                        {
+                            public void handleEvent(Event e)
+                            {
+                                System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " + totalCol);
+                            }
+                        });
                         // Create combo box for input of a new Sudoku
                         Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
 
@@ -688,6 +724,19 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         setSolveEnabled(false);
         setFreezeEnabled(true);
         renameSudokuAction.setEnabled(false);
+
+        // must reset visible all solution fields because they got hidden by the line:
+        // grpSudokuBlocks.getParent().layout(true, true);
+        for (int row = 0; row < RECTLENGTH * RECTLENGTH; row++)
+        {
+            for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
+            {
+                if (!uiFields.get(row).get(col).solution.getText().isEmpty())
+                {
+                    uiFields.get(row).get(col).solution.setVisible(true);
+                }
+            }
+        }
     }
 
     void initGuiForNew()
@@ -714,7 +763,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
                 {
                     Text cand = uiField.candidates.get(ind);
-                    cand.setVisible(false);
+                    // cand.setVisible(false);
                     cand.getParent().setVisible(false);
                 }
             }
@@ -906,7 +955,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         }
         for (Text cand : uiFields.get(row).get(col).candidates)
         {
-            cand.setVisible(false);
+            // cand.setVisible(false);
             cand.getParent().setVisible(false);
         }
     }
