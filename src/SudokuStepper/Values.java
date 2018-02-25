@@ -205,16 +205,21 @@ public class Values
     // To be used when solving a sudoku
     // alsoSetSolution: if true candidates lists with only one member are converted
     // to a solution, this is for SOLVING only
+    // If values to eliminate (=val) is null, only check if we can set the only
+    // remaining candidate as a solution
 
     public boolean eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution)
     {
         boolean retVal = false;
-        if (sudoku[row][col].candidates.contains(val))
+        if (val == null || sudoku[row][col].candidates.contains(val))
         {
-            sudoku[row][col].candidates.remove(val);
-            for (CandidatesListener listener : candidatesListeners)
+            if (val != null)
             {
-                listener.candidatesUpdated(row, col, val);
+                sudoku[row][col].candidates.remove(val);
+                for (CandidatesListener listener : candidatesListeners)
+                {
+                    listener.candidatesUpdated(row, col, val);
+                }
             }
             if (sudoku[row][col].candidates.size() == 1)
             {

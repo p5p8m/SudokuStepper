@@ -332,20 +332,24 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                             uiFields.get(totalRow).put(totalCol, new SolNCandTexts());
                         }
                         uiFields.get(totalRow).get(totalCol).solution = solutionText;
-                        uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new Listener()
-                        {
-                            public void handleEvent(Event e)
-                            {
-                                System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: " + totalCol);
-                            }
-                        });
-                        uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new Listener()
-                        {
-                            public void handleEvent(Event e)
-                            {
-                                System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " + totalCol);
-                            }
-                        });
+                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new
+                        // Listener()
+                        // {
+                        // public void handleEvent(Event e)
+                        // {
+                        //// System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: "
+                        // + totalCol);
+                        // }
+                        // });
+                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new
+                        // Listener()
+                        // {
+                        // public void handleEvent(Event e)
+                        // {
+                        //// System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " +
+                        // totalCol);
+                        // }
+                        // });
                         // Create combo box for input of a new Sudoku
                         Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
 
@@ -794,6 +798,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 {
                     uiField.solution.setVisible(false);
                     uiField.input.setText(StringUtils.EMPTY);
+                    uiField.solution.setText(StringUtils.EMPTY);
                     uiField.input.setVisible(false);
                     Boolean visible = true;
                     for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
