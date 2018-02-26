@@ -12,10 +12,9 @@ import org.eclipse.swt.widgets.Shell;
 
 public class NewSudokuAction extends SudokuAction
 {
-    public NewSudokuAction(AppMain appMain)
+    public NewSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("New");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override

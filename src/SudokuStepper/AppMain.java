@@ -1,5 +1,6 @@
 package SudokuStepper;
 
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 
-public class AppMain extends ApplicationWindow implements SolutionListener, CandidatesListener, SavedListener
+public class AppMain extends ApplicationWindow
+        implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener
 {
     private Action           action;
     private Values           mySudoku              = null;
@@ -88,14 +90,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
     {
         super(null);
         // addToolBar(SWT.NONE);
-        renameSudokuAction = new RenameSudokuAction(this);
-        newSudokuAction = new NewSudokuAction(this);
-        openSudokuAction = new OpenSudokuAction(this);
-        saveSudokuAction = new SaveSudokuAction(this);
-        saveAsSudokuAction = new SaveAsSudokuAction(this);
-        solveSudokuAction = new SolveSudokuAction(this);
-        exitSudokuAction = new ExitSudokuAction(this);
-        freezeSudokuAction = new FreezeSudokuAction(this);
+        // renameSudokuAction = new RenameSudokuAction(this, "Rename", KeyEvent.VK_R);
         addMenuBar();
         addStatusLine();
         this.myDisplay = new Display();
@@ -213,6 +208,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 }
             }
             mySudoku.addCandidatesListener(this);
+            mySudoku.addCandidatesResetListener(this);
             mySudoku.addSolutionListener(this);
             mySudoku.addSavedListener(this);
         }
@@ -457,7 +453,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         fd_grpButtons.right = new FormAttachment(100);
         // fd_grpButtons.right = new FormAttachment(0, 3);
         grpButtons.setLayoutData(fd_grpButtons);
-        grpButtons.setText("Buttons");
+        // grpButtons.setText("Buttons");
         RowLayout rl_grpButtons = new RowLayout(SWT.HORIZONTAL);
         rl_grpButtons.wrap = false;
         rl_grpButtons.pack = false;
@@ -600,14 +596,15 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         System.out.println("createActions");
     }
 
-    private Action renameSudokuAction = null;
-    private Action newSudokuAction    = null;
-    private Action openSudokuAction   = null;
-    private Action saveSudokuAction   = null;
-    private Action saveAsSudokuAction = null;
-    private Action solveSudokuAction  = null;
-    private Action exitSudokuAction   = null;
-    private Action freezeSudokuAction = null;
+    private Action renameSudokuAction = new RenameSudokuAction(this, "Rename", KeyEvent.VK_R);;
+    private Action newSudokuAction    = new NewSudokuAction(this, "New", KeyEvent.VK_N);
+    private Action openSudokuAction   = new OpenSudokuAction(this, "Open", KeyEvent.VK_O);
+    private Action saveSudokuAction   = new SaveSudokuAction(this, "Save", KeyEvent.VK_CONTROL | KeyEvent.VK_S);
+    private Action saveAsSudokuAction = new SaveAsSudokuAction(this, "Save As", KeyEvent.VK_CONTROL | KeyEvent.VK_A);
+    private Action solveSudokuAction  = new SolveSudokuAction(this, "Solve", KeyEvent.VK_S);
+    private Action exitSudokuAction   = new ExitSudokuAction(this, "Exit", KeyEvent.VK_E);
+    private Action freezeSudokuAction = new FreezeSudokuAction(this, "Freeze", KeyEvent.VK_F);
+    private Action aboutSudokuAction  = new AboutSudokuAction(this, "About", KeyEvent.VK_A);
     private Button btnSolve           = null;
     private Button btnFreeze          = null;
 
@@ -622,60 +619,61 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         System.out.println("createMenuManager");
         MenuManager menuMgr = new MenuManager();
 
-        MenuManager helpMenuMgr = new MenuManager("Help");
-        helpMenuMgr.setVisible(true);
-        menuMgr.add(helpMenuMgr);
-        MenuManager helpAboutMgr = new MenuManager("About");
-        helpAboutMgr.setVisible(true);
-        helpMenuMgr.add(helpAboutMgr);
-
         MenuManager fileMenuMgr = new MenuManager("File");
         fileMenuMgr.setVisible(true);
         menuMgr.add(fileMenuMgr);
-        MenuManager fileNewMgr = new MenuManager("New");
-        fileNewMgr.setVisible(true);
-        fileMenuMgr.add(fileNewMgr);
+        // MenuManager fileNewMgr = new MenuManager("New1");
+        // fileNewMgr.setVisible(true);
+        // fileMenuMgr.add(fileNewMgr);
         fileMenuMgr.add(newSudokuAction);
-        MenuManager fileOpenMgr = new MenuManager("Open");
-        fileOpenMgr.setVisible(true);
-        fileMenuMgr.add(fileOpenMgr);
+        // MenuManager fileOpenMgr = new MenuManager("Open1");
+        // fileOpenMgr.setVisible(true);
+        // fileMenuMgr.add(fileOpenMgr);
         fileMenuMgr.add(openSudokuAction);
-        MenuManager fileSaveMgr = new MenuManager("Save");
-        fileSaveMgr.setVisible(true);
-        fileMenuMgr.add(fileSaveMgr);
+        // MenuManager fileSaveMgr = new MenuManager("Save1");
+        // fileSaveMgr.setVisible(true);
+        // fileMenuMgr.add(fileSaveMgr);
         fileMenuMgr.add(saveSudokuAction);
         saveSudokuAction.setEnabled(false);
-        MenuManager fileSaveAsMgr = new MenuManager("Save As");
-        fileSaveAsMgr.setVisible(true);
-        fileMenuMgr.add(fileSaveAsMgr);
+        // MenuManager fileSaveAsMgr = new MenuManager("Save As1");
+        // fileSaveAsMgr.setVisible(true);
+        // fileMenuMgr.add(fileSaveAsMgr);
         fileMenuMgr.add(saveAsSudokuAction);
         saveAsSudokuAction.setEnabled(false);
-        MenuManager fileExitMgr = new MenuManager("Exit");
-        fileExitMgr.setVisible(true);
-        fileMenuMgr.add(fileExitMgr);
+        // MenuManager fileExitMgr = new MenuManager("Exit1");
+        // fileExitMgr.setVisible(true);
+        // fileMenuMgr.add(fileExitMgr);
         fileMenuMgr.add(exitSudokuAction);
         exitSudokuAction.setEnabled(true);
 
         MenuManager actionMenuMgr = new MenuManager("Action");
         actionMenuMgr.setVisible(true);
         menuMgr.add(actionMenuMgr);
-        MenuManager freezeSolveMgr = new MenuManager("Freeze");
-        freezeSolveMgr.setVisible(true);
-        actionMenuMgr.add(freezeSolveMgr);
+        // MenuManager freezeSolveMgr = new MenuManager("Freeze1");
+        // freezeSolveMgr.setVisible(true);
+        // actionMenuMgr.add(freezeSolveMgr);
         actionMenuMgr.add(freezeSudokuAction);
         setFreezeEnabled(false);
 
-        MenuManager actionSolveMgr = new MenuManager("Solve");
-        actionSolveMgr.setVisible(true);
-        actionMenuMgr.add(actionSolveMgr);
+        // MenuManager actionSolveMgr = new MenuManager("Solve1");
+        // actionSolveMgr.setVisible(true);
+        // actionMenuMgr.add(actionSolveMgr);
         actionMenuMgr.add(solveSudokuAction);
         setSolveEnabled(false);
 
-        MenuManager actionRenameMgr = new MenuManager("Rename");
-        actionRenameMgr.setVisible(true);
-        actionMenuMgr.add(actionRenameMgr);
+        // MenuManager actionRenameMgr = new MenuManager("Rename1");
+        // actionRenameMgr.setVisible(true);
+        // actionMenuMgr.add(actionRenameMgr);
         actionMenuMgr.add(renameSudokuAction);
         renameSudokuAction.setEnabled(false);
+
+        MenuManager helpMenuMgr = new MenuManager("Help");
+        helpMenuMgr.setVisible(true);
+        menuMgr.add(helpMenuMgr);
+        // MenuManager helpAboutMgr = new MenuManager("About1");
+        // helpAboutMgr.setVisible(true);
+        // helpMenuMgr.add(helpAboutMgr);
+        helpMenuMgr.add(aboutSudokuAction);
 
         return menuMgr;
     }
@@ -865,6 +863,7 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
         return new Point(INITIAL_WIDTH, INITIAL_HEIGHT);
     }
 
+    // set the given candidate invisible for the given cell
     @Override
     public void candidatesUpdated(int row, int col, LegalValues val)
     {
@@ -882,6 +881,27 @@ public class AppMain extends ApplicationWindow implements SolutionListener, Cand
                 }
             }
         });
+    }
+
+    public void candidatesReset()
+    {
+        for (int row = 0; row < RECTLENGTH * RECTLENGTH; row++)
+        {
+            for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
+            {
+                if (mySudoku.getCell(row, col).solution == null)
+                {
+                    for (Text candText : uiFields.get(row).get(col).candidates)
+                    {
+                        if (mySudoku.getCell(row, col).candidates
+                                .contains(LegalValues.from(Integer.parseInt(candText.getText()))))
+                        {
+                            candText.setVisible(true);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public void savedUpdated(boolean saved)

@@ -12,10 +12,9 @@ import org.eclipse.swt.widgets.Shell;
 
 public class SolveSudokuAction extends SudokuAction
 {
-    public SolveSudokuAction(AppMain appMain)
+    public SolveSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Solve");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override
@@ -25,7 +24,7 @@ public class SolveSudokuAction extends SudokuAction
         try
         {
             app.setState(AppState.SOLVING);
-            SolveAlgorithm alg = new SolveAlgorithm(app);
+            SolveAlgorithm alg = new SolveAlgorithm(app, "Solution Thred", null);
             Thread solutionThread = new Thread(alg);
             solutionThread.start();
         }

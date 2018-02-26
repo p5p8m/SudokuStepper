@@ -8,10 +8,9 @@ import org.eclipse.swt.widgets.Shell;
 public class RenameSudokuAction extends SudokuAction
 {
 
-    public RenameSudokuAction(AppMain appMain)
+    public RenameSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Rename");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override

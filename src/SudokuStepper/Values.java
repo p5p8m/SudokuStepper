@@ -51,6 +51,11 @@ interface CandidatesListener
     void candidatesUpdated(int row, int col, LegalValues val);
 }
 
+interface CandidatesResetListener
+{
+    void candidatesReset();
+}
+
 interface SolutionListener
 {
     void solutionUpdated(int row, int col);
@@ -86,6 +91,15 @@ public class Values
 
         public SingleCellValue()
         {
+            initCandidates();
+        }
+
+        /**
+         * Reinitialize the list of candidates to contain all legal values
+         */
+        void initCandidates()
+        {
+            candidates.clear();
             for (LegalValues val : LegalValues.values())
             {
                 candidates.add(val);
@@ -93,16 +107,17 @@ public class Values
         }
     }
 
-    public static final int          DIMENSION           = AppMain.RECTLENGTH * AppMain.RECTLENGTH;
+    public static final int               DIMENSION                = AppMain.RECTLENGTH * AppMain.RECTLENGTH;
 
-    private SingleCellValue[][]      sudoku              = new SingleCellValue[DIMENSION][DIMENSION];
-    private String                   sudokuName          = null;
-    private String                   inputFile           = null;
-    private boolean                  saved               = true;
+    private SingleCellValue[][]           sudoku                   = new SingleCellValue[DIMENSION][DIMENSION];
+    private String                        sudokuName               = null;
+    private String                        inputFile                = null;
+    private boolean                       saved                    = true;
 
-    private List<SolutionListener>   solutionListeners   = new ArrayList<SolutionListener>();
-    private List<CandidatesListener> candidatesListeners = new ArrayList<CandidatesListener>();
-    private List<SavedListener>      savedListeners      = new ArrayList<SavedListener>();
+    private List<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
+    private List<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
+    private List<CandidatesResetListener> candidatesResetListeners = new ArrayList<CandidatesResetListener>();
+    private List<SavedListener>           savedListeners           = new ArrayList<SavedListener>();
 
     // private List<NewStartListener> newStartListeners = new
     // ArrayList<NewStartListener>();
@@ -191,6 +206,11 @@ public class Values
         candidatesListeners.add(listener);
     }
 
+    public void addCandidatesResetListener(CandidatesResetListener listener)
+    {
+        candidatesResetListeners.add(listener);
+    }
+
     public void addSavedListener(SavedListener listener)
     {
         savedListeners.add(listener);
@@ -243,6 +263,25 @@ public class Values
             retVal = true;
         }
         return (retVal);
+    }
+
+    void resetCandidates()
+    {
+        for (int row = 0; row < DIMENSION; row++)
+        {
+            for (int col = 0; col < DIMENSION; col++)
+            {
+                SingleCellValue cell = getCell(row, col);
+                if (cell.solution == null)
+                {
+                    cell.initCandidates();
+                }
+            }
+        }
+        for (CandidatesResetListener listener : candidatesResetListeners)
+        {
+            listener.candidatesReset();
+        }
     }
 
     // remove from the value just set in the given cell the list of candidates from

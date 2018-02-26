@@ -3,6 +3,8 @@
  */
 package SudokuStepper;
 
+import java.awt.event.KeyEvent;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -25,10 +27,9 @@ public class SaveSudokuAction extends SudokuAction
 {
     String fileFilterPath = "F:/jdk1.5";
 
-    public SaveSudokuAction(AppMain appMain)
+    public SaveSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Save");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override

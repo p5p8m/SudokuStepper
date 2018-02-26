@@ -1,5 +1,7 @@
 package SudokuStepper;
 
+import java.awt.event.KeyEvent;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -13,12 +15,16 @@ public abstract class SudokuAction extends Action
     // protected Shell shell;
     // protected Display display;
 
-    public SudokuAction(AppMain appMain)
+    public SudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
         super();
         this.app = appMain;
-        // this.display = app.getDisplay();
-        // this.shell = app.getShell();
+        this.setText(text);
+        ;
+        if (acceleratorKey != null)
+        {
+            setAccelerator(new Integer(acceleratorKey));
+        }
     }
 
     @Override

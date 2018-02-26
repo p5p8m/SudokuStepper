@@ -23,10 +23,9 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class SaveAsSudokuAction extends SaveSudokuAction
 {
-    public SaveAsSudokuAction(AppMain appMain)
+    public SaveAsSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Save As");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override

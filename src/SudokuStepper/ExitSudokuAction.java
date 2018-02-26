@@ -14,10 +14,9 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class ExitSudokuAction extends SudokuAction
 {
-    public ExitSudokuAction(AppMain appMain)
+    public ExitSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Exit");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override

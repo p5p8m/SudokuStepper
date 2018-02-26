@@ -27,10 +27,9 @@ public class OpenSudokuAction extends SudokuAction
 {
     String fileFilterPath = "F:/jdk1.5";
 
-    public OpenSudokuAction(AppMain appMain)
+    public OpenSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain);
-        this.setText("Open");
+        super(appMain, text, acceleratorKey);
     }
 
     @Override
