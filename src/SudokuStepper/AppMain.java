@@ -596,15 +596,15 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
-    private Action renameSudokuAction = new RenameSudokuAction(this, "Rename", KeyEvent.VK_R);;
-    private Action newSudokuAction    = new NewSudokuAction(this, "New", KeyEvent.VK_N);
-    private Action openSudokuAction   = new OpenSudokuAction(this, "Open", KeyEvent.VK_O);
-    private Action saveSudokuAction   = new SaveSudokuAction(this, "Save", KeyEvent.VK_CONTROL | KeyEvent.VK_S);
-    private Action saveAsSudokuAction = new SaveAsSudokuAction(this, "Save As", KeyEvent.VK_CONTROL | KeyEvent.VK_A);
-    private Action solveSudokuAction  = new SolveSudokuAction(this, "Solve", KeyEvent.VK_S);
-    private Action exitSudokuAction   = new ExitSudokuAction(this, "Exit", KeyEvent.VK_E);
-    private Action freezeSudokuAction = new FreezeSudokuAction(this, "Freeze", KeyEvent.VK_F);
-    private Action aboutSudokuAction  = new AboutSudokuAction(this, "About", KeyEvent.VK_A);
+    private Action renameSudokuAction = new RenameSudokuAction(this, "&Rename", SWT.CTRL + KeyEvent.VK_R);;
+    private Action newSudokuAction    = new NewSudokuAction(this, "&New", SWT.CTRL + KeyEvent.VK_N);
+    private Action openSudokuAction   = new OpenSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O);
+    private Action saveSudokuAction   = new SaveSudokuAction(this, "&Save", SWT.CTRL + KeyEvent.VK_S);
+    private Action saveAsSudokuAction = new SaveAsSudokuAction(this, "Save &As", SWT.CTRL + KeyEvent.VK_A);
+    private Action solveSudokuAction  = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
+    private Action exitSudokuAction   = new ExitSudokuAction(this, "&Exit", SWT.CTRL + KeyEvent.VK_E);
+    private Action freezeSudokuAction = new FreezeSudokuAction(this, "&Freeze", SWT.CTRL + KeyEvent.VK_F);
+    private Action aboutSudokuAction  = new AboutSudokuAction(this, "&About", KeyEvent.VK_A);
     private Button btnSolve           = null;
     private Button btnFreeze          = null;
 
