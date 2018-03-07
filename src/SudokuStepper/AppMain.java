@@ -34,9 +34,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 
@@ -53,7 +55,7 @@ public class AppMain extends ApplicationWindow
                                                                            // SWT.NORMAL);
 
     private static final int INITIAL_WIDTH         = 552;
-    private static final int INITIAL_HEIGHT        = 820;
+    private static final int INITIAL_HEIGHT        = 915;
     private static final int NAME_BOX_HEIGHT       = 55;
     private static final int TOP_MARGIN            = 5;
     private static final int COLOR_INPUT_BCKGRD    = SWT.COLOR_WHITE;
@@ -446,9 +448,10 @@ public class AppMain extends ApplicationWindow
             }
         }
         Group grpButtons = new Group(OverallContainer, SWT.NONE);
-        fd_grpSudokublocks.bottom = new FormAttachment(grpButtons, -6);
+        fd_grpSudokublocks.bottom = new FormAttachment(grpButtons, -88);
         FormData fd_grpButtons = new FormData();
-        fd_grpButtons.bottom = new FormAttachment(100);
+        fd_grpButtons.top = new FormAttachment(100, -72);
+        fd_grpButtons.bottom = new FormAttachment(100, -26);
         fd_grpButtons.left = new FormAttachment(0);
         fd_grpButtons.right = new FormAttachment(100);
         // fd_grpButtons.right = new FormAttachment(0, 3);
@@ -474,6 +477,11 @@ public class AppMain extends ApplicationWindow
         });
         btnFreeze.setText("Freeze");
         setFreezeEnabled(false);
+
+        btnSlideShow = new Button(grpButtons, SWT.NONE);
+        btnSlideShow.setText("Slide Show On/Off");
+        btnSlideShow.setEnabled(true);
+
         btnSolve = new Button(grpButtons, SWT.NONE);
         btnSolve.addSelectionListener(new SelectionAdapter()
         {
@@ -487,9 +495,174 @@ public class AppMain extends ApplicationWindow
         });
         btnSolve.setText("Solve");
         setSolveEnabled(false);
-        Button btnSlideShow = new Button(grpButtons, SWT.NONE);
-        btnSlideShow.setText("Slide Show");
-        btnSlideShow.setEnabled(false);
+
+        groupSlide = new Group(OverallContainer, SWT.NONE);
+        // groupSlide.setText("Slide");
+        // groupSlide.setBackground(SWTResourceManager.getColor(128, 128, 128));
+        groupSlide.setLayout(new FormLayout());
+        FormData fd_groupSlide = new FormData();
+        fd_groupSlide.bottom = new FormAttachment(grpButtons, -6);
+        fd_groupSlide.top = new FormAttachment(grpSudokuBlocks, 9);
+        fd_groupSlide.right = new FormAttachment(100);
+        fd_groupSlide.left = new FormAttachment(grpButtons, 0, SWT.LEFT);
+        groupSlide.setLayoutData(fd_groupSlide);
+        groupSlide.setEnabled(false);
+
+        btnManual = new Button(groupSlide, SWT.RADIO);
+        FormData fd_btnManual = new FormData();
+        fd_btnManual.top = new FormAttachment(0, 5);
+        fd_btnManual.left = new FormAttachment(0, 5);
+        btnManual.setLayoutData(fd_btnManual);
+        btnManual.setText("Manual");
+
+        Button btnNext = new Button(groupSlide, SWT.NONE);
+        btnNext.addSelectionListener(new SelectionAdapter()
+        {
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+            }
+        });
+        FormData fd_btnNext = new FormData();
+        fd_btnNext.bottom = new FormAttachment(btnManual, 2, SWT.BOTTOM);
+        fd_btnNext.left = new FormAttachment(btnManual, 25);
+        btnNext.setLayoutData(fd_btnNext);
+        btnNext.setText("Next");
+
+        btnAutomatic = new Button(groupSlide, SWT.RADIO);
+        FormData fd_btnAutomatic = new FormData();
+        fd_btnAutomatic.top = new FormAttachment(0, 28);
+        fd_btnAutomatic.left = new FormAttachment(0, 5);
+        btnAutomatic.setLayoutData(fd_btnAutomatic);
+        btnAutomatic.setText("Automatic");
+
+        Label lblSpeed = new Label(groupSlide, SWT.NONE);
+        FormData fd_lblSpeed = new FormData();
+        fd_lblSpeed.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
+        fd_lblSpeed.left = new FormAttachment(btnNext, 0, SWT.LEFT);
+        lblSpeed.setLayoutData(fd_lblSpeed);
+        lblSpeed.setText("Speed:");
+
+        Button btnStop = new Button(groupSlide, SWT.NONE);
+        FormData fd_btnStop = new FormData();
+        fd_btnStop.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
+        fd_btnStop.right = new FormAttachment(100, -5);
+        btnStop.setLayoutData(fd_btnStop);
+        btnStop.setText("Stop");
+
+        Button btnStart = new Button(groupSlide, SWT.NONE);
+        FormData fd_button = new FormData();
+        fd_button.right = new FormAttachment(btnStop, -5, SWT.LEFT);
+        fd_button.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
+        btnStart.setLayoutData(fd_button);
+        btnStart.addSelectionListener(new SelectionAdapter()
+        {
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+            }
+        });
+        btnStart.setText("Start");
+
+        Slider slider = new Slider(groupSlide, SWT.NONE);
+        FormData fd_slider = new FormData();
+        fd_slider.left = new FormAttachment(lblSpeed, 5, SWT.RIGHT);
+        fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
+        fd_slider.right = new FormAttachment(btnStart, -5, SWT.LEFT);
+        slider.setLayoutData(fd_slider);
+        final int minSecondsPause = 0;
+        final int maxSecondsPause = 60;
+        final int thumbWidth = 1;
+
+        slider.setBounds(0, 0, 40, 200);
+        slider.setThumb(thumbWidth);
+        slider.setMaximum(maxSecondsPause + thumbWidth);
+        slider.setMinimum(minSecondsPause);
+        slider.setIncrement(1);
+        slider.setPageIncrement(10);
+        slider.addSelectionListener(new SelectionListener()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent arg0)
+            {
+                System.out.println("Selected: " + slider.getSelection());
+            }
+
+            @Override
+            public void widgetDefaultSelected(SelectionEvent arg0)
+            { // Obviously never called
+                System.out.println("DefaultSelected: " + slider.getSelection());
+            }
+        });
+
+        Label lblNoPause = new Label(groupSlide, SWT.NONE);
+        lblNoPause.setText(Integer.toString(minSecondsPause) + " s");
+        FormData fd_lblNoPause = new FormData();
+        fd_lblNoPause.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
+        fd_lblNoPause.left = new FormAttachment(slider, 0, SWT.LEFT);
+        lblNoPause.setLayoutData(fd_lblNoPause);
+
+        Label ldlMinute = new Label(groupSlide, SWT.NONE);
+        ldlMinute.setText(Integer.toString(maxSecondsPause) + " s");
+        FormData fd_ldlMinute = new FormData();
+        fd_ldlMinute.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
+        fd_ldlMinute.right = new FormAttachment(slider, 0, SWT.RIGHT);
+        ldlMinute.setLayoutData(fd_ldlMinute);
+
+        btnManual.addSelectionListener(new SelectionAdapter()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                Button source = (Button) e.getSource();
+
+                if (source.getSelection())
+                {
+                    System.out.println("Manual set");
+                    btnStart.setEnabled(false);
+                    btnStop.setEnabled(false);
+                    slider.setEnabled(false);
+                    btnNext.setEnabled(true);
+                }
+            }
+
+        });
+
+        btnAutomatic.addSelectionListener(new SelectionAdapter()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                Button source = (Button) e.getSource();
+
+                if (source.getSelection())
+                {
+                    btnStart.setEnabled(true);
+                    btnStop.setEnabled(true);
+                    slider.setEnabled(true);
+                    btnNext.setEnabled(false);
+                }
+            }
+
+        });
+        btnSlideShow.addSelectionListener(new SelectionAdapter()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                toggleSlideShowSudokuAction.run();
+            }
+        });
+        btnManual.setSelection(manualWasEnabled);
+        btnStart.setEnabled(!manualWasEnabled);
+        btnStop.setEnabled(!manualWasEnabled);
+        slider.setEnabled(!manualWasEnabled);
+        btnNext.setEnabled(manualWasEnabled);
+        recursiveSetEnabled(groupSlide, false);
 
         // Menus
         // Menu menuBar = new Menu(myShell, SWT.BAR);
@@ -521,15 +694,44 @@ public class AppMain extends ApplicationWindow
         return OverallContainer;
     }
 
+    private boolean firstTimeEnabled = true;
+    private boolean manualWasEnabled = true;
+
+    public void recursiveSetEnabled(Control ctrl, boolean enabled)
+    {
+        if (ctrl instanceof Composite)
+        {
+            Composite comp = (Composite) ctrl;
+            comp.setEnabled(enabled);
+            for (Control c : comp.getChildren())
+            {
+                recursiveSetEnabled(c, enabled);
+
+            }
+        }
+        else
+        {
+            ctrl.setEnabled(enabled);
+        }
+    }
+
     private void setSolveEnabled(boolean enabled)
     {
         if (btnSolve != null)
         {
             btnSolve.setEnabled(enabled);
         }
+        if (btnSlideShow != null)
+        {
+            btnSlideShow.setEnabled(enabled);
+        }
         if (solveSudokuAction != null)
         {
             solveSudokuAction.setEnabled(enabled);
+        }
+        if (toggleSlideShowSudokuAction != null)
+        {
+            toggleSlideShowSudokuAction.setEnabled(enabled);
         }
     }
 
@@ -596,17 +798,23 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
-    private Action renameSudokuAction = new RenameSudokuAction(this, "&Rename", SWT.CTRL + KeyEvent.VK_R);;
-    private Action newSudokuAction    = new NewSudokuAction(this, "&New", SWT.CTRL + KeyEvent.VK_N);
-    private Action openSudokuAction   = new OpenSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O);
-    private Action saveSudokuAction   = new SaveSudokuAction(this, "&Save", SWT.CTRL + KeyEvent.VK_S);
-    private Action saveAsSudokuAction = new SaveAsSudokuAction(this, "Save &As", SWT.CTRL + KeyEvent.VK_A);
-    private Action solveSudokuAction  = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
-    private Action exitSudokuAction   = new ExitSudokuAction(this, "&Exit", SWT.CTRL + KeyEvent.VK_E);
-    private Action freezeSudokuAction = new FreezeSudokuAction(this, "&Freeze", SWT.CTRL + KeyEvent.VK_F);
-    private Action aboutSudokuAction  = new AboutSudokuAction(this, "&About", KeyEvent.VK_A);
-    private Button btnSolve           = null;
-    private Button btnFreeze          = null;
+    private Action renameSudokuAction          = new RenameSudokuAction(this, "&Rename", SWT.CTRL + KeyEvent.VK_R);;
+    private Action newSudokuAction             = new NewSudokuAction(this, "&New", SWT.CTRL + KeyEvent.VK_N);
+    private Action openSudokuAction            = new OpenSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O);
+    private Action saveSudokuAction            = new SaveSudokuAction(this, "&Save", SWT.CTRL + KeyEvent.VK_S);
+    private Action saveAsSudokuAction          = new SaveAsSudokuAction(this, "Save &As", SWT.CTRL + KeyEvent.VK_A);
+    private Action toggleSlideShowSudokuAction = new ToggleSlideShowSudokuAction(this, "S&lide Show On/Off",
+            KeyEvent.VK_L);
+    private Action solveSudokuAction           = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
+    private Action exitSudokuAction            = new ExitSudokuAction(this, "&Exit", SWT.CTRL + KeyEvent.VK_E);
+    private Action freezeSudokuAction          = new FreezeSudokuAction(this, "&Freeze", SWT.CTRL + KeyEvent.VK_F);
+    private Action aboutSudokuAction           = new AboutSudokuAction(this, "&About", KeyEvent.VK_A);
+    private Button btnSolve                    = null;
+    private Button btnFreeze                   = null;
+    private Button btnSlideShow                = null;
+    private Button btnAutomatic                = null;
+    private Button btnManual                   = null;
+    private Group  groupSlide                  = null;
 
     /**
      * Create the menu manager.
@@ -655,6 +863,8 @@ public class AppMain extends ApplicationWindow
         actionMenuMgr.add(freezeSudokuAction);
         setFreezeEnabled(false);
 
+        actionMenuMgr.add(toggleSlideShowSudokuAction);
+        toggleSlideShowSudokuAction.setEnabled(false);
         // MenuManager actionSolveMgr = new MenuManager("Solve1");
         // actionSolveMgr.setVisible(true);
         // actionMenuMgr.add(actionSolveMgr);
@@ -1007,5 +1217,50 @@ public class AppMain extends ApplicationWindow
             }
         }
         return reallyDo;
+    }
+
+    void toggleSlideShow()
+    {
+        System.out.println("Slide Show enabled:" + groupSlide.getEnabled());
+        System.out.println("ToggleSlideShowSudokuAction.run");
+        try
+        {
+            // app.getSudokuPb().save(null);
+            System.out.println("Pressed Slide Show");
+            boolean newEnabledState = !groupSlide.getEnabled();
+            groupSlide.setEnabled(newEnabledState);
+            if (!newEnabledState)
+            {
+                manualWasEnabled = btnManual.getSelection();
+            }
+            recursiveSetEnabled(groupSlide, newEnabledState);
+            if (firstTimeEnabled)
+            {
+                btnAutomatic.setSelection(false);
+                btnManual.setSelection(true);
+                btnManual.notifyListeners(SWT.Selection, new Event());
+                firstTimeEnabled = false;
+            }
+            else if (newEnabledState)
+            {
+                btnAutomatic.setSelection(!manualWasEnabled);
+                btnManual.setSelection(manualWasEnabled);
+                if (manualWasEnabled)
+                {
+                    btnManual.notifyListeners(SWT.Selection, new Event());
+                }
+                else
+                {
+                    btnAutomatic.notifyListeners(SWT.Selection, new Event());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+            errorBox.setMessage("Could not toggle slide show. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
+                    + "\n" + ex.toString());
+            errorBox.open();
+        }
     }
 }
