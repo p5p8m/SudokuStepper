@@ -42,6 +42,8 @@ import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 
+import com.ibm.icu.impl.duration.TimeUnit;
+
 public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener
 {
@@ -49,10 +51,15 @@ public class AppMain extends ApplicationWindow
     private Values           mySudoku              = null;
     // remember the last candidate whose status was changed
     private Text             lastUpdatedCandText   = null;
-    private Font             solutionFont          = null;                 // SWTResourceManager.getFont("Segoe UI", 30,
+    private Font             solutionFont          = null;                 // SWTResourceManager.getFont("Segoe UI",
+                                                                           // 30,
                                                                            // SWT.BOLD);
+    // null means: image by image, 0 means no pause
+    private Integer          slideShowPause        = null;
+    // private Integer previousSlideShowPause = null;
     private Font             solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI", 8,
                                                                            // SWT.NORMAL);
+    static final int         RECTLENGTH            = 3;
 
     private static final int INITIAL_WIDTH         = 552;
     private static final int INITIAL_HEIGHT        = 915;
@@ -84,6 +91,10 @@ public class AppMain extends ApplicationWindow
             e.printStackTrace();
         }
     }
+
+    // first key is the row (1...9), second key is the column(1...9)
+    private Map<Integer, Map<Integer, SolNCandTexts>> uiFields = new HashMap<Integer, Map<Integer, SolNCandTexts>>(
+            RECTLENGTH);
 
     /**
      * Create the application window.
@@ -117,6 +128,18 @@ public class AppMain extends ApplicationWindow
         solutionFont = SWTResourceManager.getFont("Segoe UI", 30, SWT.BOLD);
         solutionSmallFont = SWTResourceManager.getFont("Segoe UI", 8, SWT.NORMAL);
         createActions();
+    }
+
+    private boolean slideShowEnabled = false;
+
+    boolean getSlideShowEnabled()
+    {
+        return (slideShowEnabled);
+    }
+
+    Integer getSlideShowPause()
+    { // Only valid if slide show is enabled
+        return (slideShowPause);
     }
 
     @Override
@@ -192,7 +215,7 @@ public class AppMain extends ApplicationWindow
                 for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
                 {
                     SolNCandTexts uiField = uiFields.get(row).get(col);
-                    LegalValues value = mySudoku.getCell(row, col).solution;
+                    LegalValues value = mySudoku.getCell(row, col).getSolution();
                     if (value != null)
                     {
                         uiField.solution.setText(Integer.toString(value.val()));
@@ -222,14 +245,6 @@ public class AppMain extends ApplicationWindow
         public Combo      input;
         public List<Text> candidates = new ArrayList<Text>(RECTLENGTH * RECTLENGTH);
     }
-
-    static final int                                  RECTLENGTH      = 3;
-    // first key is the row (1...9), second key is the column(1...9)
-    private Map<Integer, Map<Integer, SolNCandTexts>> uiFields        = new HashMap<Integer, Map<Integer, SolNCandTexts>>(
-            RECTLENGTH);
-    private Group                                     grpSudokuBlocks = null;
-    private Group                                     grpSudokuName   = null;
-    private Text                                      txtName         = null;
 
     /**
      * Create contents of the application window.
@@ -398,7 +413,8 @@ public class AppMain extends ApplicationWindow
                                             LegalValues val = LegalValues.from(Integer.parseInt(input));
                                             mySudoku.updateCandidateList(totalRow, totalCol, val);
                                             mySudoku.getCell(totalRow, totalCol).candidates.clear();
-                                            mySudoku.getCell(totalRow, totalCol).solution = val;
+                                            mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
+                                                    null);
                                             mySudoku.getCell(totalRow, totalCol).isInput = true;
                                             mySudoku.setSaved(false);
 
@@ -507,6 +523,7 @@ public class AppMain extends ApplicationWindow
         fd_groupSlide.left = new FormAttachment(grpButtons, 0, SWT.LEFT);
         groupSlide.setLayoutData(fd_groupSlide);
         groupSlide.setEnabled(false);
+        slideShowEnabled = groupSlide.getEnabled();
 
         btnManual = new Button(groupSlide, SWT.RADIO);
         FormData fd_btnManual = new FormData();
@@ -543,32 +560,11 @@ public class AppMain extends ApplicationWindow
         lblSpeed.setLayoutData(fd_lblSpeed);
         lblSpeed.setText("Speed:");
 
-        Button btnStop = new Button(groupSlide, SWT.NONE);
-        FormData fd_btnStop = new FormData();
-        fd_btnStop.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
-        fd_btnStop.right = new FormAttachment(100, -5);
-        btnStop.setLayoutData(fd_btnStop);
-        btnStop.setText("Stop");
-
-        Button btnStart = new Button(groupSlide, SWT.NONE);
-        FormData fd_button = new FormData();
-        fd_button.right = new FormAttachment(btnStop, -5, SWT.LEFT);
-        fd_button.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
-        btnStart.setLayoutData(fd_button);
-        btnStart.addSelectionListener(new SelectionAdapter()
-        {
-            @Override
-            public void widgetSelected(SelectionEvent e)
-            {
-            }
-        });
-        btnStart.setText("Start");
-
         Slider slider = new Slider(groupSlide, SWT.NONE);
         FormData fd_slider = new FormData();
         fd_slider.left = new FormAttachment(lblSpeed, 5, SWT.RIGHT);
         fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
-        fd_slider.right = new FormAttachment(btnStart, -5, SWT.LEFT);
+        fd_slider.right = new FormAttachment(100, -35);
         slider.setLayoutData(fd_slider);
         final int minSecondsPause = 0;
         final int maxSecondsPause = 60;
@@ -580,21 +576,6 @@ public class AppMain extends ApplicationWindow
         slider.setMinimum(minSecondsPause);
         slider.setIncrement(1);
         slider.setPageIncrement(10);
-        slider.addSelectionListener(new SelectionListener()
-        {
-
-            @Override
-            public void widgetSelected(SelectionEvent arg0)
-            {
-                System.out.println("Selected: " + slider.getSelection());
-            }
-
-            @Override
-            public void widgetDefaultSelected(SelectionEvent arg0)
-            { // Obviously never called
-                System.out.println("DefaultSelected: " + slider.getSelection());
-            }
-        });
 
         Label lblNoPause = new Label(groupSlide, SWT.NONE);
         lblNoPause.setText(Integer.toString(minSecondsPause) + " s");
@@ -603,12 +584,122 @@ public class AppMain extends ApplicationWindow
         fd_lblNoPause.left = new FormAttachment(slider, 0, SWT.LEFT);
         lblNoPause.setLayoutData(fd_lblNoPause);
 
-        Label ldlMinute = new Label(groupSlide, SWT.NONE);
-        ldlMinute.setText(Integer.toString(maxSecondsPause) + " s");
+        Label lblMinute = new Label(groupSlide, SWT.NONE);
+        lblMinute.setText(Integer.toString(maxSecondsPause) + " s");
         FormData fd_ldlMinute = new FormData();
         fd_ldlMinute.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
         fd_ldlMinute.right = new FormAttachment(slider, 0, SWT.RIGHT);
-        ldlMinute.setLayoutData(fd_ldlMinute);
+        lblMinute.setLayoutData(fd_ldlMinute);
+
+        lblCurrent = new Label(groupSlide, SWT.NONE);
+        FormData fd_lblCurrent = new FormData();
+        fd_lblCurrent.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
+        fd_lblCurrent.right = new FormAttachment(100, -5);
+        lblCurrent.setLayoutData(fd_lblCurrent);
+        // groupSlideLabels.setBackground(SWTResourceManager.getColor(56, 56, 0));
+        lblCurrent.setText(lblMinute.getText());
+
+        slider.addSelectionListener(new SelectionListener()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent arg0)
+            {
+                slideShowPause = slider.getSelection();
+                // System.out.println("Selected: " + slideShowPause);
+                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+            }
+
+            @Override
+            public void widgetDefaultSelected(SelectionEvent arg0)
+            { // Obviously never called
+                slideShowPause = slider.getSelection();
+                // System.out.println("DefaultSelected: " + slideShowPause);
+                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+            }
+        });
+        // Button btnStop = new Button(groupSlide, SWT.NONE);
+        // FormData fd_btnStop = new FormData();
+        // fd_btnStop.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
+        // fd_btnStop.right = new FormAttachment(100, -5);
+        // btnStop.setLayoutData(fd_btnStop);
+        // btnStop.setText("Stop");
+        //
+        // Button btnStart = new Button(groupSlide, SWT.NONE);
+        // FormData fd_button = new FormData();
+        // fd_button.right = new FormAttachment(btnStop, -5, SWT.LEFT);
+        // fd_button.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
+        // btnStart.setLayoutData(fd_button);
+        // btnStart.addSelectionListener(new SelectionAdapter()
+        // {
+        // @Override
+        // public void widgetSelected(SelectionEvent e)
+        // {
+        // }
+        // });
+        // btnStart.setText("Start");
+
+        // Slider slider = new Slider(groupSlide, SWT.NONE);
+        // FormData fd_slider = new FormData();
+        // fd_slider.left = new FormAttachment(lblSpeed, 5, SWT.RIGHT);
+        // fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
+        // fd_slider.right = new FormAttachment(btnStart, -5, SWT.LEFT);
+        // slider.setLayoutData(fd_slider);
+        // final int minSecondsPause = 0;
+        // final int maxSecondsPause = 60;
+        // final int thumbWidth = 1;
+        //
+        // slider.setBounds(0, 0, 40, 200);
+        // slider.setThumb(thumbWidth);
+        // slider.setMaximum(maxSecondsPause + thumbWidth);
+        // slider.setMinimum(minSecondsPause);
+        // slider.setIncrement(1);
+        // slider.setPageIncrement(10);
+        //
+        // Group groupSlideLabels = new Group(groupSlide, SWT.NONE);
+        // groupSlideLabels.setLayout(new GridLayout(3, true));
+        // FormData fd_groupSlideLabels = new FormData();
+        // fd_groupSlideLabels.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
+        // fd_groupSlideLabels.top = new FormAttachment(groupSlide, 0, SWT.TOP);
+        // fd_groupSlideLabels.right = new FormAttachment(slider, 0, SWT.RIGHT);
+        // fd_groupSlideLabels.left = new FormAttachment(slider, 0, SWT.LEFT);
+        // groupSlideLabels.setLayoutData(fd_groupSlideLabels);
+        // groupSlideLabels.setEnabled(false);
+        //
+        // Label lblNoPause = new Label(groupSlideLabels, SWT.NONE);
+        // lblNoPause.setText(Integer.toString(minSecondsPause) + " s");
+        // GridData gd_lblNoPause = new GridData(SWT.LEFT, SWT.CENTER);
+        // lblNoPause.setLayoutData(gd_lblNoPause);
+        //
+        // Label lblCurrent = new Label(groupSlideLabels, SWT.NONE);
+        // lblCurrent.setText(Integer.toString(slider.getSelection()) + " s");
+        // GridData gd_lblCurrent = new GridData(SWT.CENTER, SWT.CENTER);
+        // lblCurrent.setLayoutData(gd_lblCurrent);
+        //
+        // Label lblMinute = new Label(groupSlideLabels, SWT.NONE);
+        // lblMinute.setText(Integer.toString(maxSecondsPause) + " s");
+        // GridData gd_ldlMinute = new GridData(SWT.RIGHT, SWT.CENTER);
+        // lblMinute.setLayoutData(gd_ldlMinute);
+        //
+        // slider.addSelectionListener(new SelectionListener()
+        // {
+        //
+        // @Override
+        // public void widgetSelected(SelectionEvent arg0)
+        // {
+        // // System.out.println("Selected: " + slider.getSelection());
+        // slideShowPause = slider.getSelection();
+        // lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+        // }
+        //
+        // @Override
+        // public void widgetDefaultSelected(SelectionEvent arg0)
+        // { // Obviously never called
+        // // System.out.println("DefaultSelected: " + slider.getSelection());
+        // slideShowPause = slider.getSelection();
+        // lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+        // }
+        // });
 
         btnManual.addSelectionListener(new SelectionAdapter()
         {
@@ -621,10 +712,15 @@ public class AppMain extends ApplicationWindow
                 if (source.getSelection())
                 {
                     System.out.println("Manual set");
-                    btnStart.setEnabled(false);
-                    btnStop.setEnabled(false);
+                    // btnStart.setEnabled(false);
+                    // btnStop.setEnabled(false);
+                    lblNoPause.setEnabled(false);
+                    lblSpeed.setEnabled(false);
+                    lblMinute.setEnabled(false);
+                    lblCurrent.setEnabled(false);
                     slider.setEnabled(false);
                     btnNext.setEnabled(true);
+                    slideShowPause = null;
                 }
             }
 
@@ -640,10 +736,16 @@ public class AppMain extends ApplicationWindow
 
                 if (source.getSelection())
                 {
-                    btnStart.setEnabled(true);
-                    btnStop.setEnabled(true);
+                    // btnStart.setEnabled(true);
+                    // btnStop.setEnabled(true);
+                    lblNoPause.setEnabled(true);
+                    lblSpeed.setEnabled(true);
+                    lblMinute.setEnabled(true);
+                    lblCurrent.setEnabled(true);
                     slider.setEnabled(true);
                     btnNext.setEnabled(false);
+                    slideShowPause = slider.getSelection();
+                    lblCurrent.setText(Integer.toString(slideShowPause) + " s");
                 }
             }
 
@@ -658,8 +760,12 @@ public class AppMain extends ApplicationWindow
             }
         });
         btnManual.setSelection(manualWasEnabled);
-        btnStart.setEnabled(!manualWasEnabled);
-        btnStop.setEnabled(!manualWasEnabled);
+        // btnStart.setEnabled(!manualWasEnabled);
+        // btnStop.setEnabled(!manualWasEnabled);
+        lblNoPause.setEnabled(!manualWasEnabled);
+        lblSpeed.setEnabled(!manualWasEnabled);
+        lblMinute.setEnabled(!manualWasEnabled);
+        lblCurrent.setEnabled(!manualWasEnabled);
         slider.setEnabled(!manualWasEnabled);
         btnNext.setEnabled(manualWasEnabled);
         recursiveSetEnabled(groupSlide, false);
@@ -715,7 +821,7 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private void setSolveEnabled(boolean enabled)
+    public void setSolveEnabled(boolean enabled)
     {
         if (btnSolve != null)
         {
@@ -815,6 +921,10 @@ public class AppMain extends ApplicationWindow
     private Button btnAutomatic                = null;
     private Button btnManual                   = null;
     private Group  groupSlide                  = null;
+    private Group  grpSudokuBlocks             = null;
+    private Group  grpSudokuName               = null;
+    private Text   txtName                     = null;
+    private Label  lblCurrent                  = null;
 
     /**
      * Create the menu manager.
@@ -1099,7 +1209,7 @@ public class AppMain extends ApplicationWindow
         {
             for (int col = 0; col < RECTLENGTH * RECTLENGTH; col++)
             {
-                if (mySudoku.getCell(row, col).solution == null)
+                if (mySudoku.getCell(row, col).getSolution() == null)
                 {
                     for (Text candText : uiFields.get(row).get(col).candidates)
                     {
@@ -1162,10 +1272,27 @@ public class AppMain extends ApplicationWindow
                 uiFields.get(row).get(col).input.setVisible(false);
                 uiFields.get(row).get(col).solution.setVisible(true);
                 uiFields.get(row).get(col).solution
-                        .setText(Integer.toString(mySudoku.getCell(row, col).solution.val()));
+                        .setText(Integer.toString(mySudoku.getCell(row, col).getSolution().val()));
                 setSolutionNInputBckgrdColor(row, col);
             }
         });
+        if (slideShowEnabled && slideShowPause == null)
+        { // Step by step
+          // End thread
+            Thread.currentThread().interrupt();
+        }
+        else if (slideShowEnabled && slideShowPause > 0)
+        {
+            try
+            {
+                // Thread.sleep(slideShowPause);
+                Thread.sleep(slideShowPause * 1000);
+            }
+            catch (InterruptedException ex)
+            {
+                System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
+            }
+        }
     }
 
     private void setSolutionNInputBckgrdColor(int row, int col)
@@ -1227,8 +1354,9 @@ public class AppMain extends ApplicationWindow
         {
             // app.getSudokuPb().save(null);
             System.out.println("Pressed Slide Show");
-            boolean newEnabledState = !groupSlide.getEnabled();
+            boolean newEnabledState = !getSlideShowEnabled();
             groupSlide.setEnabled(newEnabledState);
+            slideShowEnabled = groupSlide.getEnabled();
             if (!newEnabledState)
             {
                 manualWasEnabled = btnManual.getSelection();
@@ -1253,6 +1381,10 @@ public class AppMain extends ApplicationWindow
                 {
                     btnAutomatic.notifyListeners(SWT.Selection, new Event());
                 }
+            }
+            if (lblCurrent != null && slideShowPause != null)
+            {
+                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
             }
         }
         catch (Exception ex)

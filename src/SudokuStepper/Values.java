@@ -82,30 +82,6 @@ interface FreezeListener
  */
 public class Values
 {
-    class SingleCellValue
-    {
-        public LegalValues       solution    = null;
-        public boolean           isInput     = false;
-        public boolean           isAConflict = false;
-        public List<LegalValues> candidates  = new ArrayList<LegalValues>(DIMENSION);
-
-        public SingleCellValue()
-        {
-            initCandidates();
-        }
-
-        /**
-         * Reinitialize the list of candidates to contain all legal values
-         */
-        void initCandidates()
-        {
-            candidates.clear();
-            for (LegalValues val : LegalValues.values())
-            {
-                candidates.add(val);
-            }
-        }
-    }
 
     public static final int               DIMENSION                = AppMain.RECTLENGTH * AppMain.RECTLENGTH;
 
@@ -185,7 +161,7 @@ public class Values
             row -= 1;
             col -= 1;
             LegalValues val = LegalValues.from(value);
-            sudoku[row][col].solution = val;
+            sudoku[row][col].setSolution(val, row, col, null);
             sudoku[row][col].isInput = true;
             sudoku[row][col].candidates.clear();
             setSaved(false);
@@ -228,11 +204,12 @@ public class Values
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public boolean eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution)
+    public SolutionProgress eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution)
     {
-        boolean retVal = false;
+        SolutionProgress retVal = SolutionProgress.NONE;
         if (val == null || sudoku[row][col].candidates.contains(val))
         {
+            retVal = SolutionProgress.CANDIDATES;
             if (val != null)
             {
                 sudoku[row][col].candidates.remove(val);
@@ -241,26 +218,24 @@ public class Values
                     listener.candidatesUpdated(row, col, val);
                 }
             }
-            if (sudoku[row][col].candidates.size() == 1)
-            {
-                if (alsoSetSolution)
-                {
-                    sudoku[row][col].solution = sudoku[row][col].candidates.get(0);
-                    sudoku[row][col].isInput = false;
-                    sudoku[row][col].candidates.clear();
-                    for (SolutionListener listener : solutionListeners)
-                    {
-                        listener.solutionUpdated(row, col);
-                    }
-                }
-                reduceInfluencedCellCandidates(row, col, sudoku[row][col].solution, alsoSetSolution);
-            }
             setSaved(false);
             for (SavedListener listener : savedListeners)
             {
                 listener.savedUpdated(isSaved());
             }
-            retVal = true;
+            if (sudoku[row][col].candidates.size() == 1)
+            {
+                if (alsoSetSolution)
+                {
+                    LegalValues solution = sudoku[row][col].candidates.get(0);
+                    retVal = SolutionProgress.SOLUTION;
+                    sudoku[row][col].isInput = false;
+                    sudoku[row][col].candidates.clear();
+                    // Must be the last thing because the thread could end if step by step mode
+                    sudoku[row][col].setSolution(solution, row, col, solutionListeners);
+                }
+                reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(), alsoSetSolution);
+            }
         }
         return (retVal);
     }
@@ -272,7 +247,7 @@ public class Values
             for (int col = 0; col < DIMENSION; col++)
             {
                 SingleCellValue cell = getCell(row, col);
-                if (cell.solution == null)
+                if (cell.getSolution() == null)
                 {
                     cell.initCandidates();
                 }
@@ -288,10 +263,10 @@ public class Values
     // all influenced cells
     public void updateCandidateList(int row, int col, LegalValues val)
     {
-        if (sudoku[row][col].solution != null)
+        if (sudoku[row][col].getSolution() != null)
         { // First undo the value restrictions due to the previous value, but only where
           // not another cell continues justifying them
-            LegalValues oldVal = sudoku[row][col].solution;
+            LegalValues oldVal = sudoku[row][col].getSolution();
             // Same column
             for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
             {
@@ -337,7 +312,7 @@ public class Values
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
-            if (row != rowInCol && val.equals(sudoku[rowInCol][col].solution))
+            if (row != rowInCol && val.equals(sudoku[rowInCol][col].getSolution()))
             {
                 retVal = false;
                 break;
@@ -348,7 +323,7 @@ public class Values
         {
             for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
             {
-                if (col != colInRow && val.equals(sudoku[row][colInRow].solution))
+                if (col != colInRow && val.equals(sudoku[row][colInRow].getSolution()))
                 {
                     retVal = false;
                     break;
@@ -364,7 +339,8 @@ public class Values
                 for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
                         * (col / AppMain.RECTLENGTH + 1); colInBlock++)
                 {
-                    if ((col != colInBlock || row != rowInBlock) && val.equals(sudoku[rowInBlock][colInBlock].solution))
+                    if ((col != colInBlock || row != rowInBlock)
+                            && val.equals(sudoku[rowInBlock][colInBlock].getSolution()))
                     {
                         retVal = false;
                         break;
@@ -532,7 +508,7 @@ public class Values
                     for (int rowInCol = row + 1; rowInCol < Values.DIMENSION; rowInCol++)
                     {
                         if (getCell(rowInCol, col).candidates.isEmpty()
-                                && getCell(rowInCol, col).solution == getCell(row, col).solution)
+                                && getCell(rowInCol, col).getSolution() == getCell(row, col).getSolution())
                         {
                             getCell(row, col).isAConflict = true;
                             getCell(rowInCol, col).isAConflict = true;
@@ -548,7 +524,7 @@ public class Values
                     for (int colInRow = col + 1; colInRow < Values.DIMENSION; colInRow++)
                     {
                         if (getCell(row, colInRow).candidates.isEmpty()
-                                && getCell(row, colInRow).solution == getCell(row, col).solution)
+                                && getCell(row, colInRow).getSolution() == getCell(row, col).getSolution())
                         {
                             getCell(row, col).isAConflict = true;
                             getCell(row, colInRow).isAConflict = true;
@@ -572,7 +548,8 @@ public class Values
                             if ((rowInBlock >= row || colInBlock >= col) && (rowInBlock != row || colInBlock != col))
                             {
                                 if (getCell(rowInBlock, colInBlock).candidates.isEmpty()
-                                        && getCell(rowInBlock, colInBlock).solution == getCell(row, col).solution)
+                                        && getCell(rowInBlock, colInBlock).getSolution() == getCell(row, col)
+                                                .getSolution())
                                 {
                                     getCell(row, col).isAConflict = true;
                                     getCell(rowInBlock, colInBlock).isAConflict = true;
@@ -595,7 +572,7 @@ public class Values
     int getNumberOfSolutions()
     {
         Stream<? super SingleCellValue> stream = Arrays.stream(this.sudoku).flatMap(x -> Arrays.stream(x));
-        long retVal = stream.filter(x -> ((SingleCellValue) x).solution != null).count();
+        long retVal = stream.filter(x -> ((SingleCellValue) x).getSolution() != null).count();
         return ((int) retVal);
     }
 
@@ -670,13 +647,14 @@ public class Values
                 {
                     for (int col = 0; col < DIMENSION; col++)
                     {
-                        if (sudoku[row][col].solution != null && ((sudoku[row][col].isInput && elt.equals(initialElt))
-                                || (!sudoku[row][col].isInput && elt.equals(solutionElt))))
+                        if (sudoku[row][col].getSolution() != null
+                                && ((sudoku[row][col].isInput && elt.equals(initialElt))
+                                        || (!sudoku[row][col].isInput && elt.equals(solutionElt))))
                         {
                             Element content = newDoc.createElement(CONTENT);
                             content.setAttribute(ROW, Integer.toString(row + 1));
                             content.setAttribute(COL, Integer.toString(col + 1));
-                            Text text = newDoc.createTextNode(Integer.toString(sudoku[row][col].solution.val()));
+                            Text text = newDoc.createTextNode(Integer.toString(sudoku[row][col].getSolution().val()));
                             content.appendChild(text);
                             elt.appendChild(content);
                         }
@@ -720,4 +698,47 @@ public class Values
         aTransformer.transform(src, dest);
     }
 
+}
+
+class SingleCellValue
+{
+    private LegalValues solution = null;
+
+    public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners)
+    {
+        solution = val;
+        if (solutionListeners != null)
+        {
+            for (SolutionListener listener : solutionListeners)
+            {
+                listener.solutionUpdated(row, col);
+            }
+        }
+    }
+
+    public LegalValues getSolution()
+    {
+        return (solution);
+    }
+
+    public boolean           isInput     = false;
+    public boolean           isAConflict = false;
+    public List<LegalValues> candidates  = new ArrayList<LegalValues>(Values.DIMENSION);
+
+    public SingleCellValue()
+    {
+        initCandidates();
+    }
+
+    /**
+     * Reinitialize the list of candidates to contain all legal values
+     */
+    void initCandidates()
+    {
+        candidates.clear();
+        for (LegalValues val : LegalValues.values())
+        {
+            candidates.add(val);
+        }
+    }
 }
