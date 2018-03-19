@@ -37,6 +37,7 @@ public class SolveSudokuAction extends SudokuAction
         }
         finally
         {
+            System.out.println("Leaving Solving action");
         }
     }
 }

@@ -70,6 +70,8 @@ public class AppMain extends ApplicationWindow
     private static final int COLOR_CONFLICT_BCKGRD = SWT.COLOR_RED;
     private static final int COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
     private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
+    private static final int COLOR_LAST_FOREGRD    = SWT.COLOR_RED;
+    private static final int COLOR_PREV_FOREGRD    = SWT.COLOR_WHITE;
 
     /**
      * Launch the application.
@@ -411,10 +413,10 @@ public class AppMain extends ApplicationWindow
                                         {
                                             setStatus(StringUtils.EMPTY);
                                             LegalValues val = LegalValues.from(Integer.parseInt(input));
-                                            mySudoku.updateCandidateList(totalRow, totalCol, val);
+                                            mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
                                             mySudoku.getCell(totalRow, totalCol).candidates.clear();
                                             mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
-                                                    null);
+                                                    null, true, false);
                                             mySudoku.getCell(totalRow, totalCol).isInput = true;
                                             mySudoku.setSaved(false);
 
@@ -538,6 +540,8 @@ public class AppMain extends ApplicationWindow
             @Override
             public void widgetSelected(SelectionEvent e)
             {
+                System.out.println("Pressed Next");
+                solveSudokuAction.run();
             }
         });
         FormData fd_btnNext = new FormData();
@@ -553,16 +557,16 @@ public class AppMain extends ApplicationWindow
         btnAutomatic.setLayoutData(fd_btnAutomatic);
         btnAutomatic.setText("Automatic");
 
-        Label lblSpeed = new Label(groupSlide, SWT.NONE);
-        FormData fd_lblSpeed = new FormData();
-        fd_lblSpeed.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
-        fd_lblSpeed.left = new FormAttachment(btnNext, 0, SWT.LEFT);
-        lblSpeed.setLayoutData(fd_lblSpeed);
-        lblSpeed.setText("Speed:");
+        Label lblPause = new Label(groupSlide, SWT.NONE);
+        FormData fd_lblPause = new FormData();
+        fd_lblPause.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
+        fd_lblPause.left = new FormAttachment(btnNext, 0, SWT.LEFT);
+        lblPause.setLayoutData(fd_lblPause);
+        lblPause.setText("Pause:");
 
         Slider slider = new Slider(groupSlide, SWT.NONE);
         FormData fd_slider = new FormData();
-        fd_slider.left = new FormAttachment(lblSpeed, 5, SWT.RIGHT);
+        fd_slider.left = new FormAttachment(lblPause, 5, SWT.RIGHT);
         fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
         fd_slider.right = new FormAttachment(100, -35);
         slider.setLayoutData(fd_slider);
@@ -715,7 +719,7 @@ public class AppMain extends ApplicationWindow
                     // btnStart.setEnabled(false);
                     // btnStop.setEnabled(false);
                     lblNoPause.setEnabled(false);
-                    lblSpeed.setEnabled(false);
+                    lblPause.setEnabled(false);
                     lblMinute.setEnabled(false);
                     lblCurrent.setEnabled(false);
                     slider.setEnabled(false);
@@ -739,7 +743,7 @@ public class AppMain extends ApplicationWindow
                     // btnStart.setEnabled(true);
                     // btnStop.setEnabled(true);
                     lblNoPause.setEnabled(true);
-                    lblSpeed.setEnabled(true);
+                    lblPause.setEnabled(true);
                     lblMinute.setEnabled(true);
                     lblCurrent.setEnabled(true);
                     slider.setEnabled(true);
@@ -763,7 +767,7 @@ public class AppMain extends ApplicationWindow
         // btnStart.setEnabled(!manualWasEnabled);
         // btnStop.setEnabled(!manualWasEnabled);
         lblNoPause.setEnabled(!manualWasEnabled);
-        lblSpeed.setEnabled(!manualWasEnabled);
+        lblPause.setEnabled(!manualWasEnabled);
         lblMinute.setEnabled(!manualWasEnabled);
         lblCurrent.setEnabled(!manualWasEnabled);
         slider.setEnabled(!manualWasEnabled);
@@ -1078,7 +1082,7 @@ public class AppMain extends ApplicationWindow
             for (Integer col : uiFields.get(row).keySet())
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
-                setSolutionNInputBckgrdColor(row, col);
+                setSolutionNInputBckgrdColor(row, col, false);
                 uiField.solution.setVisible(false);
                 // uiField.input.setText(StringUtils.EMPTY);
                 uiField.input.setVisible(true);
@@ -1092,7 +1096,7 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    void freeze(boolean keepCandidatesVisibility)
+    void freeze(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound)
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
@@ -1110,7 +1114,7 @@ public class AppMain extends ApplicationWindow
                 SolNCandTexts uiField = uiFields.get(row).get(col);
                 if (mySudoku.getCell(row, col).candidates.isEmpty())
                 {
-                    solutionUpdated(row, col);
+                    solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
                 }
                 else
                 {
@@ -1134,15 +1138,31 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+        return;
     }
 
-    void updateSudokuFields(boolean keepCandidatesVisibility)
+    void updateSudokuFields(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound)
+    {
+        if (runsInUiThread)
+        {
+            updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound);
+        }
+        else
+        {
+            myDisplay.asyncExec(() ->
+            {
+                updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound);
+            });
+        }
+    }
+
+    private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound)
     {
         grpSudokuBlocks.setText(mySudoku.getName());
         txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         List<List<int[]>> conflicts = mySudoku.areContentsLegal();
-        freeze(keepCandidatesVisibility);
+        freeze(keepCandidatesVisibility, true, markLastSolutionFound);
         if (!conflicts.isEmpty())
         {
             for (List<int[]> conflict : conflicts)
@@ -1185,7 +1205,7 @@ public class AppMain extends ApplicationWindow
 
     // set the given candidate invisible for the given cell
     @Override
-    public void candidatesUpdated(int row, int col, LegalValues val)
+    public void candidatesUpdated(int row, int col, LegalValues val, boolean runsInUiThread)
     {
         myDisplay.asyncExec(new Runnable()
         {
@@ -1224,13 +1244,12 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    public void savedUpdated(boolean saved)
+    public void savedUpdated(boolean saved, boolean runsInUiThread)
     {
         myDisplay.asyncExec(new Runnable()
         {
             public void run()
             {
-
                 condEnableSaveSudokuAction(saved);
                 myDisplay.readAndDispatch();
             }
@@ -1258,44 +1277,66 @@ public class AppMain extends ApplicationWindow
             {
                 uiFields.get(row).get(col).input.setVisible(true);
                 uiFields.get(row).get(col).solution.setVisible(false);
-                setSolutionNInputBckgrdColor(row, col);
+                setSolutionNInputBckgrdColor(row, col, false);
             }
         }
     }
 
-    public void solutionUpdated(int row, int col)
+    private void updateSolution(int row, int col, boolean markLastSolutionFound)
     {
-        myDisplay.asyncExec(new Runnable()
+        uiFields.get(row).get(col).input.setVisible(false);
+        uiFields.get(row).get(col).solution.setVisible(true);
+        uiFields.get(row).get(col).solution.setText(Integer.toString(mySudoku.getCell(row, col).getSolution().val()));
+        setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
+    }
+
+    public void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound)
+    {
+        // myDisplay.asyncExec(new Runnable()
+        // {
+        // public void run()
+        // {
+        // uiFields.get(row).get(col).input.setVisible(false);
+        // uiFields.get(row).get(col).solution.setVisible(true);
+        // uiFields.get(row).get(col).solution
+        // .setText(Integer.toString(mySudoku.getCell(row, col).getSolution().val()));
+        // setSolutionNInputBckgrdColor(row, col);
+        // }
+        // });
+        if (runsInUiThread)
         {
-            public void run()
-            {
-                uiFields.get(row).get(col).input.setVisible(false);
-                uiFields.get(row).get(col).solution.setVisible(true);
-                uiFields.get(row).get(col).solution
-                        .setText(Integer.toString(mySudoku.getCell(row, col).getSolution().val()));
-                setSolutionNInputBckgrdColor(row, col);
-            }
-        });
-        if (slideShowEnabled && slideShowPause == null)
-        { // Step by step
-          // End thread
-            Thread.currentThread().interrupt();
+            updateSolution(row, col, markLastSolutionFound);
         }
-        else if (slideShowEnabled && slideShowPause > 0)
+        else
         {
-            try
+            myDisplay.asyncExec(() ->
             {
-                // Thread.sleep(slideShowPause);
-                Thread.sleep(slideShowPause * 1000);
+                updateSolution(row, col, markLastSolutionFound);
+            });
+        }
+        if (!runsInUiThread && slideShowEnabled)
+        {
+            if (slideShowPause == null)
+            { // Step by step
+              // End thread
+                Thread.currentThread().interrupt();
             }
-            catch (InterruptedException ex)
+            else if (slideShowPause > 0)
             {
-                System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
+                try
+                {
+                    // Thread.sleep(slideShowPause);
+                    Thread.sleep(slideShowPause * 1000);
+                }
+                catch (InterruptedException ex)
+                {
+                    System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
+                }
             }
         }
     }
 
-    private void setSolutionNInputBckgrdColor(int row, int col)
+    private void setSolutionNInputBckgrdColor(int row, int col, boolean markLastSolutionFound)
     {
         if (mySudoku.getCell(row, col).isInput)
         {
@@ -1303,7 +1344,23 @@ public class AppMain extends ApplicationWindow
         }
         else
         {
-            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(SWT.COLOR_WHITE));
+            for (Map<Integer, SolNCandTexts> currRow : uiFields.values())
+            {
+                for (SolNCandTexts currCell : currRow.values())
+                {
+                    if (!currCell.solution.getText().isEmpty() && currCell.solution.getForeground().handle == myDisplay
+                            .getSystemColor(COLOR_LAST_FOREGRD).handle)
+                    {
+                        currCell.solution.setForeground(myDisplay.getSystemColor(COLOR_PREV_FOREGRD));
+                    }
+                }
+            }
+            int color = COLOR_PREV_FOREGRD;
+            if (markLastSolutionFound)
+            {
+                color = COLOR_LAST_FOREGRD;
+            }
+            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(color));
         }
         if (mySudoku.getCell(row, col).isAConflict)
         {

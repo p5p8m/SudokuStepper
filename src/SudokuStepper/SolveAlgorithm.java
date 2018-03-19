@@ -3,6 +3,7 @@
  */
 package SudokuStepper;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             boolean errorDetected = false;
             Integer slideShowPause = null;
             boolean slideShowEnabled = false;
+            int loopCount = 0;
             do
             {
                 slideShowPause = app.getSlideShowPause();
@@ -50,18 +52,28 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 }
                 errorDetected = !sudoku.areContentsLegal().isEmpty();
                 newNumOfSolutions = sudoku.getNumberOfSolutions();
+                loopCount++;
+                System.out.println("====loopCount: " + loopCount);
+                System.out.println("updated: " + updated);
+                System.out.println("loopCnewNumOfSolutionsount: " + newNumOfSolutions);
+                System.out.println("oldNumOfSolutions: " + oldNumOfSolutions);
+                System.out.println("errorDetected: " + errorDetected);
             }
             while ((updated != SolutionProgress.NONE || (newNumOfSolutions < Values.DIMENSION * Values.DIMENSION
                     && oldNumOfSolutions < newNumOfSolutions)) && !errorDetected
-                    && (!slideShowEnabled || slideShowPause != null));
-            app.getDisplay().asyncExec(new Runnable()
-            {
-                public void run()
-                {
-                    app.updateSudokuFields(true); // needed to make sure conflicts are represented since the check
-                    // is not performed at every stage
-                }
-            });
+            /* && (!slideShowEnabled || slideShowPause != null) */);
+            System.out.println("Leaved loop");
+            // app.getDisplay().asyncExec(new Runnable()
+            // {
+            // public void run()
+            // {
+            // app.updateSudokuFields(true, false); // needed to make sure conflicts are
+            // represented since the check
+            // // is not performed at every stage
+            // }
+            // });
+            app.updateSudokuFields(true, false, false); // needed to make sure conflicts are represented since the check
+            // is not performed at every stage
             if (errorDetected)
             {
                 app.getDisplay().asyncExec(new Runnable()
@@ -114,6 +126,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         finally
         {
             app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn));
+            System.out.println("Leaving Solving thread");
         }
     }
 
@@ -145,7 +158,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             {
                 if (sudoku.getCell(row, col).candidates.size() == 1)
                 {
-                    SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, col, null, true);
+                    SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, col, null, true, false, true);
                     updated = updated.combineWith(nowUpdated);
                     if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                     {
@@ -189,7 +202,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                     {
                         if (sudoku.getCell(row, cols.get(0)).candidates.size() == 1)
                         {
-                            SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, cols.get(0), null, true);
+                            SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, cols.get(0), null, true, false,
+                                    true);
                             updated = updated.combineWith(nowUpdated);
                             if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                             {
@@ -203,13 +217,13 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 if (otherVal != val)
                                 {
                                     SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, cols.get(0), otherVal,
-                                            true);
+                                            true, false, true);
                                     // next block superfluous?
                                     if (nowUpdated != SolutionProgress.NONE
                                             && sudoku.getCell(row, cols.get(0)).candidates.isEmpty())
                                     {
                                         sudoku.reduceInfluencedCellCandidates(row, cols.get(0),
-                                                sudoku.getCell(row, cols.get(0)).getSolution(), true);
+                                                sudoku.getCell(row, cols.get(0)).getSolution(), true, false, true);
                                     }
                                     updated = updated.combineWith(nowUpdated);
                                     if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
@@ -250,7 +264,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                     {
                         if (sudoku.getCell(rows.get(0), col).candidates.size() == 1)
                         {
-                            SolutionProgress nowUpdated = sudoku.eliminateCandidate(rows.get(0), col, null, true);
+                            SolutionProgress nowUpdated = sudoku.eliminateCandidate(rows.get(0), col, null, true, false,
+                                    true);
                             updated = updated.combineWith(nowUpdated);
                             if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                             {
@@ -264,12 +279,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 if (otherVal != val)
                                 {
                                     SolutionProgress nowUpdated = sudoku.eliminateCandidate(rows.get(0), col, otherVal,
-                                            true);
+                                            true, false, true);
                                     if (nowUpdated != SolutionProgress.NONE
                                             && sudoku.getCell(rows.get(0), col).candidates.isEmpty())
                                     {
                                         sudoku.reduceInfluencedCellCandidates(rows.get(0), col,
-                                                sudoku.getCell(rows.get(0), col).getSolution(), true);
+                                                sudoku.getCell(rows.get(0), col).getSolution(), true, false, true);
                                     }
                                     updated = updated.combineWith(nowUpdated);
                                     if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
@@ -327,7 +342,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                             if (sudoku.getCell(cells.get(0)[0], cells.get(0)[1]).candidates.size() == 1)
                             {
                                 SolutionProgress nowUpdated = sudoku.eliminateCandidate(cells.get(0)[0],
-                                        cells.get(0)[1], null, true);
+                                        cells.get(0)[1], null, true, false, true);
                                 updated = updated.combineWith(nowUpdated);
                                 if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                                 {
@@ -341,14 +356,14 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                     if (otherVal != val)
                                     {
                                         SolutionProgress nowUpdated = sudoku.eliminateCandidate(cells.get(0)[0],
-                                                cells.get(0)[1], otherVal, true);
+                                                cells.get(0)[1], otherVal, true, false, true);
                                         if (nowUpdated != SolutionProgress.NONE
                                                 && sudoku.getCell(cells.get(0)[0], cells.get(0)[1]).candidates
                                                         .isEmpty())
                                         {
                                             sudoku.reduceInfluencedCellCandidates(cells.get(0)[0], cells.get(0)[1],
                                                     sudoku.getCell(cells.get(0)[0], cells.get(0)[1]).getSolution(),
-                                                    true);
+                                                    true, false, true);
                                         }
                                         updated = updated.combineWith(nowUpdated);
                                         if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
@@ -397,7 +412,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                             if (rowInCol != row)
                             {
                                 SolutionProgress nowUpdated = sudoku.eliminateCandidate(rowInCol, col, valToEliminate,
-                                        true);
+                                        true, false, true);
                                 updated = updated.combineWith(nowUpdated);
                                 if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                                 {
@@ -414,7 +429,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                             if (colInRow != col)
                             {
                                 SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, colInRow, valToEliminate,
-                                        true);
+                                        true, false, true);
                                 updated = updated.combineWith(nowUpdated);
                                 if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                                 {
@@ -437,7 +452,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 if (rowInBlock != row || colInBlock != col)
                                 {
                                     SolutionProgress nowUpdated = sudoku.eliminateCandidate(rowInBlock, colInBlock,
-                                            valToEliminate, true);
+                                            valToEliminate, true, false, true);
                                     updated = updated.combineWith(nowUpdated);
                                     if (stopAfterFirstSolution && updated == SolutionProgress.SOLUTION)
                                     {

@@ -48,7 +48,7 @@ import org.w3c.dom.Element;
  */
 interface CandidatesListener
 {
-    void candidatesUpdated(int row, int col, LegalValues val);
+    void candidatesUpdated(int row, int col, LegalValues val, boolean runsInUiThread);
 }
 
 interface CandidatesResetListener
@@ -58,12 +58,12 @@ interface CandidatesResetListener
 
 interface SolutionListener
 {
-    void solutionUpdated(int row, int col);
+    void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound);
 }
 
 interface SavedListener
 {
-    void savedUpdated(boolean saved);
+    void savedUpdated(boolean saved, boolean runsInUiThread);
 }
 
 // interface NewStartListener
@@ -154,14 +154,15 @@ public class Values
         reset();
     }
 
-    public void initCell(int row, int col, int value) throws InvalidValueException
+    public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound)
+            throws InvalidValueException
     {
         try
         {
             row -= 1;
             col -= 1;
             LegalValues val = LegalValues.from(value);
-            sudoku[row][col].setSolution(val, row, col, null);
+            sudoku[row][col].setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
             sudoku[row][col].isInput = true;
             sudoku[row][col].candidates.clear();
             setSaved(false);
@@ -204,7 +205,8 @@ public class Values
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public SolutionProgress eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution)
+    public SolutionProgress eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution,
+            boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         if (val == null || sudoku[row][col].candidates.contains(val))
@@ -215,13 +217,13 @@ public class Values
                 sudoku[row][col].candidates.remove(val);
                 for (CandidatesListener listener : candidatesListeners)
                 {
-                    listener.candidatesUpdated(row, col, val);
+                    listener.candidatesUpdated(row, col, val, runsInUiThread);
                 }
             }
             setSaved(false);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(isSaved());
+                listener.savedUpdated(isSaved(), runsInUiThread);
             }
             if (sudoku[row][col].candidates.size() == 1)
             {
@@ -232,9 +234,11 @@ public class Values
                     sudoku[row][col].isInput = false;
                     sudoku[row][col].candidates.clear();
                     // Must be the last thing because the thread could end if step by step mode
-                    sudoku[row][col].setSolution(solution, row, col, solutionListeners);
+                    sudoku[row][col].setSolution(solution, row, col, solutionListeners, runsInUiThread,
+                            markLastSolutionFound);
                 }
-                reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(), alsoSetSolution);
+                reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(), alsoSetSolution,
+                        runsInUiThread, markLastSolutionFound);
             }
         }
         return (retVal);
@@ -261,7 +265,8 @@ public class Values
 
     // remove from the value just set in the given cell the list of candidates from
     // all influenced cells
-    public void updateCandidateList(int row, int col, LegalValues val)
+    public void updateCandidateList(int row, int col, LegalValues val, boolean runsInUiThread,
+            boolean markLastSolutionFound)
     {
         if (sudoku[row][col].getSolution() != null)
         { // First undo the value restrictions due to the previous value, but only where
@@ -300,7 +305,7 @@ public class Values
         }
         if (val != null)
         {
-            reduceInfluencedCellCandidates(row, col, val, false);
+            reduceInfluencedCellCandidates(row, col, val, false, runsInUiThread, markLastSolutionFound);
         }
     }
 
@@ -354,14 +359,15 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    void reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution)
+    void reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution,
+            boolean runsInUiThread, boolean markLastSolutionFound)
     {
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
             if (sudoku[rowInCol][col].candidates.contains(val))
             {
-                eliminateCandidate(rowInCol, col, val, alsoSetSolution);
+                eliminateCandidate(rowInCol, col, val, alsoSetSolution, runsInUiThread, markLastSolutionFound);
                 // sudoku[rowInCol][col].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -374,7 +380,7 @@ public class Values
         {
             if (sudoku[row][colInRow].candidates.contains(val))
             {
-                eliminateCandidate(row, colInRow, val, alsoSetSolution);
+                eliminateCandidate(row, colInRow, val, alsoSetSolution, runsInUiThread, markLastSolutionFound);
                 // sudoku[row][colInRow].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -391,7 +397,8 @@ public class Values
             {
                 if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
                 {
-                    eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution);
+                    eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution, runsInUiThread,
+                            markLastSolutionFound);
                     // sudoku[rowInBlock][colInBlock].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
                     // {
@@ -460,7 +467,7 @@ public class Values
                                     int value = Integer.parseInt(content.getTextContent());
                                     int col = Integer.parseInt(((Element) content).getAttribute(COL));
                                     int row = Integer.parseInt(((Element) content).getAttribute(ROW));
-                                    initCell(row, col, value);
+                                    initCell(row, col, value, false, false);
                                 }
                                 catch (InvalidValueException ex)
                                 {
@@ -480,7 +487,7 @@ public class Values
             setSaved(true);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(isSaved());
+                listener.savedUpdated(isSaved(), true);
             }
         }
     }
@@ -665,7 +672,7 @@ public class Values
             setSaved(true);
             for (SavedListener listener : savedListeners)
             {
-                listener.savedUpdated(isSaved());
+                listener.savedUpdated(isSaved(), true);
             }
             /*
              * new XmlAdapter(new FileOutputStream(fileName), new OutputFormat() { {
@@ -704,14 +711,15 @@ class SingleCellValue
 {
     private LegalValues solution = null;
 
-    public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners)
+    public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,
+            boolean runsInUiThread, boolean markLastSolutionFound)
     {
         solution = val;
         if (solutionListeners != null)
         {
             for (SolutionListener listener : solutionListeners)
             {
-                listener.solutionUpdated(row, col);
+                listener.solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
             }
         }
     }
