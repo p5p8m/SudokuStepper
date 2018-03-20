@@ -126,6 +126,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         finally
         {
             app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn));
+            app.setSolvingThread(null);
             System.out.println("Leaving Solving thread");
         }
     }

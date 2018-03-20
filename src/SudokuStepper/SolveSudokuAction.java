@@ -26,6 +26,7 @@ public class SolveSudokuAction extends SudokuAction
             app.setState(AppState.SOLVING);
             SolveAlgorithm alg = new SolveAlgorithm(app, "Solution Thred", null);
             Thread solutionThread = new Thread(alg);
+            app.setSolvingThread(solutionThread);
             solutionThread.start();
         }
         catch (Exception ex)

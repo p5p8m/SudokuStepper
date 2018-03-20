@@ -47,15 +47,22 @@ import com.ibm.icu.impl.duration.TimeUnit;
 public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener
 {
-    private Action           action;
-    private Values           mySudoku              = null;
+    private Action  action;
+    private Values  mySudoku            = null;
     // remember the last candidate whose status was changed
-    private Text             lastUpdatedCandText   = null;
-    private Font             solutionFont          = null;                 // SWTResourceManager.getFont("Segoe UI",
-                                                                           // 30,
-                                                                           // SWT.BOLD);
+    private Text    lastUpdatedCandText = null;
+    private Font    solutionFont        = null; // SWTResourceManager.getFont("Segoe UI",
+                                                // 30,
+                                                // SWT.BOLD);
     // null means: image by image, 0 means no pause
-    private Integer          slideShowPause        = null;
+    private Integer slideShowPause      = null;
+    private Thread  solvingThread       = null;
+
+    void setSolvingThread(Thread solvingTh)
+    {
+        solvingThread = solvingTh;
+    }
+
     // private Integer previousSlideShowPause = null;
     private Font             solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI", 8,
                                                                            // SWT.NORMAL);
@@ -541,7 +548,13 @@ public class AppMain extends ApplicationWindow
             public void widgetSelected(SelectionEvent e)
             {
                 System.out.println("Pressed Next");
-                solveSudokuAction.run();
+                if (solvingThread != null)
+                {
+                    synchronized (solvingThread)
+                    {
+                        solvingThread.notify();
+                    }
+                }
             }
         });
         FormData fd_btnNext = new FormData();
@@ -1316,22 +1329,28 @@ public class AppMain extends ApplicationWindow
         }
         if (!runsInUiThread && slideShowEnabled)
         {
-            if (slideShowPause == null)
-            { // Step by step
-              // End thread
-                Thread.currentThread().interrupt();
-            }
-            else if (slideShowPause > 0)
+            try
             {
-                try
+                if (slideShowPause == null)
+                { // Step by step
+                  // End thread
+                    synchronized (solvingThread)
+                    {
+                        if (solvingThread != null)
+                        {
+                            solvingThread.wait();
+                        }
+                    }
+                }
+                else if (slideShowPause > 0)
                 {
                     // Thread.sleep(slideShowPause);
                     Thread.sleep(slideShowPause * 1000);
                 }
-                catch (InterruptedException ex)
-                {
-                    System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
-                }
+            }
+            catch (InterruptedException ex)
+            {
+                System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
             }
         }
     }
