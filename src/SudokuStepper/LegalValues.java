@@ -32,4 +32,9 @@ public enum LegalValues
     {
         return (val);
     }
+    // public Object clone() throws CloneNotSupportedException
+    // {
+    // LegalValues.from(value)
+    // return (super.clone());
+    // }
 }

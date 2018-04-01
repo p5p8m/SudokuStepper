@@ -3,6 +3,7 @@ package SudokuStepper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.*;
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +86,7 @@ public class Values
 
     public static final int               DIMENSION                = AppMain.RECTLENGTH * AppMain.RECTLENGTH;
 
-    private SingleCellValue[][]           sudoku                   = new SingleCellValue[DIMENSION][DIMENSION];
+    private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
@@ -117,6 +118,41 @@ public class Values
         return (retVal);
     }
 
+    public SolutionProgress addBifurcationNClone(int row, int col) throws CloneNotSupportedException
+    {
+        SolutionProgress retVal = SolutionProgress.NONE;
+        Tentative oldSudoku = sudokuCands.peek();
+        LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(row, col);
+        Tentative newSudoku = (Tentative) oldSudoku.clone();
+        sudokuCands.push(newSudoku);
+        retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
+        return (retVal);
+    }
+
+    public boolean isRollbackPossible()
+    {
+        return (sudokuCands.size() > 1);
+    }
+
+    public SolutionProgress bifurqueOnceMore() throws CloneNotSupportedException
+    {
+        SolutionProgress retVal = SolutionProgress.NONE;
+        if (sudokuCands.size() > 1)
+        {
+            sudokuCands.pop();
+            Tentative oldSudoku = sudokuCands.peek();
+            Bifurcation nextTry = oldSudoku.getNextTry();
+            if (nextTry != null)
+            {
+                Tentative newSudoku = (Tentative) oldSudoku.clone();
+                sudokuCands.push(newSudoku);
+                retVal = eliminateCandidate(nextTry.getRow(), nextTry.getCol(), nextTry.getNextTry(), true, false,
+                        true);
+            }
+        }
+        return (retVal);
+    }
+
     public void setName(String input)
     {
         if (input == null)
@@ -127,6 +163,11 @@ public class Values
         {
             sudokuName = input.trim();
         }
+    }
+
+    public SingleCellValue[][] getSudoku()
+    {
+        return (sudokuCands.peek().getSudoku());
     }
 
     public String getInputFile()
@@ -141,29 +182,31 @@ public class Values
 
     public SingleCellValue getCell(int row, int col)
     {
-        return (sudoku[row][col]);
+        return (getSudoku()[row][col]);
     }
 
     public void resetCell(int row, int col)
     {
-        sudoku[row][col] = new SingleCellValue();
+        getSudoku()[row][col] = new SingleCellValue();
     }
 
     public Values()
     {
+        sudokuCands.push(new Tentative());
         reset();
     }
 
-    public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound)
-            throws InvalidValueException
+    public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound,
+            boolean isAnInput) throws InvalidValueException
     {
         try
         {
             row -= 1;
             col -= 1;
             LegalValues val = LegalValues.from(value);
+            SingleCellValue[][] sudoku = getSudoku();
             sudoku[row][col].setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
-            sudoku[row][col].isInput = true;
+            sudoku[row][col].isInput = isAnInput;
             sudoku[row][col].candidates.clear();
             setSaved(false);
         }
@@ -209,6 +252,7 @@ public class Values
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
+        SingleCellValue[][] sudoku = getSudoku();
         if (val == null || sudoku[row][col].candidates.contains(val))
         {
             retVal = SolutionProgress.CANDIDATES;
@@ -268,6 +312,7 @@ public class Values
     public void updateCandidateList(int row, int col, LegalValues val, boolean runsInUiThread,
             boolean markLastSolutionFound)
     {
+        SingleCellValue[][] sudoku = getSudoku();
         if (sudoku[row][col].getSolution() != null)
         { // First undo the value restrictions due to the previous value, but only where
           // not another cell continues justifying them
@@ -314,6 +359,7 @@ public class Values
     private boolean isValueACandidate(int row, int col, LegalValues val)
     {
         boolean retVal = true;
+        SingleCellValue[][] sudoku = getSudoku();
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
@@ -362,6 +408,7 @@ public class Values
     void reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
+        SingleCellValue[][] sudoku = getSudoku();
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
@@ -411,6 +458,7 @@ public class Values
 
     public void reset()
     {
+        SingleCellValue[][] sudoku = getSudoku();
         for (int row = 0; row < DIMENSION; row++)
         {
             for (int col = 0; col < DIMENSION; col++)
@@ -429,7 +477,7 @@ public class Values
     private static String COL            = "col";
     private static String SUDOKUNAME     = "name";
 
-    public void read(String fromFile)
+    public void read(String fromFile, boolean alsoReadSolution)
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
     {
         reset();
@@ -446,40 +494,51 @@ public class Values
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
             sudokuName = doc.getDocumentElement().getAttribute(SUDOKUNAME);
             NodeList initialContents = doc.getElementsByTagName(INITIAL); // Only one expected
-            for (int initInd = 0; initInd < initialContents.getLength(); initInd++)
+            NodeList solutionContents = doc.getElementsByTagName(SOLUTION); // Only one expected
+            List<NodeList> allContents = new ArrayList<NodeList>();
+            allContents.add(initialContents);
+            if (alsoReadSolution)
             {
-                if (initialContents.item(initInd).getNodeType() == Node.ELEMENT_NODE)
+                allContents.add(solutionContents);
+            }
+            for (NodeList allContent : allContents)
+            {
+                for (int initInd = 0; initInd < allContent.getLength(); initInd++)
                 {
-                    Element initialContent = (Element) initialContents.item(initInd);
-                    if (initialContent != null)
+                    if (allContent.item(initInd).getNodeType() == Node.ELEMENT_NODE)
                     {
-                        NodeList contents = initialContent.getChildNodes();
-                        for (int ind = 0; ind < contents.getLength(); ind++)
+                        Element xmlContent = (Element) allContent.item(initInd);
+                        if (xmlContent != null)
                         {
-                            Node content = contents.item(ind);
-                            Boolean b1 = content.getNodeType() == Node.ELEMENT_NODE;
-                            Boolean b2 = content.getNodeName() == CONTENT;
-                            // System.out.println("Tests: " + b1 + "/" + b2 + "/" + contents.getLength());
-                            if (content.getNodeType() == Node.ELEMENT_NODE && content.getNodeName() == CONTENT)
+                            NodeList contents = xmlContent.getChildNodes();
+                            for (int ind = 0; ind < contents.getLength(); ind++)
                             {
-                                try
+                                Node content = contents.item(ind);
+                                Boolean b1 = content.getNodeType() == Node.ELEMENT_NODE;
+                                Boolean b2 = content.getNodeName() == CONTENT;
+                                // System.out.println("Tests: " + b1 + "/" + b2 + "/" + contents.getLength());
+                                if (content.getNodeType() == Node.ELEMENT_NODE && content.getNodeName() == CONTENT)
                                 {
-                                    int value = Integer.parseInt(content.getTextContent());
-                                    int col = Integer.parseInt(((Element) content).getAttribute(COL));
-                                    int row = Integer.parseInt(((Element) content).getAttribute(ROW));
-                                    initCell(row, col, value, false, false);
-                                }
-                                catch (InvalidValueException ex)
-                                {
-                                    MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
-                                    errorBox.setMessage("Invalid value: " + content.getNodeValue() + " in row: "
-                                            + ((Element) content).getAttribute(ROW) + ", column: "
-                                            + ((Element) content).getAttribute(COL) + ". " + ex.getLocalizedMessage());
-                                    errorBox.open();
+                                    try
+                                    {
+                                        int value = Integer.parseInt(content.getTextContent());
+                                        int col = Integer.parseInt(((Element) content).getAttribute(COL));
+                                        int row = Integer.parseInt(((Element) content).getAttribute(ROW));
+                                        initCell(row, col, value, false, false, allContent == initialContents);
+                                    }
+                                    catch (InvalidValueException ex)
+                                    {
+                                        MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                                        errorBox.setMessage("Invalid value: " + content.getNodeValue() + " in row: "
+                                                + ((Element) content).getAttribute(ROW) + ", column: "
+                                                + ((Element) content).getAttribute(COL) + ". "
+                                                + ex.getLocalizedMessage());
+                                        errorBox.open();
+                                    }
                                 }
                             }
+                            break;
                         }
-                        break;
                     }
                 }
             }
@@ -578,7 +637,7 @@ public class Values
 
     int getNumberOfSolutions()
     {
-        Stream<? super SingleCellValue> stream = Arrays.stream(this.sudoku).flatMap(x -> Arrays.stream(x));
+        Stream<? super SingleCellValue> stream = Arrays.stream(this.getSudoku()).flatMap(x -> Arrays.stream(x));
         long retVal = stream.filter(x -> ((SingleCellValue) x).getSolution() != null).count();
         return ((int) retVal);
     }
@@ -648,6 +707,7 @@ public class Values
             rootElement.appendChild(solutionElt);
             Element[] elts =
             { initialElt, solutionElt };
+            SingleCellValue[][] sudoku = getSudoku();
             for (Element elt : elts)
             {
                 for (int row = 0; row < DIMENSION; row++)
@@ -707,6 +767,98 @@ public class Values
 
 }
 
+class Tentative
+{
+    private SingleCellValue[][] sudoku      = new SingleCellValue[Values.DIMENSION][Values.DIMENSION];
+    private Bifurcation         bifurcation = null;
+
+    public SingleCellValue[][] getSudoku()
+    {
+        return (sudoku);
+    }
+
+    public Bifurcation getNextTry()
+    {
+        Bifurcation retVal = null;
+        int numPossibleTries = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates.size();
+        int numPrevTries = bifurcation.getNumPreviousTries();
+        if (numPrevTries < numPossibleTries)
+        {
+            LegalValues toBeEliminatedVal = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates
+                    .get(numPrevTries);
+            retVal = bifurcation.addNewTry(toBeEliminatedVal);
+        }
+        return retVal;
+    }
+
+    public LegalValues setBifurcation(int row, int col)
+    {
+        LegalValues eliminatedVal = sudoku[row][col].candidates.get(0);
+        bifurcation = new Bifurcation(row, col, eliminatedVal);
+        return (eliminatedVal);
+    }
+
+    public Object clone() throws CloneNotSupportedException
+    {
+        Tentative newBif = (Tentative) super.clone();
+        System.arraycopy(this.sudoku, 0, sudoku, 0, Values.DIMENSION);
+        for (int row = 0; row < Values.DIMENSION; row++)
+        {
+            System.arraycopy(this.sudoku[row], 0, sudoku[row], 0, Values.DIMENSION);
+            for (int col = 0; col < Values.DIMENSION; col++)
+            {
+                sudoku[row][col] = (SingleCellValue) (this.sudoku[row][col].clone());
+            }
+        }
+        return newBif;
+    }
+}
+
+class Bifurcation
+{
+    private int               rowInt;
+    private int               colInt;
+    // The last choice in the list shows how to come from the (n-1)-th sudoku (to
+    // which this object is attached) to the n-th sudoku in the stack
+    private List<LegalValues> choices = new ArrayList<LegalValues>();
+
+    public Bifurcation(int row, int col, LegalValues val)
+    {
+        rowInt = row;
+        colInt = col;
+        choices.add(val);
+    }
+
+    public LegalValues getNextTry()
+    {
+        return (this.choices.get(choices.size() - 1));
+    }
+
+    public Bifurcation addNewTry(LegalValues toBeEliminatedVal)
+    {
+        Bifurcation retVal = this;
+        retVal.choices.add(toBeEliminatedVal);
+        return retVal;
+    }
+
+    public int getNumPreviousTries()
+    {
+        return choices.size();
+    }
+
+    public int getCol()
+    {
+        // TODO Auto-generated method stub
+        return colInt;
+    }
+
+    public int getRow()
+    {
+        // TODO Auto-generated method stub
+        return rowInt;
+    }
+}
+
 class SingleCellValue
 {
     private LegalValues solution = null;
@@ -722,6 +874,17 @@ class SingleCellValue
                 listener.solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
             }
         }
+    }
+
+    public Object clone() throws CloneNotSupportedException
+    {
+        SingleCellValue newVal = (SingleCellValue) super.clone();
+        this.candidates = new ArrayList<LegalValues>(candidates.size());
+        for (LegalValues val : candidates)
+        {
+            candidates.add(LegalValues.from(val.val()));
+        }
+        return newVal;
     }
 
     public LegalValues getSolution()

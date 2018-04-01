@@ -23,14 +23,17 @@ import org.eclipse.swt.widgets.Shell;
  * @author Pascal
  *
  */
-public class OpenSudokuAction extends SudokuAction
+public abstract class OpenSudokuAction extends SudokuAction
 {
     String fileFilterPath = "F:/jdk1.5";
 
-    public OpenSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
+    public OpenSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution)
     {
         super(appMain, text, acceleratorKey);
+        alsoReadSolution = alsoGetSolution;
     }
+
+    private boolean alsoReadSolution = false;
 
     @Override
     public void run()
@@ -68,7 +71,7 @@ public class OpenSudokuAction extends SudokuAction
                     // add check if previous sudoku is saved
                     app.setState(AppState.OPENING);
                     app.setSudokuPb(new Values());
-                    app.getSudokuPb().read(fileToOpen);
+                    app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                     app.updateSudokuFields(false, true, false);
                 }
                 else

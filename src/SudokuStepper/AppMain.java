@@ -923,7 +923,10 @@ public class AppMain extends ApplicationWindow
 
     private Action renameSudokuAction          = new RenameSudokuAction(this, "&Rename", SWT.CTRL + KeyEvent.VK_R);;
     private Action newSudokuAction             = new NewSudokuAction(this, "&New", SWT.CTRL + KeyEvent.VK_N);
-    private Action openSudokuAction            = new OpenSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O);
+    private Action openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O,
+            false);
+    private Action openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
+            SWT.CTRL + KeyEvent.VK_L, true);
     private Action saveSudokuAction            = new SaveSudokuAction(this, "&Save", SWT.CTRL + KeyEvent.VK_S);
     private Action saveAsSudokuAction          = new SaveAsSudokuAction(this, "Save &As", SWT.CTRL + KeyEvent.VK_A);
     private Action toggleSlideShowSudokuAction = new ToggleSlideShowSudokuAction(this, "S&lide Show On/Off",
@@ -957,59 +960,33 @@ public class AppMain extends ApplicationWindow
         MenuManager fileMenuMgr = new MenuManager("File");
         fileMenuMgr.setVisible(true);
         menuMgr.add(fileMenuMgr);
-        // MenuManager fileNewMgr = new MenuManager("New1");
-        // fileNewMgr.setVisible(true);
-        // fileMenuMgr.add(fileNewMgr);
         fileMenuMgr.add(newSudokuAction);
-        // MenuManager fileOpenMgr = new MenuManager("Open1");
-        // fileOpenMgr.setVisible(true);
-        // fileMenuMgr.add(fileOpenMgr);
-        fileMenuMgr.add(openSudokuAction);
-        // MenuManager fileSaveMgr = new MenuManager("Save1");
-        // fileSaveMgr.setVisible(true);
-        // fileMenuMgr.add(fileSaveMgr);
+        fileMenuMgr.add(openProblemSudokuAction);
+        fileMenuMgr.add(openSolutionSudokuAction);
         fileMenuMgr.add(saveSudokuAction);
         saveSudokuAction.setEnabled(false);
-        // MenuManager fileSaveAsMgr = new MenuManager("Save As1");
-        // fileSaveAsMgr.setVisible(true);
-        // fileMenuMgr.add(fileSaveAsMgr);
         fileMenuMgr.add(saveAsSudokuAction);
         saveAsSudokuAction.setEnabled(false);
-        // MenuManager fileExitMgr = new MenuManager("Exit1");
-        // fileExitMgr.setVisible(true);
-        // fileMenuMgr.add(fileExitMgr);
         fileMenuMgr.add(exitSudokuAction);
         exitSudokuAction.setEnabled(true);
 
         MenuManager actionMenuMgr = new MenuManager("Action");
         actionMenuMgr.setVisible(true);
         menuMgr.add(actionMenuMgr);
-        // MenuManager freezeSolveMgr = new MenuManager("Freeze1");
-        // freezeSolveMgr.setVisible(true);
-        // actionMenuMgr.add(freezeSolveMgr);
         actionMenuMgr.add(freezeSudokuAction);
         setFreezeEnabled(false);
 
         actionMenuMgr.add(toggleSlideShowSudokuAction);
         toggleSlideShowSudokuAction.setEnabled(false);
-        // MenuManager actionSolveMgr = new MenuManager("Solve1");
-        // actionSolveMgr.setVisible(true);
-        // actionMenuMgr.add(actionSolveMgr);
         actionMenuMgr.add(solveSudokuAction);
         setSolveEnabled(false);
 
-        // MenuManager actionRenameMgr = new MenuManager("Rename1");
-        // actionRenameMgr.setVisible(true);
-        // actionMenuMgr.add(actionRenameMgr);
         actionMenuMgr.add(renameSudokuAction);
         renameSudokuAction.setEnabled(false);
 
         MenuManager helpMenuMgr = new MenuManager("Help");
         helpMenuMgr.setVisible(true);
         menuMgr.add(helpMenuMgr);
-        // MenuManager helpAboutMgr = new MenuManager("About1");
-        // helpAboutMgr.setVisible(true);
-        // helpMenuMgr.add(helpAboutMgr);
         helpMenuMgr.add(aboutSudokuAction);
 
         return menuMgr;
