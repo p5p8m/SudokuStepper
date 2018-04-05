@@ -45,7 +45,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import com.ibm.icu.impl.duration.TimeUnit;
 
 public class AppMain extends ApplicationWindow
-        implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener
+        implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
 {
     private Action  action;
     private Values  mySudoku            = null;
@@ -243,6 +243,7 @@ public class AppMain extends ApplicationWindow
             }
             mySudoku.addCandidatesListener(this);
             mySudoku.addCandidatesResetListener(this);
+            mySudoku.addRollbackListener(this);
             mySudoku.addSolutionListener(this);
             mySudoku.addSavedListener(this);
         }
@@ -1113,14 +1114,15 @@ public class AppMain extends ApplicationWindow
                     uiField.solution.setText(StringUtils.EMPTY);
                     uiField.input.setVisible(false);
                     Boolean visible = true;
+                    String candidate = null;
                     for (int ind = 0; ind < RECTLENGTH * RECTLENGTH; ind++)
                     {
                         Text cand = uiField.candidates.get(ind);
-                        // String candidate = cand.getText();
-                        // Boolean visible = candidate != null && mySudoku.getCell(row, col).candidates
-                        // .contains(LegalValues.from(Integer.parseInt(candidate)));
                         if (!keepCandidatesVisibility)
                         {
+                            candidate = cand.getText();
+                            visible = candidate != null && mySudoku.getCell(row, col).candidates
+                                    .contains(LegalValues.from(Integer.parseInt(candidate)));
                             cand.setVisible(visible);
                             cand.getParent().setVisible(visible);
                         }
@@ -1232,6 +1234,11 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+    }
+
+    public void rollbackSudoku()
+    {
+        updateSudokuFields(false, false, false);
     }
 
     public void savedUpdated(boolean saved, boolean runsInUiThread)

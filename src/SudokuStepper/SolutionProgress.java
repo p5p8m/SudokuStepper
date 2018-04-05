@@ -25,7 +25,8 @@ public enum SolutionProgress
         {
             SolutionProgress.vals = SolutionProgress.values();
         }
-        return SolutionProgress.vals[i];
+        SolutionProgress retVal = SolutionProgress.vals[i];
+        return (retVal);
     }
 
     // public int val()
@@ -34,6 +35,8 @@ public enum SolutionProgress
     // }
     public SolutionProgress combineWith(SolutionProgress newVal)
     {
-        return SolutionProgress.from(Math.max(this.val, newVal.val));
+        int newValInt = Math.max(this.val, newVal.val);
+        SolutionProgress retVal = SolutionProgress.from(newValInt);
+        return (retVal);
     }
 }

@@ -64,6 +64,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 if (errorDetected && sudoku.isRollbackPossible())
                 {
                     updated = rollbackAndTryNext(sudoku);
+                    errorDetected = !sudoku.areContentsLegal().isEmpty();
                 }
                 newNumOfSolutions = sudoku.getNumberOfSolutions();
                 loopCount++;
@@ -73,8 +74,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 System.out.println("oldNumOfSolutions: " + oldNumOfSolutions);
                 System.out.println("errorDetected: " + errorDetected);
             }
-            while ((updated != SolutionProgress.NONE || (newNumOfSolutions < Values.DIMENSION * Values.DIMENSION
-                    && oldNumOfSolutions < newNumOfSolutions)) && !errorDetected
+            while (((updated != SolutionProgress.NONE || (newNumOfSolutions < Values.DIMENSION * Values.DIMENSION
+                    && oldNumOfSolutions < newNumOfSolutions)) && !errorDetected)
+                    && !(newNumOfSolutions == Values.DIMENSION * Values.DIMENSION && !errorDetected)
             /* && (!slideShowEnabled || slideShowPause != null) */);
             System.out.println("Leaved loop");
             // app.getDisplay().asyncExec(new Runnable()
@@ -252,20 +254,11 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
 
     private SolutionProgress rollbackAndTryNext(Values sudoku)
     {
-        SolutionProgress retVal = SolutionProgress.NONE;
-        try
-        {
-            retVal = sudoku.bifurqueOnceMore();
-        }
-        catch (CloneNotSupportedException ex)
-        {
-            System.out.println("Could not rollback the sudoku: " + ex.getMessage());
-            retVal = SolutionProgress.NONE;
-        }
+        SolutionProgress retVal = sudoku.bifurqueOnceMore();
         return (retVal);
     }
 
-    private SolutionProgress useTryAndError(Values sudoku) throws CloneNotSupportedException
+    private SolutionProgress useTryAndError(Values sudoku)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         try
@@ -299,10 +292,11 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             if (rowMarked != null && colMarked != null)
             {
                 // clone and try the first candidate
-                retVal = sudoku.addBifurcationNClone(rowMarked, colMarked);
+                SolutionProgress newUpdated = sudoku.addBifurcationNClone(rowMarked, colMarked);
+                retVal = retVal.combineWith(newUpdated);
             }
         }
-        catch (CloneNotSupportedException ex)
+        catch (Exception ex)
         {
             System.out.println("Could not clone the sudoku: " + ex.getMessage());
             retVal = SolutionProgress.NONE;
@@ -551,12 +545,15 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 {
                                     SolutionProgress nowUpdated = sudoku.eliminateCandidate(row, cols.get(0), otherVal,
                                             true, false, true);
+                                    updated = updated.combineWith(nowUpdated);
                                     // next block superfluous?
                                     if (nowUpdated != SolutionProgress.NONE
                                             && sudoku.getCell(row, cols.get(0)).candidates.isEmpty())
                                     {
-                                        sudoku.reduceInfluencedCellCandidates(row, cols.get(0),
+                                        nowUpdated = sudoku.reduceInfluencedCellCandidates(row, cols.get(0),
                                                 sudoku.getCell(row, cols.get(0)).getSolution(), true, false, true);
+                                        updated = updated.combineWith(nowUpdated);
+
                                     }
                                     updated = updated.combineWith(nowUpdated);
                                 }
@@ -604,8 +601,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                     if (nowUpdated != SolutionProgress.NONE
                                             && sudoku.getCell(rows.get(0), col).candidates.isEmpty())
                                     {
-                                        sudoku.reduceInfluencedCellCandidates(rows.get(0), col,
+                                        nowUpdated = sudoku.reduceInfluencedCellCandidates(rows.get(0), col,
                                                 sudoku.getCell(rows.get(0), col).getSolution(), true, false, true);
+                                        updated = updated.combineWith(nowUpdated);
                                     }
                                     updated = updated.combineWith(nowUpdated);
                                 }
@@ -666,9 +664,11 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                 && sudoku.getCell(cells.get(0)[0], cells.get(0)[1]).candidates
                                                         .isEmpty())
                                         {
-                                            sudoku.reduceInfluencedCellCandidates(cells.get(0)[0], cells.get(0)[1],
+                                            nowUpdated = sudoku.reduceInfluencedCellCandidates(cells.get(0)[0],
+                                                    cells.get(0)[1],
                                                     sudoku.getCell(cells.get(0)[0], cells.get(0)[1]).getSolution(),
                                                     true, false, true);
+                                            updated = updated.combineWith(nowUpdated);
                                         }
                                         updated = updated.combineWith(nowUpdated);
                                     }

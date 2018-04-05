@@ -57,9 +57,9 @@ interface CandidatesResetListener
     void candidatesReset();
 }
 
-interface SolutionListener
+interface RollbackListener
 {
-    void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound);
+    void rollbackSudoku();
 }
 
 interface SavedListener
@@ -94,6 +94,7 @@ public class Values
     private List<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
     private List<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
     private List<CandidatesResetListener> candidatesResetListeners = new ArrayList<CandidatesResetListener>();
+    private List<RollbackListener>        rollbackListeners        = new ArrayList<RollbackListener>();
     private List<SavedListener>           savedListeners           = new ArrayList<SavedListener>();
 
     // private List<NewStartListener> newStartListeners = new
@@ -118,12 +119,37 @@ public class Values
         return (retVal);
     }
 
-    public SolutionProgress addBifurcationNClone(int row, int col) throws CloneNotSupportedException
+    public SolutionProgress addBifurcationNClone(int row, int col)
     {
+        // For debugging
+        try
+        {
+            Values pb = new Values();
+            Tentative oldSudoku = pb.sudokuCands.peek();
+            oldSudoku.setBifurcation(0, 0);
+            oldSudoku.getSudoku()[1][1].setSolution(LegalValues.NINE, 1, 1, new ArrayList<SolutionListener>(), true,
+                    false);
+            Tentative newSudoku = new Tentative(oldSudoku);
+            pb.sudokuCands.push(newSudoku);
+            oldSudoku.getSudoku()[1][1].setSolution(LegalValues.ONE, 1, 1, new ArrayList<SolutionListener>(), true,
+                    false);
+            oldSudoku.getSudoku()[0][0].candidates.remove(8);
+            pb.sudokuCands.peek().getSudoku()[1][1].setSolution(LegalValues.TWO, 1, 1,
+                    new ArrayList<SolutionListener>(), true, false);
+            pb.sudokuCands.peek().getSudoku()[0][1].candidates.removeIf(x -> x == LegalValues.FIVE);
+            // System.out.println(System.identityHashCode(array[i]));
+        }
+        catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        // end of debugging section
         SolutionProgress retVal = SolutionProgress.NONE;
         Tentative oldSudoku = sudokuCands.peek();
+        Tentative newSudoku = new Tentative(oldSudoku);
         LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(row, col);
-        Tentative newSudoku = (Tentative) oldSudoku.clone();
         sudokuCands.push(newSudoku);
         retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
         return (retVal);
@@ -134,7 +160,7 @@ public class Values
         return (sudokuCands.size() > 1);
     }
 
-    public SolutionProgress bifurqueOnceMore() throws CloneNotSupportedException
+    public SolutionProgress bifurqueOnceMore()
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         if (sudokuCands.size() > 1)
@@ -144,8 +170,12 @@ public class Values
             Bifurcation nextTry = oldSudoku.getNextTry();
             if (nextTry != null)
             {
-                Tentative newSudoku = (Tentative) oldSudoku.clone();
+                Tentative newSudoku = new Tentative(oldSudoku);
                 sudokuCands.push(newSudoku);
+                for (RollbackListener listener : rollbackListeners)
+                {
+                    listener.rollbackSudoku();
+                }
                 retVal = eliminateCandidate(nextTry.getRow(), nextTry.getCol(), nextTry.getNextTry(), true, false,
                         true);
             }
@@ -231,6 +261,11 @@ public class Values
         candidatesResetListeners.add(listener);
     }
 
+    public void addRollbackListener(RollbackListener listener)
+    {
+        rollbackListeners.add(listener);
+    }
+
     public void addSavedListener(SavedListener listener)
     {
         savedListeners.add(listener);
@@ -255,7 +290,7 @@ public class Values
         SingleCellValue[][] sudoku = getSudoku();
         if (val == null || sudoku[row][col].candidates.contains(val))
         {
-            retVal = SolutionProgress.CANDIDATES;
+            retVal = retVal.combineWith(SolutionProgress.CANDIDATES);
             if (val != null)
             {
                 sudoku[row][col].candidates.remove(val);
@@ -274,15 +309,16 @@ public class Values
                 if (alsoSetSolution)
                 {
                     LegalValues solution = sudoku[row][col].candidates.get(0);
-                    retVal = SolutionProgress.SOLUTION;
+                    retVal = retVal.combineWith(SolutionProgress.SOLUTION);
                     sudoku[row][col].isInput = false;
                     sudoku[row][col].candidates.clear();
                     // Must be the last thing because the thread could end if step by step mode
                     sudoku[row][col].setSolution(solution, row, col, solutionListeners, runsInUiThread,
                             markLastSolutionFound);
                 }
-                reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(), alsoSetSolution,
-                        runsInUiThread, markLastSolutionFound);
+                SolutionProgress newUpdated = reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(),
+                        alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                retVal = retVal.combineWith(newUpdated);
             }
         }
         return (retVal);
@@ -405,16 +441,19 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    void reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution,
+    SolutionProgress reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
+        SolutionProgress retVal = SolutionProgress.NONE;
         SingleCellValue[][] sudoku = getSudoku();
         // Same column
         for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
         {
             if (sudoku[rowInCol][col].candidates.contains(val))
             {
-                eliminateCandidate(rowInCol, col, val, alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                SolutionProgress nowUpdated = eliminateCandidate(rowInCol, col, val, alsoSetSolution, runsInUiThread,
+                        markLastSolutionFound);
+                retVal = retVal.combineWith(nowUpdated);
                 // sudoku[rowInCol][col].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -427,7 +466,9 @@ public class Values
         {
             if (sudoku[row][colInRow].candidates.contains(val))
             {
-                eliminateCandidate(row, colInRow, val, alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                SolutionProgress nowUpdated = eliminateCandidate(row, colInRow, val, alsoSetSolution, runsInUiThread,
+                        markLastSolutionFound);
+                retVal = retVal.combineWith(nowUpdated);
                 // sudoku[row][colInRow].candidates.remove(val);
                 // for (CandidatesListener listener : candidatesListeners)
                 // {
@@ -444,8 +485,9 @@ public class Values
             {
                 if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
                 {
-                    eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution, runsInUiThread,
-                            markLastSolutionFound);
+                    SolutionProgress nowUpdated = eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution,
+                            runsInUiThread, markLastSolutionFound);
+                    retVal = retVal.combineWith(nowUpdated);
                     // sudoku[rowInBlock][colInBlock].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
                     // {
@@ -454,6 +496,7 @@ public class Values
                 }
             }
         }
+        return (retVal);
     }
 
     public void reset()
@@ -767,53 +810,6 @@ public class Values
 
 }
 
-class Tentative
-{
-    private SingleCellValue[][] sudoku      = new SingleCellValue[Values.DIMENSION][Values.DIMENSION];
-    private Bifurcation         bifurcation = null;
-
-    public SingleCellValue[][] getSudoku()
-    {
-        return (sudoku);
-    }
-
-    public Bifurcation getNextTry()
-    {
-        Bifurcation retVal = null;
-        int numPossibleTries = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates.size();
-        int numPrevTries = bifurcation.getNumPreviousTries();
-        if (numPrevTries < numPossibleTries)
-        {
-            LegalValues toBeEliminatedVal = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates
-                    .get(numPrevTries);
-            retVal = bifurcation.addNewTry(toBeEliminatedVal);
-        }
-        return retVal;
-    }
-
-    public LegalValues setBifurcation(int row, int col)
-    {
-        LegalValues eliminatedVal = sudoku[row][col].candidates.get(0);
-        bifurcation = new Bifurcation(row, col, eliminatedVal);
-        return (eliminatedVal);
-    }
-
-    public Object clone() throws CloneNotSupportedException
-    {
-        Tentative newBif = (Tentative) super.clone();
-        System.arraycopy(this.sudoku, 0, sudoku, 0, Values.DIMENSION);
-        for (int row = 0; row < Values.DIMENSION; row++)
-        {
-            System.arraycopy(this.sudoku[row], 0, sudoku[row], 0, Values.DIMENSION);
-            for (int col = 0; col < Values.DIMENSION; col++)
-            {
-                sudoku[row][col] = (SingleCellValue) (this.sudoku[row][col].clone());
-            }
-        }
-        return newBif;
-    }
-}
-
 class Bifurcation
 {
     private int               rowInt;
@@ -856,60 +852,5 @@ class Bifurcation
     {
         // TODO Auto-generated method stub
         return rowInt;
-    }
-}
-
-class SingleCellValue
-{
-    private LegalValues solution = null;
-
-    public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,
-            boolean runsInUiThread, boolean markLastSolutionFound)
-    {
-        solution = val;
-        if (solutionListeners != null)
-        {
-            for (SolutionListener listener : solutionListeners)
-            {
-                listener.solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
-            }
-        }
-    }
-
-    public Object clone() throws CloneNotSupportedException
-    {
-        SingleCellValue newVal = (SingleCellValue) super.clone();
-        this.candidates = new ArrayList<LegalValues>(candidates.size());
-        for (LegalValues val : candidates)
-        {
-            candidates.add(LegalValues.from(val.val()));
-        }
-        return newVal;
-    }
-
-    public LegalValues getSolution()
-    {
-        return (solution);
-    }
-
-    public boolean           isInput     = false;
-    public boolean           isAConflict = false;
-    public List<LegalValues> candidates  = new ArrayList<LegalValues>(Values.DIMENSION);
-
-    public SingleCellValue()
-    {
-        initCandidates();
-    }
-
-    /**
-     * Reinitialize the list of candidates to contain all legal values
-     */
-    void initCandidates()
-    {
-        candidates.clear();
-        for (LegalValues val : LegalValues.values())
-        {
-            candidates.add(val);
-        }
     }
 }
