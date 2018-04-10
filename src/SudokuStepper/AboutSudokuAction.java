@@ -18,7 +18,7 @@ public class AboutSudokuAction extends SudokuAction
 
     public AboutSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
-        super(appMain, "&About", KeyEvent.VK_A);
+        super(appMain, "&About", acceleratorKey);
     }
 
     @Override

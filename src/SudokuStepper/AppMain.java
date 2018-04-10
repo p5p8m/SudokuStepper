@@ -184,13 +184,26 @@ public class AppMain extends ApplicationWindow
 
     public void setState(AppState val)
     {
+        // Check old status before
+        AppState oldStatus = status;
         status = val;
         if (val == AppState.SOLVING || mySudoku == null)
         {
             setSolveEnabled(false);
+            if (btnNext != null)
+            {
+                btnNext.setEnabled(btnManual.isEnabled() && btnManual.getSelection());
+            }
         }
         else if (val == AppState.EMPTY && mySudoku != null)
         {
+            if (oldStatus == AppState.SOLVING)
+            {
+                if (btnNext != null)
+                {
+                    btnNext.setEnabled(false);
+                }
+            }
             setSolveEnabled(true);
         }
     }
@@ -542,7 +555,7 @@ public class AppMain extends ApplicationWindow
         btnManual.setLayoutData(fd_btnManual);
         btnManual.setText("Manual");
 
-        Button btnNext = new Button(groupSlide, SWT.NONE);
+        btnNext = new Button(groupSlide, SWT.NONE);
         btnNext.addSelectionListener(new SelectionAdapter()
         {
             @Override
@@ -737,7 +750,7 @@ public class AppMain extends ApplicationWindow
                     lblMinute.setEnabled(false);
                     lblCurrent.setEnabled(false);
                     slider.setEnabled(false);
-                    btnNext.setEnabled(true);
+                    btnNext.setEnabled(status == AppState.SOLVING);
                     slideShowPause = null;
                 }
             }
@@ -935,11 +948,13 @@ public class AppMain extends ApplicationWindow
     private Action solveSudokuAction           = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
     private Action exitSudokuAction            = new ExitSudokuAction(this, "&Exit", SWT.CTRL + KeyEvent.VK_E);
     private Action freezeSudokuAction          = new FreezeSudokuAction(this, "&Freeze", SWT.CTRL + KeyEvent.VK_F);
-    private Action aboutSudokuAction           = new AboutSudokuAction(this, "&About", KeyEvent.VK_A);
+    private Action aboutSudokuAction           = new AboutSudokuAction(this, "&About",
+            SWT.CTRL + SWT.SHIFT + KeyEvent.VK_A);
     private Button btnSolve                    = null;
     private Button btnFreeze                   = null;
     private Button btnSlideShow                = null;
     private Button btnAutomatic                = null;
+    private Button btnNext                     = null;
     private Button btnManual                   = null;
     private Group  groupSlide                  = null;
     private Group  grpSudokuBlocks             = null;
@@ -1091,7 +1106,7 @@ public class AppMain extends ApplicationWindow
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
-        setSolveEnabled(true);
+        setSolveEnabled(status != AppState.SOLVING);
         grpSudokuName.setVisible(false);
         ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
         txtName.setEditable(false);
@@ -1167,7 +1182,7 @@ public class AppMain extends ApplicationWindow
             errorBox.setMessage("There are illegal values in the sudoku");
             errorBox.open();
         }
-        setSolveEnabled(true);
+        setSolveEnabled(status != AppState.SOLVING);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
         condEnableSaveSudokuAction(mySudoku.isSaved());
         renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);

@@ -121,31 +121,34 @@ public class Values
 
     public SolutionProgress addBifurcationNClone(int row, int col)
     {
-        // For debugging
-        try
-        {
-            Values pb = new Values();
-            Tentative oldSudoku = pb.sudokuCands.peek();
-            oldSudoku.setBifurcation(0, 0);
-            oldSudoku.getSudoku()[1][1].setSolution(LegalValues.NINE, 1, 1, new ArrayList<SolutionListener>(), true,
-                    false);
-            Tentative newSudoku = new Tentative(oldSudoku);
-            pb.sudokuCands.push(newSudoku);
-            oldSudoku.getSudoku()[1][1].setSolution(LegalValues.ONE, 1, 1, new ArrayList<SolutionListener>(), true,
-                    false);
-            oldSudoku.getSudoku()[0][0].candidates.remove(8);
-            pb.sudokuCands.peek().getSudoku()[1][1].setSolution(LegalValues.TWO, 1, 1,
-                    new ArrayList<SolutionListener>(), true, false);
-            pb.sudokuCands.peek().getSudoku()[0][1].candidates.removeIf(x -> x == LegalValues.FIVE);
-            // System.out.println(System.identityHashCode(array[i]));
-        }
-        catch (Exception e)
-        {
-            // TODO Auto-generated catch block
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-        // end of debugging section
+        // // For debugging
+        // try
+        // {
+        // Values pb = new Values();
+        // Tentative oldSudoku = pb.sudokuCands.peek();
+        // oldSudoku.setBifurcation(0, 0);
+        // oldSudoku.getSudoku()[1][1].setSolution(LegalValues.NINE, 1, 1, new
+        // ArrayList<SolutionListener>(), true,
+        // false);
+        // Tentative newSudoku = new Tentative(oldSudoku);
+        // pb.sudokuCands.push(newSudoku);
+        // oldSudoku.getSudoku()[1][1].setSolution(LegalValues.ONE, 1, 1, new
+        // ArrayList<SolutionListener>(), true,
+        // false);
+        // oldSudoku.getSudoku()[0][0].candidates.remove(8);
+        // pb.sudokuCands.peek().getSudoku()[1][1].setSolution(LegalValues.TWO, 1, 1,
+        // new ArrayList<SolutionListener>(), true, false);
+        // pb.sudokuCands.peek().getSudoku()[0][1].candidates.removeIf(x -> x ==
+        // LegalValues.FIVE);
+        // // System.out.println(System.identityHashCode(array[i]));
+        // }
+        // catch (Exception e)
+        // {
+        // // TODO Auto-generated catch block
+        // System.out.println(e.getMessage());
+        // e.printStackTrace();
+        // }
+        // // end of debugging section
         SolutionProgress retVal = SolutionProgress.NONE;
         Tentative oldSudoku = sudokuCands.peek();
         Tentative newSudoku = new Tentative(oldSudoku);

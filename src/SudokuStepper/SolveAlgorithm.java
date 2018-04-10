@@ -328,7 +328,10 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                     sudoku.getCell(row, scndCol).candidates)
                                     && sudoku.getCell(row, col).candidates.size() == 2)
                             {
-                                for (LegalValues val : sudoku.getCell(row, col).candidates)
+                                // Make a deep copy to avoid problems when the list is modified whithin the loop
+                                List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                        sudoku.getCell(row, col).candidates);
+                                for (LegalValues val : locCandidates)
                                 {
                                     for (int cleanedCol = 0; cleanedCol < Values.DIMENSION; cleanedCol++)
                                     {
@@ -380,7 +383,10 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                     sudoku.getCell(scndRow, col).candidates)
                                     && sudoku.getCell(row, col).candidates.size() == 2)
                             {
-                                for (LegalValues val : sudoku.getCell(row, col).candidates)
+                                // Make a deep copy to avoid problems when the list is modified whithin the loop
+                                List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                        sudoku.getCell(row, col).candidates);
+                                for (LegalValues val : locCandidates)
                                 {
                                     for (int cleanedRow = 0; cleanedRow < Values.DIMENSION; cleanedRow++)
                                     {
@@ -449,8 +455,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                     sudoku.getCell(scndRowInBlock, scndColInBlock).candidates)
                                                     && sudoku.getCell(rowInBlock, colInBlock).candidates.size() == 2)
                                             {
-                                                for (LegalValues val : sudoku.getCell(rowInBlock,
-                                                        colInBlock).candidates)
+                                                List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                        sudoku.getCell(rowInBlock, colInBlock).candidates);
+                                                for (LegalValues val : locCandidates)
                                                 {
                                                     for (int cleanedRowInBlock = AppMain.RECTLENGTH
                                                             * rowBlock; cleanedRowInBlock < AppMain.RECTLENGTH
