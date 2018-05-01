@@ -153,6 +153,8 @@ public class Values
         Tentative oldSudoku = sudokuCands.peek();
         Tentative newSudoku = new Tentative(oldSudoku);
         LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(row, col);
+        System.out.println(
+                "Try and Error with row: " + row + ", col: " + col + ", eliminating value: " + toBeEliminatedVal);
         sudokuCands.push(newSudoku);
         retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
         return (retVal);
@@ -179,8 +181,12 @@ public class Values
                 {
                     listener.rollbackSudoku();
                 }
-                retVal = eliminateCandidate(nextTry.getRow(), nextTry.getCol(), nextTry.getNextTry(), true, false,
-                        true);
+                int row = nextTry.getRow();
+                int col = nextTry.getCol();
+                LegalValues toBeEliminatedVal = nextTry.getNextTry();
+                System.out.println("Try and Error rollback with row: " + row + ", col: " + col
+                        + ", now eliminating value: " + toBeEliminatedVal);
+                retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
             }
         }
         return (retVal);
@@ -722,7 +728,7 @@ public class Values
         }
         catch (IOException | URISyntaxException ex)
         {
-            System.out.println("Exception lookking for Schema: " + ex.getMessage());
+            System.out.println("Exception looking for Schema: " + ex.getMessage());
             MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
             errorBox.setMessage("Could not load Schema. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n"
                     + ex.toString());

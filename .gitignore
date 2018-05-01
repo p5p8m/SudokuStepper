@@ -24,3 +24,4 @@ hs_err_pid*
 *~
 SudokuStepper - New
 *.bak
+/target/
