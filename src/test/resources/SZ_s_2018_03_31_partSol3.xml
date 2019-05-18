@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<sudoku xmlns="http://www.example.org/SudokuStepper" name="SZ_s_2018_03_31">
+  <initial>
+    <content col="4" row="1">2</content>
+    <content col="6" row="1">9</content>
+    <content col="9" row="1">8</content>
+    <content col="3" row="2">8</content>
+    <content col="8" row="2">7</content>
+    <content col="9" row="2">4</content>
+    <content col="2" row="3">2</content>
+    <content col="3" row="3">3</content>
+    <content col="6" row="3">7</content>
+    <content col="4" row="4">6</content>
+    <content col="8" row="4">4</content>
+    <content col="1" row="5">7</content>
+    <content col="5" row="5">3</content>
+    <content col="9" row="5">1</content>
+    <content col="2" row="6">9</content>
+    <content col="6" row="6">2</content>
+    <content col="4" row="7">7</content>
+    <content col="7" row="7">5</content>
+    <content col="8" row="7">3</content>
+    <content col="1" row="8">2</content>
+    <content col="2" row="8">4</content>
+    <content col="7" row="8">1</content>
+    <content col="1" row="9">6</content>
+    <content col="4" row="9">8</content>
+    <content col="6" row="9">5</content>
+  </initial>
+  <solution>
+    <content col="2" row="1">7</content>
+    <content col="7" row="1">3</content>
+    <content col="1" row="2">9</content>
+    <content col="7" row="2">2</content>
+    <content col="5" row="3">8</content>
+    <content col="3" row="4">2</content>
+    <content col="6" row="4">1</content>
+    <content col="6" row="5">8</content>
+    <content col="8" row="5">2</content>
+    <content col="3" row="7">9</content>
+    <content col="5" row="7">2</content>
+    <content col="6" row="7">4</content>
+    <content col="9" row="7">6</content>
+    <content col="3" row="8">5</content>
+    <content col="8" row="8">8</content>
+    <content col="9" row="8">7</content>
+    <content col="2" row="9">3</content>
+    <content col="3" row="9">7</content>
+    <content col="5" row="9">1</content>
+    <content col="7" row="9">4</content>
+    <content col="8" row="9">9</content>
+    <content col="9" row="9">2</content>
+  </solution>
+</sudoku>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<sudoku xmlns="http://www.example.org/SudokuStepper" name="SZ_s_2018_03_10">
+  <initial>
+    <content col="1" row="1">8</content>
+    <content col="6" row="1">5</content>
+    <content col="9" row="1">7</content>
+    <content col="1" row="2">7</content>
+    <content col="2" row="2">5</content>
+    <content col="3" row="2">3</content>
+    <content col="2" row="3">2</content>
+    <content col="4" row="3">7</content>
+    <content col="5" row="3">8</content>
+    <content col="6" row="4">8</content>
+    <content col="8" row="4">9</content>
+    <content col="3" row="5">7</content>
+    <content col="5" row="5">3</content>
+    <content col="7" row="5">6</content>
+    <content col="2" row="6">3</content>
+    <content col="4" row="6">4</content>
+    <content col="5" row="7">9</content>
+    <content col="6" row="7">2</content>
+    <content col="8" row="7">5</content>
+    <content col="7" row="8">4</content>
+    <content col="8" row="8">3</content>
+    <content col="9" row="8">8</content>
+    <content col="1" row="9">6</content>
+    <content col="4" row="9">1</content>
+    <content col="9" row="9">2</content>
+  </initial>
+  <solution/>
+</sudoku>

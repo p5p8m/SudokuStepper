@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<sudoku xmlns="http://www.example.org/SudokuStepper" name="qwqw">
+  <initial>
+    <content col="1" row="1">2</content>
+  </initial>
+  <solution/>
+</sudoku>
