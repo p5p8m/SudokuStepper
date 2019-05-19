@@ -7,7 +7,7 @@ public class SingleCellValue
 {
     public boolean           isInput     = false;
     public boolean           isAConflict = false;
-    public List<LegalValues> candidates  = new ArrayList<LegalValues>(Values.DIMENSION);
+    public List<LegalValues> candidates  = new ArrayList<LegalValues>(AppMain.CANDIDATESNUMBER);
     private LegalValues      solution    = null;
 
     public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,

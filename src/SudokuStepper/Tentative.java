@@ -2,9 +2,9 @@ package SudokuStepper;
 
 import java.util.Arrays;
 
-public class Tentative
+public class Tentative // Contains the tentative solution for a complete sudoku samurai
 {
-    private SingleCellValue[][] sudoku      = new SingleCellValue[Values.DIMENSION][Values.DIMENSION];
+    private SingleCellValue[][] sudoku      = new SingleCellValue[AppMain.MAXROWS][AppMain.MAXCOLS];
     private Bifurcation         bifurcation = null;
 
     public SingleCellValue[][] getSudoku()
@@ -36,9 +36,9 @@ public class Tentative
     public Tentative(Tentative src)
     {
         bifurcation = null;
-        for (int row = 0; row < Values.DIMENSION; row++)
+        for (int row = 0; row < AppMain.MAXROWS; row++)
         {
-            for (int col = 0; col < Values.DIMENSION; col++)
+            for (int col = 0; col < AppMain.MAXCOLS; col++)
             {
                 sudoku[row][col] = new SingleCellValue(src.sudoku[row][col]);
             }

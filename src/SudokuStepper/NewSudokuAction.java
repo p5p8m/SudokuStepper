@@ -10,11 +10,16 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import SudokuStepper.Values.SudokuType;
+
 public class NewSudokuAction extends SudokuAction
 {
-    public NewSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
+    private SudokuType newSudokuType = SudokuType.SINGLE;
+
+    public NewSudokuAction(AppMain appMain, Values.SudokuType type, String text, Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
+        newSudokuType = type;
     }
 
     @Override
@@ -26,7 +31,7 @@ public class NewSudokuAction extends SudokuAction
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
-                app.setSudokuPb(new Values());
+                app.setSudokuPb(new Values(newSudokuType));
                 app.setState(AppState.CREATING);
                 app.updateSudokuFields(false, true, false);
                 app.initGuiForNew();

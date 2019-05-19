@@ -84,10 +84,19 @@ interface FreezeListener
 public class Values
 {
 
-    public static final int               DIMENSION                = AppMain.RECTLENGTH * AppMain.RECTLENGTH;
+    public enum SudokuType
+    {
+        SINGLE, SAMURAI
+    }
+
+    public static final int               DIMENSION1               = AppMain.CANDIDATESNUMBER;
+    public static final int               NUMBEROFCELLSTOBESOLVED  = AppMain.MAXCOLS * AppMain.MAXROWS;       // Will be
+                                                                                                              // modified
+                                                                                                              // later
 
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
+    private SudokuType                    sudokuType               = SudokuType.SINGLE;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
 
@@ -117,6 +126,11 @@ public class Values
             retVal = StringUtils.EMPTY;
         }
         return (retVal);
+    }
+
+    public SudokuType getType()
+    {
+        return (sudokuType);
     }
 
     public SolutionProgress addBifurcationNClone(int row, int col)
@@ -221,6 +235,8 @@ public class Values
 
     public SingleCellValue getCell(int row, int col)
     {
+        SingleCellValue[][] s = getSudoku();
+        SingleCellValue v = s[row][col];
         return (getSudoku()[row][col]);
     }
 
@@ -229,9 +245,10 @@ public class Values
         getSudoku()[row][col] = new SingleCellValue();
     }
 
-    public Values()
+    public Values(SudokuType type)
     {
         sudokuCands.push(new Tentative());
+        sudokuType = type;
         reset();
     }
 
@@ -335,9 +352,9 @@ public class Values
 
     void resetCandidates()
     {
-        for (int row = 0; row < DIMENSION; row++)
+        for (int row = 0; row < DIMENSION1; row++)
         {
-            for (int col = 0; col < DIMENSION; col++)
+            for (int col = 0; col < DIMENSION1; col++)
             {
                 SingleCellValue cell = getCell(row, col);
                 if (cell.getSolution() == null)
@@ -363,7 +380,7 @@ public class Values
           // not another cell continues justifying them
             LegalValues oldVal = sudoku[row][col].getSolution();
             // Same column
-            for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+            for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
             {
                 if (!sudoku[rowInCol][col].candidates.contains(oldVal) && isValueACandidate(rowInCol, col, oldVal))
                 {
@@ -371,7 +388,7 @@ public class Values
                 }
             }
             // Same row
-            for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+            for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
             {
                 if (!sudoku[row][colInRow].candidates.contains(oldVal) && isValueACandidate(row, colInRow, oldVal))
                 {
@@ -379,11 +396,13 @@ public class Values
                 }
             }
             // Same block
-            for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
-                    * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+            for (int rowInBlock = AppMain.RECTANGLELENGTH
+                    * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                            * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
             {
-                for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
-                        * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+                for (int colInBlock = AppMain.RECTANGLELENGTH
+                        * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                 {
                     if (!sudoku[rowInBlock][colInBlock].candidates.contains(oldVal)
                             && isValueACandidate(rowInBlock, colInBlock, oldVal))
@@ -406,7 +425,7 @@ public class Values
         boolean retVal = true;
         SingleCellValue[][] sudoku = getSudoku();
         // Same column
-        for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+        for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
         {
             if (row != rowInCol && val.equals(sudoku[rowInCol][col].getSolution()))
             {
@@ -417,7 +436,7 @@ public class Values
         // Same row
         if (retVal)
         {
-            for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+            for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
             {
                 if (col != colInRow && val.equals(sudoku[row][colInRow].getSolution()))
                 {
@@ -429,11 +448,13 @@ public class Values
         // Same block
         if (retVal)
         {
-            for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
-                    * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+            for (int rowInBlock = AppMain.RECTANGLELENGTH
+                    * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                            * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
             {
-                for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
-                        * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+                for (int colInBlock = AppMain.RECTANGLELENGTH
+                        * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                 {
                     if ((col != colInBlock || row != rowInBlock)
                             && val.equals(sudoku[rowInBlock][colInBlock].getSolution()))
@@ -456,7 +477,7 @@ public class Values
         SolutionProgress retVal = SolutionProgress.NONE;
         SingleCellValue[][] sudoku = getSudoku();
         // Same column
-        for (int rowInCol = 0; rowInCol < Values.DIMENSION; rowInCol++)
+        for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
         {
             if (sudoku[rowInCol][col].candidates.contains(val))
             {
@@ -471,7 +492,7 @@ public class Values
             }
         }
         // Same row
-        for (int colInRow = 0; colInRow < Values.DIMENSION; colInRow++)
+        for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
         {
             if (sudoku[row][colInRow].candidates.contains(val))
             {
@@ -486,11 +507,13 @@ public class Values
             }
         }
         // Same block
-        for (int rowInBlock = AppMain.RECTLENGTH * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
-                * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+        for (int rowInBlock = AppMain.RECTANGLELENGTH
+                * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                        * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
         {
-            for (int colInBlock = AppMain.RECTLENGTH * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
-                    * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+            for (int colInBlock = AppMain.RECTANGLELENGTH
+                    * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                            * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
             {
                 if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
                 {
@@ -511,9 +534,9 @@ public class Values
     public void reset()
     {
         SingleCellValue[][] sudoku = getSudoku();
-        for (int row = 0; row < DIMENSION; row++)
+        for (int row = 0; row < DIMENSION1; row++)
         {
-            for (int col = 0; col < DIMENSION; col++)
+            for (int col = 0; col < DIMENSION1; col++)
             {
                 sudoku[row][col] = new SingleCellValue();
             }
@@ -528,6 +551,7 @@ public class Values
     private static String ROW            = "row";
     private static String COL            = "col";
     private static String SUDOKUNAME     = "name";
+    private static String SUDOKUTYPE     = "type";
 
     public void read(String fromFile, boolean alsoReadSolution)
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
@@ -545,6 +569,15 @@ public class Values
             doc.getDocumentElement().normalize();
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
             sudokuName = doc.getDocumentElement().getAttribute(SUDOKUNAME);
+            String sudokuTypeString = doc.getDocumentElement().getAttribute(SUDOKUTYPE);
+            try
+            {
+                sudokuType = SudokuType.valueOf(sudokuTypeString.toUpperCase());
+            }
+            catch (IllegalArgumentException ex)
+            {
+                sudokuType = SudokuType.SINGLE;
+            }
             NodeList initialContents = doc.getElementsByTagName(INITIAL); // Only one expected
             NodeList solutionContents = doc.getElementsByTagName(SOLUTION); // Only one expected
             List<NodeList> allContents = new ArrayList<NodeList>();
@@ -609,21 +642,21 @@ public class Values
     {
         List<List<int[]>> retVal = new ArrayList<List<int[]>>();
         // First reset from a possible previous run
-        for (int row = 0; row < Values.DIMENSION; row++)
+        for (int row = 0; row < Values.DIMENSION1; row++)
         {
-            for (int col = 0; col < Values.DIMENSION; col++)
+            for (int col = 0; col < Values.DIMENSION1; col++)
             {
                 getCell(row, col).isAConflict = false;
             }
         }
-        for (int row = 0; row < Values.DIMENSION; row++)
+        for (int row = 0; row < Values.DIMENSION1; row++)
         {
-            for (int col = 0; col < Values.DIMENSION; col++)
+            for (int col = 0; col < Values.DIMENSION1; col++)
             {
                 if (getCell(row, col).candidates.isEmpty())
                 {
                     // Same column
-                    for (int rowInCol = row + 1; rowInCol < Values.DIMENSION; rowInCol++)
+                    for (int rowInCol = row + 1; rowInCol < Values.DIMENSION1; rowInCol++)
                     {
                         if (getCell(rowInCol, col).candidates.isEmpty()
                                 && getCell(rowInCol, col).getSolution() == getCell(row, col).getSolution())
@@ -639,7 +672,7 @@ public class Values
                         }
                     }
                     // Same row
-                    for (int colInRow = col + 1; colInRow < Values.DIMENSION; colInRow++)
+                    for (int colInRow = col + 1; colInRow < Values.DIMENSION1; colInRow++)
                     {
                         if (getCell(row, colInRow).candidates.isEmpty()
                                 && getCell(row, colInRow).getSolution() == getCell(row, col).getSolution())
@@ -655,13 +688,13 @@ public class Values
                         }
                     }
                     // Same block
-                    for (int rowInBlock = AppMain.RECTLENGTH
-                            * (row / AppMain.RECTLENGTH); rowInBlock < AppMain.RECTLENGTH
-                                    * (row / AppMain.RECTLENGTH + 1); rowInBlock++)
+                    for (int rowInBlock = AppMain.RECTANGLELENGTH
+                            * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                                    * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
                     {
-                        for (int colInBlock = AppMain.RECTLENGTH
-                                * (col / AppMain.RECTLENGTH); colInBlock < AppMain.RECTLENGTH
-                                        * (col / AppMain.RECTLENGTH + 1); colInBlock++)
+                        for (int colInBlock = AppMain.RECTANGLELENGTH
+                                * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                        * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                         {
                             if ((rowInBlock >= row || colInBlock >= col) && (rowInBlock != row || colInBlock != col))
                             {
@@ -690,7 +723,7 @@ public class Values
     int getNumberOfSolutions()
     {
         Stream<? super SingleCellValue> stream = Arrays.stream(this.getSudoku()).flatMap(x -> Arrays.stream(x));
-        long retVal = stream.filter(x -> ((SingleCellValue) x).getSolution() != null).count();
+        long retVal = stream.filter(x -> (x == null || ((SingleCellValue) x).getSolution() != null)).count();
         return ((int) retVal);
     }
 
@@ -752,6 +785,7 @@ public class Values
             rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns",
                     "http://www.example.org/SudokuStepper");
             rootElement.setAttribute(SUDOKUNAME, sudokuName);
+            rootElement.setAttribute(SUDOKUTYPE, sudokuType.name().toLowerCase());
             newDoc.appendChild(rootElement);
             Element initialElt = newDoc.createElement(INITIAL);
             rootElement.appendChild(initialElt);
@@ -762,9 +796,9 @@ public class Values
             SingleCellValue[][] sudoku = getSudoku();
             for (Element elt : elts)
             {
-                for (int row = 0; row < DIMENSION; row++)
+                for (int row = 0; row < DIMENSION1; row++)
                 {
-                    for (int col = 0; col < DIMENSION; col++)
+                    for (int col = 0; col < DIMENSION1; col++)
                     {
                         if (sudoku[row][col].getSolution() != null
                                 && ((sudoku[row][col].isInput && elt.equals(initialElt))
