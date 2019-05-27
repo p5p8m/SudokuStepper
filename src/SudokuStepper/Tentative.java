@@ -2,12 +2,14 @@ package SudokuStepper;
 
 import java.util.Arrays;
 
+import SudokuStepper.Values.SudokuType;
+
 public class Tentative // Contains the tentative solution for a complete sudoku samurai
 {
-    private SingleCellValue[][] sudoku      = new SingleCellValue[AppMain.MAXROWS][AppMain.MAXCOLS];
-    private Bifurcation         bifurcation = null;
+    private MasterSudoku sudoku      = null;
+    private Bifurcation  bifurcation = null;
 
-    public SingleCellValue[][] getSudoku()
+    public MasterSudoku getSudoku()
     {
         return (sudoku);
     }
@@ -15,37 +17,36 @@ public class Tentative // Contains the tentative solution for a complete sudoku 
     public Bifurcation getNextTry()
     {
         Bifurcation retVal = null;
-        int numPossibleTries = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates.size();
+        int numPossibleTries = sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).candidates.size();
         int numPrevTries = bifurcation.getNumPreviousTries();
         if (numPrevTries < numPossibleTries)
         {
-            LegalValues toBeEliminatedVal = sudoku[bifurcation.getRow()][bifurcation.getCol()].candidates
+            LegalValues toBeEliminatedVal = sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).candidates
                     .get(numPrevTries);
             retVal = bifurcation.addNewTry(toBeEliminatedVal);
         }
         return retVal;
     }
 
-    public LegalValues setBifurcation(int row, int col)
+    public LegalValues setBifurcation(int globalRow, int globalCol)
     {
-        LegalValues eliminatedVal = sudoku[row][col].candidates.get(0);
-        bifurcation = new Bifurcation(row, col, eliminatedVal);
+        LegalValues eliminatedVal = sudoku.getRowCol(globalRow, globalCol).candidates.get(0);
+        // Interested to see if the other solution is also legal?
+        // eliminatedVal = sudoku.getRowCol(globalRow, globalCol).candidates
+        // .get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1); // For a
+        // test
+        bifurcation = new Bifurcation(globalRow, globalCol, eliminatedVal);
         return (eliminatedVal);
     }
 
-    public Tentative(Tentative src)
+    public Tentative(Tentative src, SudokuType type)
     {
         bifurcation = null;
-        for (int row = 0; row < AppMain.MAXROWS; row++)
-        {
-            for (int col = 0; col < AppMain.MAXCOLS; col++)
-            {
-                sudoku[row][col] = new SingleCellValue(src.sudoku[row][col]);
-            }
-        }
+        sudoku = new MasterSudoku(src.sudoku, type);
     }
 
-    public Tentative()
+    public Tentative(SudokuType type)
     {
+        sudoku = new MasterSudoku(type);
     }
 }

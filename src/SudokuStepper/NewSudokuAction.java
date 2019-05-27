@@ -37,14 +37,15 @@ public class NewSudokuAction extends SudokuAction
                 app.initGuiForNew();
             }
         }
-        catch (Exception ex)
-        {
-            MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
-            errorBox.setMessage("Could not create new Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
-                    + "\n" + ex.toString());
-            errorBox.open();
-            app.setState(AppState.EMPTY);
-        }
+        // catch (Exception ex)
+        // {
+        // MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+        // errorBox.setMessage("Could not create new Sudoku. \n" + ex.getMessage() +
+        // "\n" + ex.getLocalizedMessage()
+        // + "\n" + ex.toString());
+        // errorBox.open();
+        // app.setState(AppState.EMPTY);
+        // }
         finally
         {
             // Do not reset until "Freeze" is pressed app.setState(AppState.EMPTY);

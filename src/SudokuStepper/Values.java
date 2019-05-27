@@ -78,7 +78,7 @@ interface FreezeListener
 }
 
 /**
- * @author Pascal
+ * @author Pascal Represents the complete Sudoku Samurai
  *
  */
 public class Values
@@ -88,11 +88,6 @@ public class Values
     {
         SINGLE, SAMURAI
     }
-
-    public static final int               DIMENSION1               = AppMain.CANDIDATESNUMBER;
-    public static final int               NUMBEROFCELLSTOBESOLVED  = AppMain.MAXCOLS * AppMain.MAXROWS;       // Will be
-                                                                                                              // modified
-                                                                                                              // later
 
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
@@ -108,6 +103,22 @@ public class Values
 
     // private List<NewStartListener> newStartListeners = new
     // ArrayList<NewStartListener>();
+    public int getNumberOfCellsToBeSolved()
+    {
+        int retVal = 0;
+        switch (sudokuType)
+        {
+        case SAMURAI:
+            retVal = AppMain.MAXROWS * AppMain.MAXCOLS - 8 * AppMain.RECTANGLELENGTH * AppMain.RECTANGLELENGTH;
+            break;
+        case SINGLE:
+        default:
+            retVal = AppMain.SINGLESUDOKUMAXCOLS * AppMain.SINGLESUDOKUMAXROWS;
+            break;
+        }
+        return (retVal);
+    }
+
     public boolean isSaved()
     {
         return saved;
@@ -133,7 +144,7 @@ public class Values
         return (sudokuType);
     }
 
-    public SolutionProgress addBifurcationNClone(int row, int col)
+    public SolutionProgress addBifurcationNClone(int globalRow, int globalCol)
     {
         // // For debugging
         // try
@@ -165,12 +176,12 @@ public class Values
         // // end of debugging section
         SolutionProgress retVal = SolutionProgress.NONE;
         Tentative oldSudoku = sudokuCands.peek();
-        Tentative newSudoku = new Tentative(oldSudoku);
-        LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(row, col);
-        System.out.println(
-                "Try and Error with row: " + row + ", col: " + col + ", eliminating value: " + toBeEliminatedVal);
+        Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
+        LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(globalRow, globalCol);
+        System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
+                + toBeEliminatedVal);
         sudokuCands.push(newSudoku);
-        retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
+        retVal = eliminateCandidate(globalRow, globalCol, toBeEliminatedVal, true, false, true);
         return (retVal);
     }
 
@@ -189,7 +200,7 @@ public class Values
             Bifurcation nextTry = oldSudoku.getNextTry();
             if (nextTry != null)
             {
-                Tentative newSudoku = new Tentative(oldSudoku);
+                Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
                 sudokuCands.push(newSudoku);
                 for (RollbackListener listener : rollbackListeners)
                 {
@@ -218,7 +229,7 @@ public class Values
         }
     }
 
-    public SingleCellValue[][] getSudoku()
+    public MasterSudoku getSudoku()
     {
         return (sudokuCands.peek().getSudoku());
     }
@@ -233,21 +244,19 @@ public class Values
         return (retVal);
     }
 
-    public SingleCellValue getCell(int row, int col)
+    public SingleCellValue getCell(int globalRow, int globalCol)
     {
-        SingleCellValue[][] s = getSudoku();
-        SingleCellValue v = s[row][col];
-        return (getSudoku()[row][col]);
+        return (getSudoku().getRowCol(globalRow, globalCol));
     }
 
-    public void resetCell(int row, int col)
+    public void resetCell(int globalRow, int globalCol)
     {
-        getSudoku()[row][col] = new SingleCellValue();
+        getSudoku().resetCell(globalRow, globalCol);
     }
 
     public Values(SudokuType type)
     {
-        sudokuCands.push(new Tentative());
+        sudokuCands.push(new Tentative(type));
         sudokuType = type;
         reset();
     }
@@ -260,10 +269,10 @@ public class Values
             row -= 1;
             col -= 1;
             LegalValues val = LegalValues.from(value);
-            SingleCellValue[][] sudoku = getSudoku();
-            sudoku[row][col].setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
-            sudoku[row][col].isInput = isAnInput;
-            sudoku[row][col].candidates.clear();
+            MasterSudoku sudoku = getSudoku();
+            sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
+            sudoku.getRowCol(row, col).isInput = isAnInput;
+            sudoku.getRowCol(row, col).candidates.clear();
             setSaved(false);
         }
         catch (Exception ex)
@@ -309,20 +318,20 @@ public class Values
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public SolutionProgress eliminateCandidate(int row, int col, LegalValues val, boolean alsoSetSolution,
+    public SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValues val, boolean alsoSetSolution,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        SingleCellValue[][] sudoku = getSudoku();
-        if (val == null || sudoku[row][col].candidates.contains(val))
+        MasterSudoku sudoku = getSudoku();
+        if (val == null || sudoku.getRowCol(globalRow, globalCol).candidates.contains(val))
         {
             retVal = retVal.combineWith(SolutionProgress.CANDIDATES);
             if (val != null)
             {
-                sudoku[row][col].candidates.remove(val);
+                sudoku.getRowCol(globalRow, globalCol).candidates.remove(val);
                 for (CandidatesListener listener : candidatesListeners)
                 {
-                    listener.candidatesUpdated(row, col, val, runsInUiThread);
+                    listener.candidatesUpdated(globalRow, globalCol, val, runsInUiThread);
                 }
             }
             setSaved(false);
@@ -330,20 +339,21 @@ public class Values
             {
                 listener.savedUpdated(isSaved(), runsInUiThread);
             }
-            if (sudoku[row][col].candidates.size() == 1)
+            if (sudoku.getRowCol(globalRow, globalCol).candidates.size() == 1)
             {
                 if (alsoSetSolution)
                 {
-                    LegalValues solution = sudoku[row][col].candidates.get(0);
+                    LegalValues solution = sudoku.getRowCol(globalRow, globalCol).candidates.get(0);
                     retVal = retVal.combineWith(SolutionProgress.SOLUTION);
-                    sudoku[row][col].isInput = false;
-                    sudoku[row][col].candidates.clear();
+                    sudoku.getRowCol(globalRow, globalCol).isInput = false;
+                    sudoku.getRowCol(globalRow, globalCol).candidates.clear();
                     // Must be the last thing because the thread could end if step by step mode
-                    sudoku[row][col].setSolution(solution, row, col, solutionListeners, runsInUiThread,
-                            markLastSolutionFound);
+                    sudoku.getRowCol(globalRow, globalCol).setSolution(solution, globalRow, globalCol,
+                            solutionListeners, runsInUiThread, markLastSolutionFound);
                 }
-                SolutionProgress newUpdated = reduceInfluencedCellCandidates(row, col, sudoku[row][col].getSolution(),
-                        alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                SolutionProgress newUpdated = reduceInfluencedCellCandidates(globalRow, globalCol,
+                        sudoku.getRowCol(globalRow, globalCol).getSolution(), alsoSetSolution, runsInUiThread,
+                        markLastSolutionFound);
                 retVal = retVal.combineWith(newUpdated);
             }
         }
@@ -352,11 +362,11 @@ public class Values
 
     void resetCandidates()
     {
-        for (int row = 0; row < DIMENSION1; row++)
+        for (int globalRow = 0; globalRow < AppMain.MAXROWS; globalRow++)
         {
-            for (int col = 0; col < DIMENSION1; col++)
+            for (int globalCol = 0; globalCol < AppMain.MAXCOLS; globalCol++)
             {
-                SingleCellValue cell = getCell(row, col);
+                SingleCellValue cell = getCell(globalRow, globalCol);
                 if (cell.getSolution() == null)
                 {
                     cell.initCandidates();
@@ -369,65 +379,73 @@ public class Values
         }
     }
 
-    // remove from the value just set in the given cell the list of candidates from
-    // all influenced cells
-    public void updateCandidateList(int row, int col, LegalValues val, boolean runsInUiThread,
+    // remove the value just set in the given cell the list of candidates from
+    // all influenced cells, for master sudoku
+    public void updateCandidateList(int globalRow, int globalCol, LegalValues val, boolean runsInUiThread,
             boolean markLastSolutionFound)
     {
-        SingleCellValue[][] sudoku = getSudoku();
-        if (sudoku[row][col].getSolution() != null)
-        { // First undo the value restrictions due to the previous value, but only where
-          // not another cell continues justifying them
-            LegalValues oldVal = sudoku[row][col].getSolution();
-            // Same column
-            for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
-            {
-                if (!sudoku[rowInCol][col].candidates.contains(oldVal) && isValueACandidate(rowInCol, col, oldVal))
+        MasterSudoku masterSudoku = getSudoku();
+        for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
+        {
+            int localRow = subSudoku.getLocalRow(globalRow);
+            int localCol = subSudoku.getLocalCol(globalCol);
+            if (subSudoku.getRowCol(localRow, localCol).getSolution() != null)
+            { // First undo the value restrictions due to the previous value, but only where
+              // not another cell continues justifying them
+                LegalValues oldVal = subSudoku.getRowCol(localRow, localCol).getSolution();
+                // Same column
+                for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
                 {
-                    sudoku[rowInCol][col].candidates.add(oldVal);
-                }
-            }
-            // Same row
-            for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
-            {
-                if (!sudoku[row][colInRow].candidates.contains(oldVal) && isValueACandidate(row, colInRow, oldVal))
-                {
-                    sudoku[row][colInRow].candidates.add(oldVal);
-                }
-            }
-            // Same block
-            for (int rowInBlock = AppMain.RECTANGLELENGTH
-                    * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                            * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
-            {
-                for (int colInBlock = AppMain.RECTANGLELENGTH
-                        * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
-                {
-                    if (!sudoku[rowInBlock][colInBlock].candidates.contains(oldVal)
-                            && isValueACandidate(rowInBlock, colInBlock, oldVal))
+                    if (!subSudoku.getRowCol(rowInCol, localCol).candidates.contains(oldVal)
+                            && isValueACandidate(rowInCol, localCol, oldVal))
                     {
-                        sudoku[rowInBlock][colInBlock].candidates.add(oldVal);
+                        subSudoku.getRowCol(rowInCol, localCol).candidates.add(oldVal);
+                    }
+                }
+                // Same row
+                for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+                {
+                    if (!subSudoku.getRowCol(localRow, colInRow).candidates.contains(oldVal)
+                            && isValueACandidate(localRow, colInRow, oldVal))
+                    {
+                        subSudoku.getRowCol(localRow, colInRow).candidates.add(oldVal);
+                    }
+                }
+                // Same block
+                for (int rowInBlock = AppMain.RECTANGLELENGTH
+                        * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                                * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                {
+                    for (int colInBlock = AppMain.RECTANGLELENGTH
+                            * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                    * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                    {
+                        if (!subSudoku.getRowCol(rowInBlock, colInBlock).candidates.contains(oldVal)
+                                && isValueACandidate(rowInBlock, colInBlock, oldVal))
+                        {
+                            subSudoku.getRowCol(rowInBlock, colInBlock).candidates.add(oldVal);
+                        }
                     }
                 }
             }
-        }
-        if (val != null)
-        {
-            reduceInfluencedCellCandidates(row, col, val, false, runsInUiThread, markLastSolutionFound);
+            if (val != null)
+            {
+                reduceInfluencedCellCandidates(globalRow, globalCol, val, false, runsInUiThread, markLastSolutionFound);
+            }
         }
     }
 
     // Check if the value is a possible candidate based on the values already set in
     // all influencing cells, val should not be null
-    private boolean isValueACandidate(int row, int col, LegalValues val)
+    // Check is performed for a single sudoku, use local coordinates
+    private boolean isValueACandidate(int localRow, int localCol, LegalValues val)
     {
         boolean retVal = true;
-        SingleCellValue[][] sudoku = getSudoku();
+        MasterSudoku sudoku = getSudoku();
         // Same column
-        for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
+        for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
         {
-            if (row != rowInCol && val.equals(sudoku[rowInCol][col].getSolution()))
+            if (localRow != rowInCol && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution()))
             {
                 retVal = false;
                 break;
@@ -436,9 +454,9 @@ public class Values
         // Same row
         if (retVal)
         {
-            for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
+            for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
             {
-                if (col != colInRow && val.equals(sudoku[row][colInRow].getSolution()))
+                if (localCol != colInRow && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution()))
                 {
                     retVal = false;
                     break;
@@ -449,15 +467,15 @@ public class Values
         if (retVal)
         {
             for (int rowInBlock = AppMain.RECTANGLELENGTH
-                    * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                            * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                    * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                            * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
             {
                 for (int colInBlock = AppMain.RECTANGLELENGTH
-                        * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                        * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                 {
-                    if ((col != colInBlock || row != rowInBlock)
-                            && val.equals(sudoku[rowInBlock][colInBlock].getSolution()))
+                    if ((localCol != colInBlock || localRow != rowInBlock)
+                            && val.equals(sudoku.getRowCol(rowInBlock, colInBlock).getSolution()))
                     {
                         retVal = false;
                         break;
@@ -471,60 +489,66 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    SolutionProgress reduceInfluencedCellCandidates(int row, int col, LegalValues val, boolean alsoSetSolution,
-            boolean runsInUiThread, boolean markLastSolutionFound)
+    SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValues val,
+            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        SingleCellValue[][] sudoku = getSudoku();
-        // Same column
-        for (int rowInCol = 0; rowInCol < Values.DIMENSION1; rowInCol++)
+        MasterSudoku masterSudoku = getSudoku();
+        for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
         {
-            if (sudoku[rowInCol][col].candidates.contains(val))
+            int localRow = subSudoku.getLocalRow(globalRow);
+            int localCol = subSudoku.getLocalCol(globalCol);
+            // Same column
+            for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
             {
-                SolutionProgress nowUpdated = eliminateCandidate(rowInCol, col, val, alsoSetSolution, runsInUiThread,
-                        markLastSolutionFound);
-                retVal = retVal.combineWith(nowUpdated);
-                // sudoku[rowInCol][col].candidates.remove(val);
-                // for (CandidatesListener listener : candidatesListeners)
-                // {
-                // listener.candidatesUpdated(rowInCol, col, val);
-                // }
-            }
-        }
-        // Same row
-        for (int colInRow = 0; colInRow < Values.DIMENSION1; colInRow++)
-        {
-            if (sudoku[row][colInRow].candidates.contains(val))
-            {
-                SolutionProgress nowUpdated = eliminateCandidate(row, colInRow, val, alsoSetSolution, runsInUiThread,
-                        markLastSolutionFound);
-                retVal = retVal.combineWith(nowUpdated);
-                // sudoku[row][colInRow].candidates.remove(val);
-                // for (CandidatesListener listener : candidatesListeners)
-                // {
-                // listener.candidatesUpdated(row, colInRow, val);
-                // }
-            }
-        }
-        // Same block
-        for (int rowInBlock = AppMain.RECTANGLELENGTH
-                * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                        * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
-        {
-            for (int colInBlock = AppMain.RECTANGLELENGTH
-                    * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                            * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
-            {
-                if (sudoku[rowInBlock][colInBlock].candidates.contains(val))
+                if (subSudoku.getRowCol(rowInCol, localCol).candidates.contains(val))
                 {
-                    SolutionProgress nowUpdated = eliminateCandidate(rowInBlock, colInBlock, val, alsoSetSolution,
-                            runsInUiThread, markLastSolutionFound);
+                    SolutionProgress nowUpdated = eliminateCandidate(subSudoku.getGlobalRow(rowInCol), globalCol, val,
+                            alsoSetSolution, runsInUiThread, markLastSolutionFound);
                     retVal = retVal.combineWith(nowUpdated);
-                    // sudoku[rowInBlock][colInBlock].candidates.remove(val);
+                    // sudoku[rowInCol, col].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
                     // {
-                    // listener.candidatesUpdated(rowInBlock, colInBlock, val);
+                    // listener.candidatesUpdated(rowInCol, col, val);
                     // }
+                }
+            }
+            // Same row
+            for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+            {
+                if (subSudoku.getRowCol(localRow, colInRow).candidates.contains(val))
+                {
+                    SolutionProgress nowUpdated = eliminateCandidate(globalRow, subSudoku.getGlobalCol(colInRow), val,
+                            alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                    retVal = retVal.combineWith(nowUpdated);
+                    // sudoku[row, colInRow].candidates.remove(val);
+                    // for (CandidatesListener listener : candidatesListeners)
+                    // {
+                    // listener.candidatesUpdated(row, colInRow, val);
+                    // }
+                }
+            }
+            // Same block
+            for (int rowInBlock = AppMain.RECTANGLELENGTH
+                    * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                            * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+            {
+                for (int colInBlock = AppMain.RECTANGLELENGTH
+                        * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                {
+                    if (subSudoku.getRowCol(rowInBlock, colInBlock).candidates.contains(val))
+                    {
+                        SolutionProgress nowUpdated = eliminateCandidate(subSudoku.getGlobalRow(rowInBlock),
+                                subSudoku.getGlobalCol(colInBlock), val, alsoSetSolution, runsInUiThread,
+                                markLastSolutionFound);
+                        retVal = retVal.combineWith(nowUpdated);
+                        // sudoku[rowInBlock, colInBlock].candidates.remove(val);
+                        // for (CandidatesListener listener : candidatesListeners)
+                        // {
+                        // listener.candidatesUpdated(rowInBlock, colInBlock, val);
+                        // }
+                    }
                 }
             }
         }
@@ -533,14 +557,7 @@ public class Values
 
     public void reset()
     {
-        SingleCellValue[][] sudoku = getSudoku();
-        for (int row = 0; row < DIMENSION1; row++)
-        {
-            for (int col = 0; col < DIMENSION1; col++)
-            {
-                sudoku[row][col] = new SingleCellValue();
-            }
-        }
+        getSudoku().reset();
     }
 
     private static String SCHEMAFILENAME = "SudokuStepper\\SudokuStepper.xsd";
@@ -578,6 +595,7 @@ public class Values
             {
                 sudokuType = SudokuType.SINGLE;
             }
+            getSudoku().setSudokuType(sudokuType);
             NodeList initialContents = doc.getElementsByTagName(INITIAL); // Only one expected
             NodeList solutionContents = doc.getElementsByTagName(SOLUTION); // Only one expected
             List<NodeList> allContents = new ArrayList<NodeList>();
@@ -642,74 +660,80 @@ public class Values
     {
         List<List<int[]>> retVal = new ArrayList<List<int[]>>();
         // First reset from a possible previous run
-        for (int row = 0; row < Values.DIMENSION1; row++)
+        for (int row = 0; row < AppMain.MAXROWS; row++)
         {
-            for (int col = 0; col < Values.DIMENSION1; col++)
+            for (int col = 0; col < AppMain.MAXCOLS; col++)
             {
                 getCell(row, col).isAConflict = false;
             }
         }
-        for (int row = 0; row < Values.DIMENSION1; row++)
+        for (SubSudoku subSudoku : getSudoku().getSubSudokus())
         {
-            for (int col = 0; col < Values.DIMENSION1; col++)
+            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
             {
-                if (getCell(row, col).candidates.isEmpty())
+                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
                 {
-                    // Same column
-                    for (int rowInCol = row + 1; rowInCol < Values.DIMENSION1; rowInCol++)
+                    if (subSudoku.getRowCol(row, col).candidates.isEmpty())
                     {
-                        if (getCell(rowInCol, col).candidates.isEmpty()
-                                && getCell(rowInCol, col).getSolution() == getCell(row, col).getSolution())
+                        // Same column
+                        for (int rowInCol = row + 1; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
                         {
-                            getCell(row, col).isAConflict = true;
-                            getCell(rowInCol, col).isAConflict = true;
-                            ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
-                            newConflict.add(new int[]
-                            { row, col });
-                            newConflict.add(new int[]
-                            { rowInCol, col });
-                            retVal.add(newConflict);
-                        }
-                    }
-                    // Same row
-                    for (int colInRow = col + 1; colInRow < Values.DIMENSION1; colInRow++)
-                    {
-                        if (getCell(row, colInRow).candidates.isEmpty()
-                                && getCell(row, colInRow).getSolution() == getCell(row, col).getSolution())
-                        {
-                            getCell(row, col).isAConflict = true;
-                            getCell(row, colInRow).isAConflict = true;
-                            ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
-                            newConflict.add(new int[]
-                            { row, col });
-                            newConflict.add(new int[]
-                            { row, colInRow });
-                            retVal.add(newConflict);
-                        }
-                    }
-                    // Same block
-                    for (int rowInBlock = AppMain.RECTANGLELENGTH
-                            * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                                    * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
-                    {
-                        for (int colInBlock = AppMain.RECTANGLELENGTH
-                                * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                        * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
-                        {
-                            if ((rowInBlock >= row || colInBlock >= col) && (rowInBlock != row || colInBlock != col))
+                            if (subSudoku.getRowCol(rowInCol, col).candidates.isEmpty()
+                                    && subSudoku.getRowCol(rowInCol, col).getSolution() == subSudoku.getRowCol(row, col)
+                                            .getSolution())
                             {
-                                if (getCell(rowInBlock, colInBlock).candidates.isEmpty()
-                                        && getCell(rowInBlock, colInBlock).getSolution() == getCell(row, col)
-                                                .getSolution())
+                                subSudoku.getRowCol(row, col).isAConflict = true;
+                                subSudoku.getRowCol(rowInCol, col).isAConflict = true;
+                                ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
+                                newConflict.add(new int[]
+                                { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
+                                newConflict.add(new int[]
+                                { subSudoku.getGlobalRow(rowInCol), subSudoku.getGlobalCol(col) });
+                                retVal.add(newConflict);
+                            }
+                        }
+                        // Same row
+                        for (int colInRow = col + 1; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+                        {
+                            if (subSudoku.getRowCol(row, colInRow).candidates.isEmpty()
+                                    && subSudoku.getRowCol(row, colInRow).getSolution() == subSudoku.getRowCol(row, col)
+                                            .getSolution())
+                            {
+                                subSudoku.getRowCol(row, col).isAConflict = true;
+                                subSudoku.getRowCol(row, colInRow).isAConflict = true;
+                                ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
+                                newConflict.add(new int[]
+                                { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
+                                newConflict.add(new int[]
+                                { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(colInRow) });
+                                retVal.add(newConflict);
+                            }
+                        }
+                        // Same block
+                        for (int rowInBlock = AppMain.RECTANGLELENGTH
+                                * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
+                                        * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                        {
+                            for (int colInBlock = AppMain.RECTANGLELENGTH
+                                    * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
+                                            * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                            {
+                                if ((rowInBlock >= row || colInBlock >= col)
+                                        && (rowInBlock != row || colInBlock != col))
                                 {
-                                    getCell(row, col).isAConflict = true;
-                                    getCell(rowInBlock, colInBlock).isAConflict = true;
-                                    ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
-                                    newConflict.add(new int[]
-                                    { row, col });
-                                    newConflict.add(new int[]
-                                    { rowInBlock, colInBlock });
-                                    retVal.add(newConflict);
+                                    if (subSudoku.getRowCol(rowInBlock, colInBlock).candidates.isEmpty()
+                                            && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution() == subSudoku
+                                                    .getRowCol(row, col).getSolution())
+                                    {
+                                        subSudoku.getRowCol(row, col).isAConflict = true;
+                                        subSudoku.getRowCol(rowInBlock, colInBlock).isAConflict = true;
+                                        ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
+                                        newConflict.add(new int[]
+                                        { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
+                                        newConflict.add(new int[]
+                                        { subSudoku.getGlobalRow(rowInBlock), subSudoku.getGlobalCol(colInBlock) });
+                                        retVal.add(newConflict);
+                                    }
                                 }
                             }
                         }
@@ -722,7 +746,8 @@ public class Values
 
     int getNumberOfSolutions()
     {
-        Stream<? super SingleCellValue> stream = Arrays.stream(this.getSudoku()).flatMap(x -> Arrays.stream(x));
+        Stream<? super SingleCellValue> stream = Arrays.stream(this.getSudoku().getArray())
+                .flatMap(x -> Arrays.stream(x));
         long retVal = stream.filter(x -> (x == null || ((SingleCellValue) x).getSolution() != null)).count();
         return ((int) retVal);
     }
@@ -793,23 +818,27 @@ public class Values
             rootElement.appendChild(solutionElt);
             Element[] elts =
             { initialElt, solutionElt };
-            SingleCellValue[][] sudoku = getSudoku();
+            MasterSudoku sudoku = getSudoku();
             for (Element elt : elts)
             {
-                for (int row = 0; row < DIMENSION1; row++)
+                for (int row = 0; row < AppMain.MAXROWS; row++)
                 {
-                    for (int col = 0; col < DIMENSION1; col++)
+                    for (int col = 0; col < AppMain.MAXCOLS; col++)
                     {
-                        if (sudoku[row][col].getSolution() != null
-                                && ((sudoku[row][col].isInput && elt.equals(initialElt))
-                                        || (!sudoku[row][col].isInput && elt.equals(solutionElt))))
+                        if (sudoku.isRowColUsed(sudokuType, row, col))
                         {
-                            Element content = newDoc.createElement(CONTENT);
-                            content.setAttribute(ROW, Integer.toString(row + 1));
-                            content.setAttribute(COL, Integer.toString(col + 1));
-                            Text text = newDoc.createTextNode(Integer.toString(sudoku[row][col].getSolution().val()));
-                            content.appendChild(text);
-                            elt.appendChild(content);
+                            if (sudoku.getRowCol(row, col).getSolution() != null
+                                    && ((sudoku.getRowCol(row, col).isInput && elt.equals(initialElt))
+                                            || (!sudoku.getRowCol(row, col).isInput && elt.equals(solutionElt))))
+                            {
+                                Element content = newDoc.createElement(CONTENT);
+                                content.setAttribute(ROW, Integer.toString(row + 1));
+                                content.setAttribute(COL, Integer.toString(col + 1));
+                                Text text = newDoc.createTextNode(
+                                        Integer.toString(sudoku.getRowCol(row, col).getSolution().val()));
+                                content.appendChild(text);
+                                elt.appendChild(content);
+                            }
                         }
                     }
                 }

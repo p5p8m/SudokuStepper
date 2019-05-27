@@ -76,6 +76,10 @@ public class AppMain extends ApplicationWindow
     static final int         CANDIDATESPERROW      = 3;
     static final int         MAXCOLS               = 21;                   // 9 for single sudoku, 21 for sudoku samurai
     static final int         MAXROWS               = 21;                   // 9 for single sudoku, 21 for sudoku samurai
+    static final int         SINGLESUDOKUMAXROWS   = 9;
+    static final int         SINGLESUDOKUMAXCOLS   = 9;
+    static final int         CELLSPERROW           = 3;
+    static final int         CELLSPERCOL           = 3;
 
     private static final int INITIAL_WIDTH         = 1250;                 // 552;
     private static final int INITIAL_HEIGHT        = 2100;                 // 915;
@@ -925,7 +929,7 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    class fileExitItemListener implements SelectionListener
+    private class fileExitItemListener implements SelectionListener
     {
         public void widgetSelected(SelectionEvent event)
         {
@@ -1171,7 +1175,9 @@ public class AppMain extends ApplicationWindow
                 else
                 {
                     uiField.solution.setVisible(false);
-                    uiField.input.setText(StringUtils.EMPTY);
+                    Combo c = uiField.input;
+                    String t = uiField.input.getText();
+                    // uiField.input.setText(StringUtils.EMPTY);
                     uiField.solution.setText(StringUtils.EMPTY);
                     uiField.input.setVisible(false);
                     Boolean visible = true;
@@ -1403,44 +1409,48 @@ public class AppMain extends ApplicationWindow
 
     private void setSolutionNInputBckgrdColor(int row, int col, boolean markLastSolutionFound)
     {
-        if (mySudoku.getCell(row, col).isInput)
+        SingleCellValue sVal = mySudoku.getCell(row, col);
+        if (sVal != null)
         {
-            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(COLOR_SOLT_FOREGRD));
-        }
-        else
-        {
-            for (Map<Integer, SolNCandTexts> currRow : uiFields.values())
+            if (sVal.isInput)
             {
-                for (SolNCandTexts currCell : currRow.values())
+                uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(COLOR_SOLT_FOREGRD));
+            }
+            else
+            {
+                for (Map<Integer, SolNCandTexts> currRow : uiFields.values())
                 {
-                    if (!currCell.solution.getText().isEmpty() && currCell.solution.getForeground().handle == myDisplay
-                            .getSystemColor(COLOR_LAST_FOREGRD).handle)
+                    for (SolNCandTexts currCell : currRow.values())
                     {
-                        currCell.solution.setForeground(myDisplay.getSystemColor(COLOR_PREV_FOREGRD));
+                        if (!currCell.solution.getText().isEmpty() && currCell.solution
+                                .getForeground().handle == myDisplay.getSystemColor(COLOR_LAST_FOREGRD).handle)
+                        {
+                            currCell.solution.setForeground(myDisplay.getSystemColor(COLOR_PREV_FOREGRD));
+                        }
                     }
                 }
+                int color = COLOR_PREV_FOREGRD;
+                if (markLastSolutionFound)
+                {
+                    color = COLOR_LAST_FOREGRD;
+                }
+                uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(color));
             }
-            int color = COLOR_PREV_FOREGRD;
-            if (markLastSolutionFound)
+            if (sVal.isAConflict)
             {
-                color = COLOR_LAST_FOREGRD;
+                uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
+                uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
             }
-            uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(color));
-        }
-        if (mySudoku.getCell(row, col).isAConflict)
-        {
-            uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
-            uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
-        }
-        else
-        {
-            uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
-            uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
-        }
-        for (Text cand : uiFields.get(row).get(col).candidates)
-        {
-            // cand.setVisible(false);
-            cand.getParent().setVisible(false);
+            else
+            {
+                uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
+                uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
+            }
+            for (Text cand : uiFields.get(row).get(col).candidates)
+            {
+                // cand.setVisible(false);
+                cand.getParent().setVisible(false);
+            }
         }
     }
 

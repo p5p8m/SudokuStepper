@@ -72,7 +72,7 @@ public abstract class OpenSudokuAction extends SudokuAction
                     System.out.println("Open file: " + fileToOpen);
                     // add check if previous sudoku is saved
                     app.setState(AppState.OPENING);
-                    app.setSudokuPb(new Values(SudokuType.SINGLE)); // default to be overwritten when reding in
+                    app.setSudokuPb(new Values(SudokuType.SINGLE)); // default to be overwritten when reading in
                     app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                     app.updateSudokuFields(false, true, false);
                 }
