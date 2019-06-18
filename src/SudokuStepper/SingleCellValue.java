@@ -2,12 +2,13 @@ package SudokuStepper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class SingleCellValue
 {
     public boolean           isInput     = false;
     public boolean           isAConflict = false;
-    public List<LegalValues> candidates  = new ArrayList<LegalValues>(AppMain.CANDIDATESNUMBER);
+    public List<LegalValues> candidates  = new Vector<LegalValues>(AppMain.CANDIDATESNUMBER);
     private LegalValues      solution    = null;
 
     public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,

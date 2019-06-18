@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
+import java.util.Vector;
 import java.util.stream.*;
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
@@ -84,6 +86,43 @@ interface FreezeListener
 public class Values
 {
 
+    public class SolutionTrace
+    {
+        int               row;
+        int               col;
+        LegalValues       val;
+        List<LegalValues> choices;
+
+        public SolutionTrace(int rowIn, int colIn, LegalValues valIn, List<LegalValues> choicesIn)
+        {
+            row = rowIn;
+            col = colIn;
+            val = valIn;
+            choices = choicesIn;
+        }
+
+        public int getRow()
+        {
+            return (row);
+        }
+
+        public int getCol()
+        {
+            return (col);
+        }
+
+        public LegalValues getValue()
+        {
+            return (val);
+        }
+
+        public List<LegalValues> getChoices()
+        {
+            return (choices);
+        }
+
+    }
+
     public enum SudokuType
     {
         SINGLE, SAMURAI
@@ -94,6 +133,8 @@ public class Values
     private SudokuType                    sudokuType               = SudokuType.SINGLE;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
+    private AppMain                       appMain                  = null;
+    private List<Values.SolutionTrace>    solutionTrace            = new Vector<Values.SolutionTrace>();
 
     private List<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
     private List<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
@@ -119,9 +160,19 @@ public class Values
         return (retVal);
     }
 
+    public List<SolutionTrace> getSolutionTrace()
+    {
+        return (solutionTrace);
+    }
+
     public boolean isSaved()
     {
         return saved;
+    }
+
+    public AppMain getApp()
+    {
+        return (appMain);
     }
 
     public void setSaved(boolean saved)
@@ -254,11 +305,17 @@ public class Values
         getSudoku().resetCell(globalRow, globalCol);
     }
 
-    public Values(SudokuType type)
+    public Values(SudokuType type, AppMain app)
     {
-        sudokuCands.push(new Tentative(type));
+        sudokuCands.push(new Tentative(type, this));
         sudokuType = type;
+        appMain = app;
         reset();
+    }
+
+    public Values()
+    {
+
     }
 
     public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound,
@@ -564,11 +621,14 @@ public class Values
     private static String SUDOKU         = "sudoku";
     private static String INITIAL        = "initial";
     private static String SOLUTION       = "solution";
+    private static String PROGRESS       = "progress";
     private static String CONTENT        = "content";
     private static String ROW            = "row";
     private static String COL            = "col";
+    private static String CHOICES        = "choices";
     private static String SUDOKUNAME     = "name";
     private static String SUDOKUTYPE     = "type";
+    private static String SEPARATOR      = ", ";
 
     public void read(String fromFile, boolean alsoReadSolution)
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
@@ -797,7 +857,7 @@ public class Values
         return retVal;
     }
 
-    public void save(String outputFile)
+    public void save(String outputFile, List<Values.SolutionTrace> trace)
     {
         try
         {
@@ -815,12 +875,13 @@ public class Values
             Element initialElt = newDoc.createElement(INITIAL);
             rootElement.appendChild(initialElt);
             Element solutionElt = newDoc.createElement(SOLUTION);
-            rootElement.appendChild(solutionElt);
+
             Element[] elts =
             { initialElt, solutionElt };
             MasterSudoku sudoku = getSudoku();
             for (Element elt : elts)
             {
+                int numberNodes = 0;
                 for (int row = 0; row < AppMain.MAXROWS; row++)
                 {
                     for (int col = 0; col < AppMain.MAXCOLS; col++)
@@ -831,6 +892,10 @@ public class Values
                                     && ((sudoku.getRowCol(row, col).isInput && elt.equals(initialElt))
                                             || (!sudoku.getRowCol(row, col).isInput && elt.equals(solutionElt))))
                             {
+                                if (!sudoku.getRowCol(row, col).isInput && elt.equals(solutionElt))
+                                {
+                                    numberNodes++;
+                                }
                                 Element content = newDoc.createElement(CONTENT);
                                 content.setAttribute(ROW, Integer.toString(row + 1));
                                 content.setAttribute(COL, Integer.toString(col + 1));
@@ -840,6 +905,45 @@ public class Values
                                 elt.appendChild(content);
                             }
                         }
+                    }
+                }
+                Element progressElt = newDoc.createElement(PROGRESS);
+                if (elt.equals(solutionElt) && numberNodes > 0)
+                {
+                    // also save the trace
+                    Text text = newDoc.createTextNode("");
+                    for (Values.SolutionTrace singleTrace : trace)
+                    {
+                        Element content = newDoc.createElement(CONTENT);
+                        content.setAttribute(ROW, Integer.toString(singleTrace.getRow() + 1));
+                        content.setAttribute(COL, Integer.toString(singleTrace.getCol() + 1));
+                        String attrVal = "";
+                        if (singleTrace.getChoices() != null)
+                        {
+                            int loopCount = 0;
+                            for (LegalValues val : singleTrace.getChoices())
+                            {
+                                if (loopCount > 0)
+                                {
+                                    attrVal += ", ";
+                                }
+                                attrVal += Integer.toString(val.val());
+                                loopCount++;
+                            }
+                            content.setAttribute(CHOICES, attrVal);
+                            text = newDoc.createTextNode("");
+                        }
+                        else
+                        {
+                            text = newDoc.createTextNode(Integer.toString(singleTrace.getValue().val()));
+                        }
+                        content.appendChild(text);
+                        progressElt.appendChild(content);
+                    }
+                    if (trace.size() > 0)
+                    {
+                        rootElement.appendChild(solutionElt);
+                        rootElement.appendChild(progressElt);
                     }
                 }
             }
@@ -925,4 +1029,5 @@ class Bifurcation
         // TODO Auto-generated method stub
         return rowInt;
     }
+
 }

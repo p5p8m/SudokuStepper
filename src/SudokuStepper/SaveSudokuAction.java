@@ -38,7 +38,7 @@ public class SaveSudokuAction extends SudokuAction
         System.out.println("SaveSudokuAction.run");
         try
         {
-            app.getSudokuPb().save(null);
+            app.getSudokuPb().save(null, app.getSudokuPb().getSolutionTrace());
         }
         catch (Exception ex)
         {

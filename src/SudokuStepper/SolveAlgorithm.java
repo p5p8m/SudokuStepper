@@ -318,7 +318,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         return (retVal);
     }
 
-    private SolutionProgress detectTuples(Values sudoku) // SIngle sudoku
+    private SolutionProgress detectTuples(Values sudoku) // Single sudoku
     {
         // ArrayList<ClosedTuples> retVal1 = new ArrayList<ClosedTuples>();
         SolutionProgress retVal = SolutionProgress.NONE;

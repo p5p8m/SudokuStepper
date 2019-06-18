@@ -1,10 +1,11 @@
 package SudokuStepper;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+// import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.action.Action;
@@ -45,6 +46,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import com.ibm.icu.impl.duration.TimeUnit;
 
 import SudokuStepper.Values.SudokuType;
+import SudokuStepper.Values.SolutionTrace;
 
 public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
@@ -287,7 +289,7 @@ public class AppMain extends ApplicationWindow
     {
         public Text       solution;
         public Combo      input;
-        public List<Text> candidates = new ArrayList<Text>(CANDIDATESNUMBER);
+        public List<Text> candidates = new Vector<Text>(CANDIDATESNUMBER);
     }
 
     protected void setCompositeVisibility(SudokuType type)
@@ -1351,8 +1353,13 @@ public class AppMain extends ApplicationWindow
     {
         uiFields.get(row).get(col).input.setVisible(false);
         uiFields.get(row).get(col).solution.setVisible(true);
-        uiFields.get(row).get(col).solution.setText(Integer.toString(mySudoku.getCell(row, col).getSolution().val()));
+        LegalValues solutionVal = mySudoku.getCell(row, col).getSolution();
+        uiFields.get(row).get(col).solution.setText(Integer.toString(solutionVal.val()));
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
+        // Also update the solution trace (even if not necessary in the case of
+        // currently freezing)
+        mySudoku.getSolutionTrace().add(mySudoku.new SolutionTrace(row, col, solutionVal, null));
+
     }
 
     public void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound)
@@ -1379,6 +1386,7 @@ public class AppMain extends ApplicationWindow
                 updateSolution(row, col, markLastSolutionFound);
             });
         }
+
         if (!runsInUiThread && slideShowEnabled)
         {
             try
@@ -1527,4 +1535,5 @@ public class AppMain extends ApplicationWindow
             errorBox.open();
         }
     }
+
 }

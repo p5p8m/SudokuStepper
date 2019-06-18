@@ -15,10 +15,12 @@ public class MasterSudoku
 {
     private SingleCellValue[][]  masterSudoku = new SingleCellValue[AppMain.MAXROWS][AppMain.MAXCOLS];
     private ArrayList<SubSudoku> subSudokus   = new ArrayList<SubSudoku>();
+    private Values               values       = null;
 
-    public MasterSudoku(SudokuType type)
+    public MasterSudoku(SudokuType type, Values valuesIn)
     {
         setSudokuType(type);
+        values = valuesIn;
     }
 
     public void setSudokuType(SudokuType type)
@@ -36,6 +38,11 @@ public class MasterSudoku
             break;
         }
 
+    }
+
+    public Values getValues()
+    {
+        return (values);
     }
 
     public ArrayList<SubSudoku> getSubSudokus()

@@ -24,6 +24,22 @@
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
+   <xs:complexType name="cellContentsWithChoices">
+      <xs:simpleContent>
+      <xs:annotation>
+         <xs:documentation>if there is a bifurcation the choices list all possibilities and the content is the chosen value
+         </xs:documentation>
+      </xs:annotation>
+         <xs:extension base="tns:rangeValue">
+            <xs:attribute type="tns:rangeValue" name="row"
+               use="required" />
+            <xs:attribute type="tns:rangeValue" name="col"
+               use="required" />
+            <xs:attribute type="tns:rangeValue" name="choices"
+               use="optional" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
    <xs:complexType name="cellContents">
       <xs:sequence>
          <xs:element name="content" type="tns:cellContent"
@@ -39,6 +55,9 @@
             </xs:element>
             <xs:element name="solution"
                type="tns:cellContents" minOccurs="0" maxOccurs="1">
+            </xs:element>
+            <xs:element name="progress"
+               type="tns:cellContentsWithChoices" minOccurs="0" maxOccurs="1">
             </xs:element>
          </xs:sequence>
          <xs:attribute name="name" type="xs:string"

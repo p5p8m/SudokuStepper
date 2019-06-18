@@ -64,7 +64,7 @@ public class SaveAsSudokuAction extends SaveSudokuAction
             System.out.println("Open file: " + fileToWrite);
             if (fileToWrite != null)
             {
-                app.getSudokuPb().save(fileToWrite);
+                app.getSudokuPb().save(fileToWrite, app.getSudokuPb().getSolutionTrace());
                 app.updateSudokuFields(true, true, false);
             }
         }
