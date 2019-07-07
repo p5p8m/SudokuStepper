@@ -1184,6 +1184,7 @@ public class AppMain extends ApplicationWindow
                     uiField.input.setVisible(false);
                     Boolean visible = true;
                     String candidate = null;
+                    Boolean alreadyVisible = false;
                     for (int ind = 0; ind < CANDIDATESNUMBER; ind++)
                     {
                         Text cand = uiField.candidates.get(ind);
@@ -1193,7 +1194,12 @@ public class AppMain extends ApplicationWindow
                             visible = candidate != null && sVal != null
                                     && sVal.candidates.contains(LegalValues.from(Integer.parseInt(candidate)));
                             cand.setVisible(visible);
-                            cand.getParent().setVisible(visible);
+                            if (visible)
+                            {
+                                alreadyVisible = visible;
+                            }
+                            // cand.getParent().setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
+                            cand.getParent().setVisible(visible | alreadyVisible);
                         }
                     }
                 }
@@ -1358,8 +1364,10 @@ public class AppMain extends ApplicationWindow
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
         // Also update the solution trace (even if not necessary in the case of
         // currently freezing)
-        mySudoku.getSolutionTrace().add(mySudoku.new SolutionTrace(row, col, solutionVal, null));
-
+        if (markLastSolutionFound)
+        { // we are only updating the UI so no need to update the trace
+            mySudoku.getSolutionTrace().add(mySudoku.new SolutionTrace(row, col, solutionVal, null));
+        }
     }
 
     public void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound)

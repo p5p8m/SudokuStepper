@@ -992,6 +992,7 @@ class Bifurcation
     private int               colInt;
     // The last choice in the list shows how to come from the (n-1)-th sudoku (to
     // which this object is attached) to the n-th sudoku in the stack
+    // The list gets longer the more different solution you try
     private List<LegalValues> choices = new ArrayList<LegalValues>();
 
     public Bifurcation(int row, int col, LegalValues val)
@@ -1020,13 +1021,11 @@ class Bifurcation
 
     public int getCol()
     {
-        // TODO Auto-generated method stub
         return colInt;
     }
 
     public int getRow()
     {
-        // TODO Auto-generated method stub
         return rowInt;
     }
 

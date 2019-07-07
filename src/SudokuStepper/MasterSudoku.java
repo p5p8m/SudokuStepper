@@ -60,6 +60,7 @@ public class MasterSudoku
             }
         }
         setSudokuType(type);
+        this.values = src.getValues();
     }
 
     public SingleCellValue getRowCol(int globalRow, int globalCol)

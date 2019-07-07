@@ -27,7 +27,12 @@ public class Tentative // Contains the tentative solution for a complete sudoku 
         if (numPrevTries < numPossibleTries)
         {
             LegalValues toBeEliminatedVal = sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).candidates
-                    .get(numPrevTries);
+                    // If you start with index 0 in the list of candidates:
+                    // .get(numPrevTries);
+                    // if you start with the last in the list
+                    // Change accordingly with code in setBifurcation
+                    .get(sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).candidates.size() - 1
+                            - numPrevTries);
             retVal = bifurcation.addNewTry(toBeEliminatedVal);
             // SudokuStepper.Values.SolutionTrace s = new SolutionTrace(1, 1,
             // LegalValues.EIGHT, null);
@@ -42,11 +47,11 @@ public class Tentative // Contains the tentative solution for a complete sudoku 
     public LegalValues setBifurcation(int globalRow, int globalCol)
     {
         List<LegalValues> candidates = sudoku.getRowCol(globalRow, globalCol).candidates;
-        LegalValues eliminatedVal = candidates.get(0);
+        LegalValues eliminatedVal = candidates.get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1); // .get(0);
         // Interested to see if the other solution is also legal?
         // eliminatedVal = sudoku.getRowCol(globalRow, globalCol).candidates
-        // .get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1); // For a
-        // test
+        // .get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1);
+        // Change accordingly with code in getNextTry
         sudoku.getValues().getSolutionTrace()
                 .add(sudoku.getValues().new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
         bifurcation = new Bifurcation(globalRow, globalCol, eliminatedVal);

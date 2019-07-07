@@ -39,6 +39,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             int oldNumOfSolutions = 0;
             int newNumOfSolutions = 0;
             SolutionProgress updated = SolutionProgress.NONE;
+            sudoku.getSolutionTrace().clear();
             boolean errorDetected = false;
             // Integer slideShowPause = null;
             // boolean slideShowEnabled = false;
@@ -344,7 +345,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                         sudoku.getCell(row, scndCol).candidates)
                                         && sudoku.getCell(row, col).candidates.size() == 2)
                                 {
-                                    // Make a deep copy to avoid problems when the list is modified whithin the loop
+                                    // Make a deep copy to avoid problems when the list is modified within the loop
                                     List<LegalValues> locCandidates = new ArrayList<LegalValues>(
                                             sudoku.getCell(row, col).candidates);
                                     for (LegalValues val : locCandidates)
