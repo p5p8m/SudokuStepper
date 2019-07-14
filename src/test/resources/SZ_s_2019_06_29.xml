@@ -86,7 +86,7 @@
     <content col="9" row="9">4</content>
   </solution>
   <progress>
-    <content choices="1, 6" col="5" row="1"/>
+    <content choices="1 6" col="5" row="1"/>
     <content col="4" row="5">8</content>
     <content col="3" row="2">8</content>
     <content col="5" row="9">2</content>

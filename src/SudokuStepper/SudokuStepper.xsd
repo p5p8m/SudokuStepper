@@ -14,6 +14,22 @@
          <xs:maxInclusive value="21"></xs:maxInclusive>
       </xs:restriction>
    </xs:simpleType>
+   <xs:simpleType name="noValue">
+      <xs:annotation>
+         <xs:documentation>Unset integer value
+         </xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="" />
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="nullableRangeValue">
+      <xs:annotation>
+         <xs:documentation>maximum value is 21 if samurai type, else 9, and it may be empty
+         </xs:documentation>
+      </xs:annotation>
+      <xs:union memberTypes="tns:rangeValue tns:noValue"/>
+   </xs:simpleType>
    <xs:complexType name="cellContent">
       <xs:simpleContent>
          <xs:extension base="tns:rangeValue">
@@ -24,21 +40,37 @@
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
-   <xs:complexType name="cellContentsWithChoices">
+   <xs:complexType name="cellContentWithChoices">
       <xs:simpleContent>
-      <xs:annotation>
-         <xs:documentation>if there is a bifurcation the choices list all possibilities and the content is the chosen value
-         </xs:documentation>
-      </xs:annotation>
-         <xs:extension base="tns:rangeValue">
+         <xs:annotation>
+            <xs:documentation>if there is a bifurcation the choices list
+               all possibilities and the content is the chosen value
+            </xs:documentation>
+         </xs:annotation>
+         <xs:extension base="tns:nullableRangeValue">
             <xs:attribute type="tns:rangeValue" name="row"
                use="required" />
             <xs:attribute type="tns:rangeValue" name="col"
                use="required" />
-            <xs:attribute type="tns:rangeValue" name="choices"
-               use="optional" />
+            <xs:attribute name="choices" use="optional">
+               <xs:simpleType>
+                  <xs:restriction base="tns:intList">
+                  </xs:restriction>
+               </xs:simpleType>
+            </xs:attribute>
          </xs:extension>
       </xs:simpleContent>
+   </xs:complexType>
+   <xs:simpleType name="intList">
+      <xs:list itemType="tns:rangeValue" />
+   </xs:simpleType>
+   <xs:complexType name="cellContentsWithChoices">
+      <xs:sequence>
+         <xs:element name="content"
+            type="tns:cellContentWithChoices" maxOccurs="unbounded"
+            minOccurs="0">
+         </xs:element>
+      </xs:sequence>
    </xs:complexType>
    <xs:complexType name="cellContents">
       <xs:sequence>
@@ -57,7 +89,8 @@
                type="tns:cellContents" minOccurs="0" maxOccurs="1">
             </xs:element>
             <xs:element name="progress"
-               type="tns:cellContentsWithChoices" minOccurs="0" maxOccurs="1">
+               type="tns:cellContentsWithChoices" minOccurs="0"
+               maxOccurs="1">
             </xs:element>
          </xs:sequence>
          <xs:attribute name="name" type="xs:string"

@@ -46,7 +46,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import com.ibm.icu.impl.duration.TimeUnit;
 
 import SudokuStepper.Values.SudokuType;
-import SudokuStepper.Values.SolutionTrace;
+import SudokuStepper.ListOfSolTraces;
 
 public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
@@ -93,6 +93,7 @@ public class AppMain extends ApplicationWindow
     private static final int COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
     private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
     private static final int COLOR_LAST_FOREGRD    = SWT.COLOR_RED;
+    private static final int COLOR_TNERR_FOREGRD   = SWT.COLOR_BLUE;
     private static final int COLOR_PREV_FOREGRD    = SWT.COLOR_WHITE;
 
     /**
@@ -481,10 +482,10 @@ public class AppMain extends ApplicationWindow
                                             setStatus(StringUtils.EMPTY);
                                             LegalValues val = LegalValues.from(Integer.parseInt(input));
                                             mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
-                                            mySudoku.getCell(totalRow, totalCol).candidates.clear();
+                                            mySudoku.getCell(totalRow, totalCol).getCandidates().clear();
                                             mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
                                                     null, true, false);
-                                            mySudoku.getCell(totalRow, totalCol).isInput = true;
+                                            mySudoku.getCell(totalRow, totalCol).setInput(true);
                                             mySudoku.setSaved(false);
 
                                         }
@@ -1170,7 +1171,7 @@ public class AppMain extends ApplicationWindow
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
                 SingleCellValue sVal = mySudoku.getCell(row, col);
-                if (sVal != null && sVal.candidates.isEmpty())
+                if (sVal != null && sVal.getCandidates().isEmpty())
                 {
                     solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
                 }
@@ -1192,7 +1193,7 @@ public class AppMain extends ApplicationWindow
                         {
                             candidate = cand.getText();
                             visible = candidate != null && sVal != null
-                                    && sVal.candidates.contains(LegalValues.from(Integer.parseInt(candidate)));
+                                    && sVal.getCandidates().contains(LegalValues.from(Integer.parseInt(candidate)));
                             cand.setVisible(visible);
                             if (visible)
                             {
@@ -1301,7 +1302,7 @@ public class AppMain extends ApplicationWindow
                 {
                     for (Text candText : uiFields.get(row).get(col).candidates)
                     {
-                        if (mySudoku.getCell(row, col).candidates
+                        if (mySudoku.getCell(row, col).getCandidates()
                                 .contains(LegalValues.from(Integer.parseInt(candText.getText()))))
                         {
                             candText.setVisible(true);
@@ -1314,7 +1315,7 @@ public class AppMain extends ApplicationWindow
 
     public void rollbackSudoku()
     {
-        updateSudokuFields(false, false, false);
+        updateSudokuFields(false, false, true);
     }
 
     public void savedUpdated(boolean saved, boolean runsInUiThread)
@@ -1364,14 +1365,19 @@ public class AppMain extends ApplicationWindow
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
         // Also update the solution trace (even if not necessary in the case of
         // currently freezing)
-        if (markLastSolutionFound)
-        { // we are only updating the UI so no need to update the trace
-            mySudoku.getSolutionTrace().add(mySudoku.new SolutionTrace(row, col, solutionVal, null));
-        }
+        // if (markLastSolutionFound)
+        // { // we are only updating the UI so no need to update the trace
+        // mySudoku.addToSolutionTrace(mySudoku, row, col, solutionVal, null);
+        // }
     }
 
     public void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound)
     {
+        if (markLastSolutionFound && !runsInUiThread)
+        { // we are only updating the UI so no need to update the trace
+            LegalValues solutionVal = mySudoku.getCell(row, col).getSolution();
+            mySudoku.addToSolutionTrace(mySudoku, row, col, solutionVal, null);
+        }
         // myDisplay.asyncExec(new Runnable()
         // {
         // public void run()
@@ -1428,7 +1434,7 @@ public class AppMain extends ApplicationWindow
         SingleCellValue sVal = mySudoku.getCell(row, col);
         if (sVal != null)
         {
-            if (sVal.isInput)
+            if (sVal.isInput())
             {
                 uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(COLOR_SOLT_FOREGRD));
             }
@@ -1448,11 +1454,18 @@ public class AppMain extends ApplicationWindow
                 int color = COLOR_PREV_FOREGRD;
                 if (markLastSolutionFound)
                 {
-                    color = COLOR_LAST_FOREGRD;
+                    if (sVal.isTryNError())
+                    {
+                        color = COLOR_TNERR_FOREGRD;
+                    }
+                    else
+                    {
+                        color = COLOR_LAST_FOREGRD;
+                    }
                 }
                 uiFields.get(row).get(col).solution.setForeground(myDisplay.getSystemColor(color));
             }
-            if (sVal.isAConflict)
+            if (sVal.isAConflict())
             {
                 uiFields.get(row).get(col).solution.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));
                 uiFields.get(row).get(col).input.setBackground(myDisplay.getSystemColor(COLOR_CONFLICT_BCKGRD));

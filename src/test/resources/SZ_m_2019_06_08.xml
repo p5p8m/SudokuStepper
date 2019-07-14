@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<sudoku xmlns="http://www.example.org/SudokuStepper" name="SZ_m_2019_06_08_test1" type="single">
+<sudoku xmlns="http://www.example.org/SudokuStepper" name="SZ_m_2019_06_08" type="single">
   <initial>
     <content col="3" row="1">4</content>
     <content col="4" row="1">3</content>
@@ -8,7 +8,6 @@
     <content col="3" row="2">7</content>
     <content col="4" row="2">4</content>
     <content col="3" row="3">3</content>
-    <content col="5" row="3">7</content>
     <content col="6" row="3">8</content>
     <content col="8" row="3">2</content>
     <content col="9" row="3">4</content>
@@ -48,6 +47,7 @@
     <content col="1" row="3">5</content>
     <content col="2" row="3">6</content>
     <content col="4" row="3">9</content>
+    <content col="5" row="3">7</content>
     <content col="7" row="3">1</content>
     <content col="2" row="4">8</content>
     <content col="3" row="4">9</content>

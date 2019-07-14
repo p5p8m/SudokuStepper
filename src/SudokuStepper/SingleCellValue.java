@@ -6,10 +6,11 @@ import java.util.Vector;
 
 public class SingleCellValue
 {
-    public boolean           isInput     = false;
-    public boolean           isAConflict = false;
-    public List<LegalValues> candidates  = new Vector<LegalValues>(AppMain.CANDIDATESNUMBER);
-    private LegalValues      solution    = null;
+    private boolean           isInput     = false;
+    private boolean           isTryNError = false;
+    private boolean           isAConflict = false;
+    private List<LegalValues> candidates  = new Vector<LegalValues>(AppMain.CANDIDATESNUMBER);
+    private LegalValues       solution    = null;
 
     public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,
             boolean runsInUiThread, boolean markLastSolutionFound)
@@ -26,12 +27,13 @@ public class SingleCellValue
 
     public SingleCellValue(SingleCellValue src)
     {
-        for (LegalValues val : src.candidates)
+        for (LegalValues val : src.getCandidates())
         {
-            candidates.add(val);
+            getCandidates().add(val);
         }
-        isInput = src.isInput;
-        isAConflict = src.isAConflict;
+        setInput(src.isInput());
+        isTryNError = src.isTryNError;
+        setAConflict(src.isAConflict());
         solution = src.solution;
     }
 
@@ -50,10 +52,50 @@ public class SingleCellValue
      */
     void initCandidates()
     {
-        candidates.clear();
+        getCandidates().clear();
         for (LegalValues val : LegalValues.values())
         {
-            candidates.add(val);
+            getCandidates().add(val);
         }
+    }
+
+    public boolean isTryNError()
+    {
+        return isTryNError;
+    }
+
+    public void setTryNError(boolean isTryNError)
+    {
+        this.isTryNError = isTryNError;
+    }
+
+    public boolean isInput()
+    {
+        return isInput;
+    }
+
+    public void setInput(boolean isInput)
+    {
+        this.isInput = isInput;
+    }
+
+    public boolean isAConflict()
+    {
+        return isAConflict;
+    }
+
+    public void setAConflict(boolean isAConflict)
+    {
+        this.isAConflict = isAConflict;
+    }
+
+    public List<LegalValues> getCandidates()
+    {
+        return candidates;
+    }
+
+    public void setCandidates(List<LegalValues> candidates)
+    {
+        this.candidates = candidates;
     }
 }

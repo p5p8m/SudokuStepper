@@ -2,6 +2,7 @@ package SudokuStepper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
@@ -42,6 +43,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
+// import SudokuStepper.SolutionTrace;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
@@ -86,43 +89,6 @@ interface FreezeListener
 public class Values
 {
 
-    public class SolutionTrace
-    {
-        int               row;
-        int               col;
-        LegalValues       val;
-        List<LegalValues> choices;
-
-        public SolutionTrace(int rowIn, int colIn, LegalValues valIn, List<LegalValues> choicesIn)
-        {
-            row = rowIn;
-            col = colIn;
-            val = valIn;
-            choices = choicesIn;
-        }
-
-        public int getRow()
-        {
-            return (row);
-        }
-
-        public int getCol()
-        {
-            return (col);
-        }
-
-        public LegalValues getValue()
-        {
-            return (val);
-        }
-
-        public List<LegalValues> getChoices()
-        {
-            return (choices);
-        }
-
-    }
-
     public enum SudokuType
     {
         SINGLE, SAMURAI
@@ -134,7 +100,7 @@ public class Values
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
     private AppMain                       appMain                  = null;
-    private List<Values.SolutionTrace>    solutionTrace            = new Vector<Values.SolutionTrace>();
+    private ListOfSolTraces               solutionTrace            = new ListOfSolTraces();
 
     private List<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
     private List<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
@@ -160,9 +126,10 @@ public class Values
         return (retVal);
     }
 
-    public List<SolutionTrace> getSolutionTrace()
+    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValues eliminatedVal,
+            List<LegalValues> candidates)
     {
-        return (solutionTrace);
+        solutionTrace.addToSolutionTrace(values, globalRow, globalCol, eliminatedVal, candidates);
     }
 
     public boolean isSaved()
@@ -232,7 +199,8 @@ public class Values
         System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
                 + toBeEliminatedVal);
         sudokuCands.push(newSudoku);
-        retVal = eliminateCandidate(globalRow, globalCol, toBeEliminatedVal, true, false, true);
+        retVal = eliminateCandidate(globalRow, globalCol, toBeEliminatedVal, true, false, true, true);
+        oldSudoku.getSudoku().getRowCol(globalRow, globalCol).setTryNError(true);
         return (retVal);
     }
 
@@ -262,7 +230,8 @@ public class Values
                 LegalValues toBeEliminatedVal = nextTry.getNextTry();
                 System.out.println("Try and Error rollback with row: " + row + ", col: " + col
                         + ", now eliminating value: " + toBeEliminatedVal);
-                retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true);
+                retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true, true);
+                oldSudoku.getSudoku().getRowCol(row, col).setTryNError(true);
             }
         }
         return (retVal);
@@ -319,7 +288,7 @@ public class Values
     }
 
     public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound,
-            boolean isAnInput) throws InvalidValueException
+            boolean isAnInput, boolean isATry) throws InvalidValueException
     {
         try
         {
@@ -328,8 +297,9 @@ public class Values
             LegalValues val = LegalValues.from(value);
             MasterSudoku sudoku = getSudoku();
             sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
-            sudoku.getRowCol(row, col).isInput = isAnInput;
-            sudoku.getRowCol(row, col).candidates.clear();
+            sudoku.getRowCol(row, col).setInput(isAnInput);
+            sudoku.getRowCol(row, col).setTryNError(isATry);
+            sudoku.getRowCol(row, col).getCandidates().clear();
             setSaved(false);
         }
         catch (Exception ex)
@@ -376,16 +346,16 @@ public class Values
     // remaining candidate as a solution
 
     public SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValues val, boolean alsoSetSolution,
-            boolean runsInUiThread, boolean markLastSolutionFound)
+            boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku sudoku = getSudoku();
-        if (val == null || sudoku.getRowCol(globalRow, globalCol).candidates.contains(val))
+        if (val == null || sudoku.getRowCol(globalRow, globalCol).getCandidates().contains(val))
         {
             retVal = retVal.combineWith(SolutionProgress.CANDIDATES);
             if (val != null)
             {
-                sudoku.getRowCol(globalRow, globalCol).candidates.remove(val);
+                sudoku.getRowCol(globalRow, globalCol).getCandidates().remove(val);
                 for (CandidatesListener listener : candidatesListeners)
                 {
                     listener.candidatesUpdated(globalRow, globalCol, val, runsInUiThread);
@@ -396,14 +366,15 @@ public class Values
             {
                 listener.savedUpdated(isSaved(), runsInUiThread);
             }
-            if (sudoku.getRowCol(globalRow, globalCol).candidates.size() == 1)
+            if (sudoku.getRowCol(globalRow, globalCol).getCandidates().size() == 1)
             {
                 if (alsoSetSolution)
                 {
-                    LegalValues solution = sudoku.getRowCol(globalRow, globalCol).candidates.get(0);
+                    LegalValues solution = sudoku.getRowCol(globalRow, globalCol).getCandidates().get(0);
                     retVal = retVal.combineWith(SolutionProgress.SOLUTION);
-                    sudoku.getRowCol(globalRow, globalCol).isInput = false;
-                    sudoku.getRowCol(globalRow, globalCol).candidates.clear();
+                    sudoku.getRowCol(globalRow, globalCol).setInput(false);
+                    sudoku.getRowCol(globalRow, globalCol).setTryNError(isATry);
+                    sudoku.getRowCol(globalRow, globalCol).getCandidates().clear();
                     // Must be the last thing because the thread could end if step by step mode
                     sudoku.getRowCol(globalRow, globalCol).setSolution(solution, globalRow, globalCol,
                             solutionListeners, runsInUiThread, markLastSolutionFound);
@@ -453,19 +424,19 @@ public class Values
                 // Same column
                 for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
                 {
-                    if (!subSudoku.getRowCol(rowInCol, localCol).candidates.contains(oldVal)
+                    if (!subSudoku.getRowCol(rowInCol, localCol).getCandidates().contains(oldVal)
                             && isValueACandidate(rowInCol, localCol, oldVal))
                     {
-                        subSudoku.getRowCol(rowInCol, localCol).candidates.add(oldVal);
+                        subSudoku.getRowCol(rowInCol, localCol).getCandidates().add(oldVal);
                     }
                 }
                 // Same row
                 for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
                 {
-                    if (!subSudoku.getRowCol(localRow, colInRow).candidates.contains(oldVal)
+                    if (!subSudoku.getRowCol(localRow, colInRow).getCandidates().contains(oldVal)
                             && isValueACandidate(localRow, colInRow, oldVal))
                     {
-                        subSudoku.getRowCol(localRow, colInRow).candidates.add(oldVal);
+                        subSudoku.getRowCol(localRow, colInRow).getCandidates().add(oldVal);
                     }
                 }
                 // Same block
@@ -477,10 +448,10 @@ public class Values
                             * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
                                     * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                     {
-                        if (!subSudoku.getRowCol(rowInBlock, colInBlock).candidates.contains(oldVal)
+                        if (!subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().contains(oldVal)
                                 && isValueACandidate(rowInBlock, colInBlock, oldVal))
                         {
-                            subSudoku.getRowCol(rowInBlock, colInBlock).candidates.add(oldVal);
+                            subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().add(oldVal);
                         }
                     }
                 }
@@ -558,10 +529,10 @@ public class Values
             // Same column
             for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
             {
-                if (subSudoku.getRowCol(rowInCol, localCol).candidates.contains(val))
+                if (subSudoku.getRowCol(rowInCol, localCol).getCandidates().contains(val))
                 {
                     SolutionProgress nowUpdated = eliminateCandidate(subSudoku.getGlobalRow(rowInCol), globalCol, val,
-                            alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                            alsoSetSolution, runsInUiThread, markLastSolutionFound, false);
                     retVal = retVal.combineWith(nowUpdated);
                     // sudoku[rowInCol, col].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
@@ -573,10 +544,10 @@ public class Values
             // Same row
             for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
             {
-                if (subSudoku.getRowCol(localRow, colInRow).candidates.contains(val))
+                if (subSudoku.getRowCol(localRow, colInRow).getCandidates().contains(val))
                 {
                     SolutionProgress nowUpdated = eliminateCandidate(globalRow, subSudoku.getGlobalCol(colInRow), val,
-                            alsoSetSolution, runsInUiThread, markLastSolutionFound);
+                            alsoSetSolution, runsInUiThread, markLastSolutionFound, false);
                     retVal = retVal.combineWith(nowUpdated);
                     // sudoku[row, colInRow].candidates.remove(val);
                     // for (CandidatesListener listener : candidatesListeners)
@@ -594,11 +565,11 @@ public class Values
                         * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
                                 * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
                 {
-                    if (subSudoku.getRowCol(rowInBlock, colInBlock).candidates.contains(val))
+                    if (subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().contains(val))
                     {
                         SolutionProgress nowUpdated = eliminateCandidate(subSudoku.getGlobalRow(rowInBlock),
                                 subSudoku.getGlobalCol(colInBlock), val, alsoSetSolution, runsInUiThread,
-                                markLastSolutionFound);
+                                markLastSolutionFound, false);
                         retVal = retVal.combineWith(nowUpdated);
                         // sudoku[rowInBlock, colInBlock].candidates.remove(val);
                         // for (CandidatesListener listener : candidatesListeners)
@@ -687,7 +658,7 @@ public class Values
                                         int value = Integer.parseInt(content.getTextContent());
                                         int col = Integer.parseInt(((Element) content).getAttribute(COL));
                                         int row = Integer.parseInt(((Element) content).getAttribute(ROW));
-                                        initCell(row, col, value, false, false, allContent == initialContents);
+                                        initCell(row, col, value, false, false, allContent == initialContents, false);
                                     }
                                     catch (InvalidValueException ex)
                                     {
@@ -724,7 +695,7 @@ public class Values
         {
             for (int col = 0; col < AppMain.MAXCOLS; col++)
             {
-                getCell(row, col).isAConflict = false;
+                getCell(row, col).setAConflict(false);
             }
         }
         for (SubSudoku subSudoku : getSudoku().getSubSudokus())
@@ -733,17 +704,17 @@ public class Values
             {
                 for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
                 {
-                    if (subSudoku.getRowCol(row, col).candidates.isEmpty())
+                    if (subSudoku.getRowCol(row, col).getCandidates().isEmpty())
                     {
                         // Same column
                         for (int rowInCol = row + 1; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
                         {
-                            if (subSudoku.getRowCol(rowInCol, col).candidates.isEmpty()
+                            if (subSudoku.getRowCol(rowInCol, col).getCandidates().isEmpty()
                                     && subSudoku.getRowCol(rowInCol, col).getSolution() == subSudoku.getRowCol(row, col)
                                             .getSolution())
                             {
-                                subSudoku.getRowCol(row, col).isAConflict = true;
-                                subSudoku.getRowCol(rowInCol, col).isAConflict = true;
+                                subSudoku.getRowCol(row, col).setAConflict(true);
+                                subSudoku.getRowCol(rowInCol, col).setAConflict(true);
                                 ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
                                 newConflict.add(new int[]
                                 { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
@@ -755,12 +726,12 @@ public class Values
                         // Same row
                         for (int colInRow = col + 1; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
                         {
-                            if (subSudoku.getRowCol(row, colInRow).candidates.isEmpty()
+                            if (subSudoku.getRowCol(row, colInRow).getCandidates().isEmpty()
                                     && subSudoku.getRowCol(row, colInRow).getSolution() == subSudoku.getRowCol(row, col)
                                             .getSolution())
                             {
-                                subSudoku.getRowCol(row, col).isAConflict = true;
-                                subSudoku.getRowCol(row, colInRow).isAConflict = true;
+                                subSudoku.getRowCol(row, col).setAConflict(true);
+                                subSudoku.getRowCol(row, colInRow).setAConflict(true);
                                 ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
                                 newConflict.add(new int[]
                                 { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
@@ -781,12 +752,12 @@ public class Values
                                 if ((rowInBlock >= row || colInBlock >= col)
                                         && (rowInBlock != row || colInBlock != col))
                                 {
-                                    if (subSudoku.getRowCol(rowInBlock, colInBlock).candidates.isEmpty()
+                                    if (subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().isEmpty()
                                             && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution() == subSudoku
                                                     .getRowCol(row, col).getSolution())
                                     {
-                                        subSudoku.getRowCol(row, col).isAConflict = true;
-                                        subSudoku.getRowCol(rowInBlock, colInBlock).isAConflict = true;
+                                        subSudoku.getRowCol(row, col).setAConflict(true);
+                                        subSudoku.getRowCol(rowInBlock, colInBlock).setAConflict(true);
                                         ArrayList<int[]> newConflict = new ArrayList<int[]>(2);
                                         newConflict.add(new int[]
                                         { subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(col) });
@@ -857,7 +828,7 @@ public class Values
         return retVal;
     }
 
-    public void save(String outputFile, List<Values.SolutionTrace> trace)
+    public void save(String outputFile, ListOfSolTraces trace)
     {
         try
         {
@@ -889,10 +860,10 @@ public class Values
                         if (sudoku.isRowColUsed(sudokuType, row, col))
                         {
                             if (sudoku.getRowCol(row, col).getSolution() != null
-                                    && ((sudoku.getRowCol(row, col).isInput && elt.equals(initialElt))
-                                            || (!sudoku.getRowCol(row, col).isInput && elt.equals(solutionElt))))
+                                    && ((sudoku.getRowCol(row, col).isInput() && elt.equals(initialElt))
+                                            || (!sudoku.getRowCol(row, col).isInput() && elt.equals(solutionElt))))
                             {
-                                if (!sudoku.getRowCol(row, col).isInput && elt.equals(solutionElt))
+                                if (!sudoku.getRowCol(row, col).isInput() && elt.equals(solutionElt))
                                 {
                                     numberNodes++;
                                 }
@@ -912,7 +883,7 @@ public class Values
                 {
                     // also save the trace
                     Text text = newDoc.createTextNode("");
-                    for (Values.SolutionTrace singleTrace : trace)
+                    for (SolutionTrace singleTrace : trace)
                     {
                         Element content = newDoc.createElement(CONTENT);
                         content.setAttribute(ROW, Integer.toString(singleTrace.getRow() + 1));
@@ -925,7 +896,7 @@ public class Values
                             {
                                 if (loopCount > 0)
                                 {
-                                    attrVal += ", ";
+                                    attrVal += " ";
                                 }
                                 attrVal += Integer.toString(val.val());
                                 loopCount++;
@@ -984,7 +955,62 @@ public class Values
         aTransformer.transform(src, dest);
     }
 
+    /**
+     * @return the solutionTrace
+     */
+    public ListOfSolTraces getSolutionTrace()
+    {
+        return solutionTrace;
+    }
 }
+
+/*
+ * public class ListOfSolTraces implements Iterable<SolutionTrace> { private
+ * List<SolutionTrace> listTraces = new Vector<SolutionTrace>();
+ * 
+ * public void addToSolutionTrace(Values values, int globalRow, int globalCol,
+ * LegalValues eliminatedVal, List<LegalValues> candidates) {
+ * listTraces.add(values.new SolutionTrace(globalRow, globalCol, eliminatedVal,
+ * candidates)); }
+ * 
+ * public void clear() { listTraces.clear(); }
+ * 
+ * public int size() { return (listTraces.size()); }
+ * 
+ * public Iterator<SolutionTrace> iterator() { return new
+ * TraceIterator<SolutionTrace>(); } }
+ * 
+ * public class TraceIterator<SolutionTrace> implements Iterator<SolutionTrace>
+ * { SolutionTrace current; int currentInd = -1; List<SolutionTrace>
+ * intListTraces; // constructor public
+ * TraceIterator<SolutionTrace>(ListOfSolTraces traceList) { intListTraces =
+ * traceList.listTraces; if ( intListTraces.size() > 0) { currentInd = 0; } }
+ * 
+ * // Checks if the next element exists public boolean hasNext() { return
+ * currentInd < traceList.size() - 1; }
+ * 
+ * // moves the cursor/iterator to next element public SolutionTrace next() {
+ * SolutionTrace trace = intListTraces.get(currentInd); currentInd++;
+ * return(trace); } }
+ */
+/*
+ * private class SolutionTrace { private int row; private int col; private
+ * LegalValues val; private List<LegalValues> choices;
+ * 
+ * public SolutionTrace(int rowIn, int colIn, LegalValues valIn,
+ * List<LegalValues> choicesIn) { row = rowIn; col = colIn; val = valIn; choices
+ * = choicesIn; }
+ * 
+ * public int getRow() { return (row); }
+ * 
+ * public int getCol() { return (col); }
+ * 
+ * public LegalValues getValue() { return (val); }
+ * 
+ * public List<LegalValues> getChoices() { return (choices); }
+ * 
+ * }
+ */
 
 class Bifurcation
 {
@@ -1028,5 +1054,4 @@ class Bifurcation
     {
         return rowInt;
     }
-
 }
