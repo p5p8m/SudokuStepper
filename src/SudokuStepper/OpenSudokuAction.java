@@ -76,6 +76,9 @@ public abstract class OpenSudokuAction extends SudokuAction
                                                                          // in
                     app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                     app.updateSudokuFields(false, true, false);
+                    // app.setSlideShowMode(app.getSlideShowEnabled());
+                    app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
+                    app.toggleSlideShow();
                 }
                 else
                 {

@@ -208,7 +208,12 @@ public class AppMain extends ApplicationWindow
             setSolveEnabled(false);
             if (btnNext != null)
             {
-                btnNext.setEnabled(btnManual.isEnabled() && btnManual.getSelection());
+                btnNext.setEnabled((status == AppState.SOLVING || btnManual.isEnabled()) && btnManual.getSelection());
+            }
+            if (slider != null)
+            {
+                slider.setEnabled(
+                        (status == AppState.SOLVING || btnAutomatic.isEnabled()) && btnAutomatic.getSelection());
             }
         }
         else if (val == AppState.EMPTY && mySudoku != null)
@@ -577,7 +582,14 @@ public class AppMain extends ApplicationWindow
             public void widgetSelected(SelectionEvent e)
             {
                 System.out.println("Pressed Solve");
+                btnManual.setEnabled(false);
+                btnAutomatic.setEnabled(false);
+                // if (btnManual.getSelection())
+                // {
+                // btnNext.setEnabled(true);
+                // }
                 solveSudokuAction.run();
+                System.out.println("Started solving");
             }
         });
         btnSolve.setText("Solve");
@@ -639,7 +651,7 @@ public class AppMain extends ApplicationWindow
         lblPause.setLayoutData(fd_lblPause);
         lblPause.setText("Pause:");
 
-        Slider slider = new Slider(groupSlide, SWT.NONE);
+        slider = new Slider(groupSlide, SWT.NONE);
         FormData fd_slider = new FormData();
         fd_slider.left = new FormAttachment(lblPause, 5, SWT.RIGHT);
         fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
@@ -918,6 +930,17 @@ public class AppMain extends ApplicationWindow
         {
             toggleSlideShowSudokuAction.setEnabled(enabled);
         }
+        // if (!enabled)
+        // {
+        // if (btnManual != null)
+        // {
+        // btnManual.setEnabled(enabled);
+        // }
+        // if (btnAutomatic != null)
+        // {
+        // btnAutomatic.setEnabled(enabled);
+        // }
+        // }
     }
 
     private void setFreezeEnabled(boolean enabled)
@@ -1005,6 +1028,7 @@ public class AppMain extends ApplicationWindow
     private Button btnFreeze                   = null;
     private Button btnSlideShow                = null;
     private Button btnAutomatic                = null;
+    private Slider slider                      = null;
     private Button btnNext                     = null;
     private Button btnManual                   = null;
     private Group  groupSlide                  = null;
@@ -1516,37 +1540,7 @@ public class AppMain extends ApplicationWindow
             // app.getSudokuPb().save(null);
             System.out.println("Pressed Slide Show");
             boolean newEnabledState = !getSlideShowEnabled();
-            groupSlide.setEnabled(newEnabledState);
-            slideShowEnabled = groupSlide.getEnabled();
-            if (!newEnabledState)
-            {
-                manualWasEnabled = btnManual.getSelection();
-            }
-            recursiveSetEnabled(groupSlide, newEnabledState);
-            if (firstTimeEnabled)
-            {
-                btnAutomatic.setSelection(false);
-                btnManual.setSelection(true);
-                btnManual.notifyListeners(SWT.Selection, new Event());
-                firstTimeEnabled = false;
-            }
-            else if (newEnabledState)
-            {
-                btnAutomatic.setSelection(!manualWasEnabled);
-                btnManual.setSelection(manualWasEnabled);
-                if (manualWasEnabled)
-                {
-                    btnManual.notifyListeners(SWT.Selection, new Event());
-                }
-                else
-                {
-                    btnAutomatic.notifyListeners(SWT.Selection, new Event());
-                }
-            }
-            if (lblCurrent != null && slideShowPause != null)
-            {
-                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
-            }
+            setSlideShowMode(newEnabledState);
         }
         catch (Exception ex)
         {
@@ -1554,6 +1548,44 @@ public class AppMain extends ApplicationWindow
             errorBox.setMessage("Could not toggle slide show. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
                     + "\n" + ex.toString());
             errorBox.open();
+        }
+    }
+
+    /**
+     * @param newEnabledState
+     */
+    void setSlideShowMode(boolean newEnabledState)
+    {
+        groupSlide.setEnabled(newEnabledState);
+        slideShowEnabled = groupSlide.getEnabled();
+        if (!newEnabledState)
+        {
+            manualWasEnabled = btnManual.getSelection();
+        }
+        recursiveSetEnabled(groupSlide, newEnabledState);
+        if (firstTimeEnabled)
+        {
+            btnAutomatic.setSelection(false);
+            btnManual.setSelection(true);
+            btnManual.notifyListeners(SWT.Selection, new Event());
+            firstTimeEnabled = false;
+        }
+        else if (newEnabledState)
+        {
+            btnAutomatic.setSelection(!manualWasEnabled);
+            btnManual.setSelection(manualWasEnabled);
+            if (manualWasEnabled)
+            {
+                btnManual.notifyListeners(SWT.Selection, new Event());
+            }
+            else
+            {
+                btnAutomatic.notifyListeners(SWT.Selection, new Event());
+            }
+        }
+        if (lblCurrent != null && slideShowPause != null)
+        {
+            lblCurrent.setText(Integer.toString(slideShowPause) + " s");
         }
     }
 
