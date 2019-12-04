@@ -1176,6 +1176,8 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+        txtName.setFocus();
+
     }
 
     void freeze(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound)

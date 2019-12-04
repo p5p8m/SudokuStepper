@@ -64,7 +64,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                     updated = useTryAndError(sudoku);
                 }
                 errorDetected = !sudoku.areContentsLegal().isEmpty();
-                if (errorDetected && sudoku.isRollbackPossible())
+                while (errorDetected && sudoku.isRollbackPossible())
                 {
                     updated = rollbackAndTryNext(sudoku);
                     errorDetected = !sudoku.areContentsLegal().isEmpty();
@@ -467,7 +467,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                         if (scndRowInBlock > rowInBlock
                                                 || (scndRowInBlock == rowInBlock && scndColInBlock > colInBlock))
                                         {
-                                            if (!sudoku.getCell(scndRowInBlock, scndColInBlock).getCandidates().isEmpty())
+                                            if (!sudoku.getCell(scndRowInBlock, scndColInBlock).getCandidates()
+                                                    .isEmpty())
                                             {
                                                 if (sameContents(sudoku.getCell(rowInBlock, colInBlock).getCandidates(),
                                                         sudoku.getCell(scndRowInBlock, scndColInBlock).getCandidates())
@@ -490,8 +491,10 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                                         || cleanedColInBlock != colInBlock)
                                                                         && (cleanedRowInBlock != scndRowInBlock
                                                                                 || cleanedColInBlock != scndColInBlock)
-                                                                        && !sudoku.getCell(cleanedRowInBlock,
-                                                                                cleanedColInBlock).getCandidates().isEmpty())
+                                                                        && !sudoku
+                                                                                .getCell(cleanedRowInBlock,
+                                                                                        cleanedColInBlock)
+                                                                                .getCandidates().isEmpty())
                                                                 {
                                                                     SolutionProgress nowUpdated = sudoku
                                                                             .eliminateCandidate(cleanedRowInBlock,
@@ -712,8 +715,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                     subSudoku.getGlobalCol(cells.get(0)[1]), otherVal, true, false,
                                                     true, false);
                                             if (nowUpdated != SolutionProgress.NONE
-                                                    && subSudoku.getRowCol(cells.get(0)[0], cells.get(0)[1]).getCandidates()
-                                                            .isEmpty())
+                                                    && subSudoku.getRowCol(cells.get(0)[0], cells.get(0)[1])
+                                                            .getCandidates().isEmpty())
                                             {
                                                 nowUpdated = masterSudoku.reduceInfluencedCellCandidates(
                                                         subSudoku.getGlobalRow(cells.get(0)[0]),

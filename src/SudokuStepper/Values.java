@@ -212,27 +212,29 @@ public class Values
     public SolutionProgress bifurqueOnceMore()
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        if (sudokuCands.size() > 1)
+        Bifurcation nextTry = null;
+        Tentative oldSudoku = null;
+        while (nextTry == null && sudokuCands.size() > 1)
         {
             sudokuCands.pop();
-            Tentative oldSudoku = sudokuCands.peek();
-            Bifurcation nextTry = oldSudoku.getNextTry();
-            if (nextTry != null)
+            oldSudoku = sudokuCands.peek();
+            nextTry = oldSudoku.getNextTry();
+        }
+        if (nextTry != null)
+        {
+            Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
+            sudokuCands.push(newSudoku);
+            for (RollbackListener listener : rollbackListeners)
             {
-                Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
-                sudokuCands.push(newSudoku);
-                for (RollbackListener listener : rollbackListeners)
-                {
-                    listener.rollbackSudoku();
-                }
-                int row = nextTry.getRow();
-                int col = nextTry.getCol();
-                LegalValues toBeEliminatedVal = nextTry.getNextTry();
-                System.out.println("Try and Error rollback with row: " + row + ", col: " + col
-                        + ", now eliminating value: " + toBeEliminatedVal);
-                retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true, true);
-                oldSudoku.getSudoku().getRowCol(row, col).setTryNError(true);
+                listener.rollbackSudoku();
             }
+            int row = nextTry.getRow();
+            int col = nextTry.getCol();
+            LegalValues toBeEliminatedVal = nextTry.getNextTry();
+            System.out.println("Try and Error rollback with row: " + row + ", col: " + col + ", now eliminating value: "
+                    + toBeEliminatedVal);
+            retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true, true);
+            oldSudoku.getSudoku().getRowCol(row, col).setTryNError(true);
         }
         return (retVal);
     }
