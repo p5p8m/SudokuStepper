@@ -227,6 +227,10 @@ public class AppMain extends ApplicationWindow
             }
             setSolveEnabled(true);
         }
+        else if (val == AppState.CREATING)
+        {
+            recursiveSetEnabled(groupSlide, false);
+        }
     }
 
     private Display myDisplay;
