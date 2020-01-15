@@ -3,6 +3,9 @@
  */
 package SudokuStepper;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -61,11 +64,34 @@ public class SaveAsSudokuAction extends SaveSudokuAction
             }
             dialog.setFileName(proposal);
             String fileToWrite = dialog.open();
-            System.out.println("Open file: " + fileToWrite);
+            System.out.println("Save to file: " + fileToWrite);
             if (fileToWrite != null)
             {
-                app.getSudokuPb().save(fileToWrite, app.getSudokuPb().getSolutionTrace());
-                app.updateSudokuFields(true, true, false);
+                fileToWrite = fileToWrite.trim();
+                boolean reallySave = true;
+                if (Files.exists(Paths.get(fileToWrite.trim())))
+                {
+                    MessageBox questionBox = new MessageBox(new Shell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+                    questionBox.setText("About to overwrite another sudoku file");
+                    questionBox.setMessage(
+                            "The file " + fileToWrite + " already exists. Do you really want to overwrite it?");
+                    int response = questionBox.open();
+                    switch (response)
+                    {
+                    case SWT.YES:
+                        reallySave = true;
+                        break;
+                    case SWT.NO:
+                    default:
+                        reallySave = false;
+                        break;
+                    }
+                }
+                if (reallySave)
+                {
+                    app.getSudokuPb().save(fileToWrite, app.getSudokuPb().getSolutionTrace());
+                    app.updateSudokuFields(true, true, false);
+                }
             }
         }
         catch (Exception ex)
