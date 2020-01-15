@@ -92,7 +92,7 @@ public class AppMain extends ApplicationWindow
     private static final int COLOR_CONFLICT_BCKGRD = SWT.COLOR_RED;
     private static final int COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
     private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
-    private static final int COLOR_LAST_FOREGRD    = SWT.COLOR_RED;
+    private static final int COLOR_LAST_FOREGRD    = SWT.COLOR_MAGENTA;
     private static final int COLOR_TNERR_FOREGRD   = SWT.COLOR_BLUE;
     private static final int COLOR_PREV_FOREGRD    = SWT.COLOR_WHITE;
 
