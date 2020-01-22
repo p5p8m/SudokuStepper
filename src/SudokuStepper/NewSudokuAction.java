@@ -35,8 +35,7 @@ public class NewSudokuAction extends SudokuAction
                 app.setState(AppState.CREATING);
                 app.updateSudokuFields(false, true, false);
                 // app.setSlideShowMode(app.getSlideShowEnabled());
-                app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
-                app.toggleSlideShow();
+                app.disableSlideShow();
                 app.initGuiForNew();
             }
         }

@@ -1557,6 +1557,22 @@ public class AppMain extends ApplicationWindow
         }
     }
 
+    void disableSlideShow()
+    {
+        System.out.println("Slide Show to be disabled");
+        try
+        {
+            setSlideShowMode(false);
+        }
+        catch (Exception ex)
+        {
+            MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+            errorBox.setMessage("Could not disable slide show. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
+                    + "\n" + ex.toString());
+            errorBox.open();
+        }
+    }
+
     /**
      * @param newEnabledState
      */
