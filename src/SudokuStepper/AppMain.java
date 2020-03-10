@@ -1,5 +1,6 @@
 package SudokuStepper;
 
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 // import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -84,7 +86,7 @@ public class AppMain extends ApplicationWindow
     static final int         CELLSPERCOL           = 3;
 
     private static final int INITIAL_WIDTH         = 1250;                 // 552;
-    private static final int INITIAL_HEIGHT        = 2100;                 // 915;
+    private static final int INITIAL_HEIGHT        = 4200;                 // 2100; // 915;
     private static final int NAME_BOX_HEIGHT       = 55;
     private static final int TOP_MARGIN            = 5;
     private static final int COLOR_INPUT_BCKGRD    = SWT.COLOR_WHITE;
@@ -335,8 +337,11 @@ public class AppMain extends ApplicationWindow
         System.out.println("createContents");
         setStatus(StringUtils.EMPTY);
         Composite OverallContainer = new Composite(parent, SWT.NONE);
+        // OverallContainer.setLayout(new GridLayout(1, false));
         OverallContainer.setLayout(new FormLayout());
-
+        //
+        // Text box for sudoku name
+        //
         grpSudokuName = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
         grpSudokuName.setText("Sudoku Name:");
         grpSudokuName.setLayout(new FormLayout());
@@ -377,23 +382,46 @@ public class AppMain extends ApplicationWindow
                     input = input.trim();
                 }
                 mySudoku.setName(input);
-                grpSudokuBlocks.setText(input);
+                ((Group) (cellComposites[0][0].getParent())).setText(input);
             }
         });
+        //
+        // Scrolled sudoku
+        //
+        FormData fd_grpSudokublocksScrolled = new FormData();
+        grpSudokuScrolled = new ScrolledComposite(OverallContainer, SWT.V_SCROLL | SWT.H_SCROLL);
 
-        grpSudokuBlocks = new Group(OverallContainer, SWT.BORDER | SWT.SHADOW_OUT);
-        FormData fd_grpSudokublocks = new FormData();
-        fd_grpSudokublocks.right = new FormAttachment(100, -3);
-        fd_grpSudokublocks.top = new FormAttachment(0, TOP_MARGIN);
-        fd_grpSudokublocks.left = new FormAttachment(0, 3);
-        grpSudokuBlocks.setLayoutData(fd_grpSudokublocks);
-        grpSudokuBlocks.setText(StringUtils.EMPTY);
-        grpSudokuBlocks.setLayout(new GridLayout(MAXCOLS / RECTANGLELENGTH, true));
+        fd_grpSudokublocksScrolled.right = new FormAttachment(100, -3);
+        fd_grpSudokublocksScrolled.top = new FormAttachment(0, TOP_MARGIN);
+        fd_grpSudokublocksScrolled.left = new FormAttachment(0, 3);
+        grpSudokuScrolled.setLayoutData(fd_grpSudokublocksScrolled);
+        grpSudokuScrolled.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_MAGENTA));
+
+        Group grpSudokuScrolledContents = new Group(grpSudokuScrolled, SWT.NONE);
+        grpSudokuScrolledContents.setLayout(new GridLayout(MAXCOLS / RECTANGLELENGTH, true));
+        grpSudokuScrolledContents.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        // for (int i = 0; i < 20; i++)
+        // {
+        // Text textSub = new Text(grpSudokuScrolledContents, SWT.BORDER);
+        // textSub.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
+        // }
+
+        // GridLayout layoutData = new GridLayout(MAXCOLS / RECTANGLELENGTH, true);
+        // layoutData.marginRight = 5;
+        // layoutData.marginLeft = 5;
+        // layoutData.marginTop = 5;
+        // layoutData.marginBottom = 5;
+        // grpSudokuBlocks.setLayoutData(layoutData);
+
+        //
+        // Sudoku itsself
+        //
         for (int blockRow = 1; blockRow <= MAXROWS / RECTANGLELENGTH; blockRow++)
         {
             for (int blockCol = 1; blockCol <= MAXCOLS / RECTANGLELENGTH; blockCol++)
             {
-                Composite cellComposite = new Composite(grpSudokuBlocks, SWT.NONE);
+                Composite cellComposite = new Composite(grpSudokuScrolledContents, SWT.NONE);
                 cellComposites[blockRow - 1][blockCol - 1] = cellComposite;
                 cellComposite.setBackground(myDisplay.getSystemColor(SWT.COLOR_GREEN));
                 cellComposite.setLayout(new GridLayout(RECTANGLELENGTH, false));
@@ -542,15 +570,22 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+        grpSudokuScrolled.setContent(grpSudokuScrolledContents);
+        grpSudokuScrolled.setExpandHorizontal(true);
+        grpSudokuScrolled.setExpandVertical(true);
+        Point minSize = grpSudokuScrolledContents.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        grpSudokuScrolled.setMinSize(minSize);
+
         setCompositeVisibility(SudokuType.SAMURAI);
+        //
+        // Buttons and other rulers...
+        //
         Group grpButtons = new Group(OverallContainer, SWT.NONE);
-        fd_grpSudokublocks.bottom = new FormAttachment(grpButtons, -88);
         FormData fd_grpButtons = new FormData();
         fd_grpButtons.top = new FormAttachment(100, -72);
         fd_grpButtons.bottom = new FormAttachment(100, -26);
         fd_grpButtons.left = new FormAttachment(0);
         fd_grpButtons.right = new FormAttachment(100);
-        // fd_grpButtons.right = new FormAttachment(0, 3);
         grpButtons.setLayoutData(fd_grpButtons);
         // grpButtons.setText("Buttons");
         RowLayout rl_grpButtons = new RowLayout(SWT.HORIZONTAL);
@@ -598,14 +633,16 @@ public class AppMain extends ApplicationWindow
         });
         btnSolve.setText("Solve");
         setSolveEnabled(false);
-
+        //
+        // Slides for manual and automatic modes
+        //
         groupSlide = new Group(OverallContainer, SWT.NONE);
         // groupSlide.setText("Slide");
         // groupSlide.setBackground(SWTResourceManager.getColor(128, 128, 128));
         groupSlide.setLayout(new FormLayout());
         FormData fd_groupSlide = new FormData();
         fd_groupSlide.bottom = new FormAttachment(grpButtons, -6);
-        fd_groupSlide.top = new FormAttachment(grpSudokuBlocks, 9);
+        fd_groupSlide.top = new FormAttachment(grpSudokuScrolled, 9);
         fd_groupSlide.right = new FormAttachment(100);
         fd_groupSlide.left = new FormAttachment(grpButtons, 0, SWT.LEFT);
         groupSlide.setLayoutData(fd_groupSlide);
@@ -693,6 +730,8 @@ public class AppMain extends ApplicationWindow
         lblCurrent.setLayoutData(fd_lblCurrent);
         // groupSlideLabels.setBackground(SWTResourceManager.getColor(56, 56, 0));
         lblCurrent.setText(lblMinute.getText());
+
+        fd_grpSudokublocksScrolled.bottom = new FormAttachment(grpButtons, -128);
 
         slider.addSelectionListener(new SelectionListener()
         {
@@ -1010,36 +1049,41 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
-    private Action renameSudokuAction          = new RenameSudokuAction(this, "&Rename", SWT.CTRL + KeyEvent.VK_R);
-    private Action newSudokuSingleAction       = new NewSudokuAction(this, Values.SudokuType.SINGLE, "&New Single",
-            SWT.CTRL + KeyEvent.VK_N);
-    private Action newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI, "&New Samurai",
-            SWT.CTRL + KeyEvent.VK_M);
-    private Action openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open", SWT.CTRL + KeyEvent.VK_O,
-            false);
-    private Action openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
+    private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
+            SWT.CTRL + KeyEvent.VK_R);
+    private Action            newSudokuSingleAction       = new NewSudokuAction(this, Values.SudokuType.SINGLE,
+            "&New Single", SWT.CTRL + KeyEvent.VK_N);
+    private Action            newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI,
+            "&New Samurai", SWT.CTRL + KeyEvent.VK_M);
+    private Action            openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open",
+            SWT.CTRL + KeyEvent.VK_O, false);
+    private Action            openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
             SWT.CTRL + KeyEvent.VK_L, true);
-    private Action saveSudokuAction            = new SaveSudokuAction(this, "&Save", SWT.CTRL + KeyEvent.VK_S);
-    private Action saveAsSudokuAction          = new SaveAsSudokuAction(this, "Save &As", SWT.CTRL + KeyEvent.VK_A);
-    private Action toggleSlideShowSudokuAction = new ToggleSlideShowSudokuAction(this, "S&lide Show On/Off",
+    private Action            saveSudokuAction            = new SaveSudokuAction(this, "&Save",
+            SWT.CTRL + KeyEvent.VK_S);
+    private Action            saveAsSudokuAction          = new SaveAsSudokuAction(this, "Save &As",
+            SWT.CTRL + KeyEvent.VK_A);
+    private Action            toggleSlideShowSudokuAction = new ToggleSlideShowSudokuAction(this, "S&lide Show On/Off",
             KeyEvent.VK_L);
-    private Action solveSudokuAction           = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
-    private Action exitSudokuAction            = new ExitSudokuAction(this, "&Exit", SWT.CTRL + KeyEvent.VK_E);
-    private Action freezeSudokuAction          = new FreezeSudokuAction(this, "&Freeze", SWT.CTRL + KeyEvent.VK_F);
-    private Action aboutSudokuAction           = new AboutSudokuAction(this, "&About",
+    private Action            solveSudokuAction           = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
+    private Action            exitSudokuAction            = new ExitSudokuAction(this, "&Exit",
+            SWT.CTRL + KeyEvent.VK_E);
+    private Action            freezeSudokuAction          = new FreezeSudokuAction(this, "&Freeze",
+            SWT.CTRL + KeyEvent.VK_F);
+    private Action            aboutSudokuAction           = new AboutSudokuAction(this, "&About",
             SWT.CTRL + SWT.SHIFT + KeyEvent.VK_A);
-    private Button btnSolve                    = null;
-    private Button btnFreeze                   = null;
-    private Button btnSlideShow                = null;
-    private Button btnAutomatic                = null;
-    private Slider slider                      = null;
-    private Button btnNext                     = null;
-    private Button btnManual                   = null;
-    private Group  groupSlide                  = null;
-    private Group  grpSudokuBlocks             = null;
-    private Group  grpSudokuName               = null;
-    private Text   txtName                     = null;
-    private Label  lblCurrent                  = null;
+    private Button            btnSolve                    = null;
+    private Button            btnFreeze                   = null;
+    private Button            btnSlideShow                = null;
+    private Button            btnAutomatic                = null;
+    private Slider            slider                      = null;
+    private Button            btnNext                     = null;
+    private Button            btnManual                   = null;
+    private Group             groupSlide                  = null;
+    private ScrolledComposite grpSudokuScrolled           = null;
+    private Group             grpSudokuName               = null;
+    private Text              txtName                     = null;
+    private Label             lblCurrent                  = null;
 
     /**
      * Create the menu manager.
@@ -1119,7 +1163,7 @@ public class AppMain extends ApplicationWindow
     void startRenamingGui()
     {
         grpSudokuName.setVisible(true);
-        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
+        ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
         if (mySudoku != null && mySudoku.getName() != null)
         {
             txtName.setText(mySudoku.getName());
@@ -1129,9 +1173,9 @@ public class AppMain extends ApplicationWindow
             txtName.setText(StringUtils.EMPTY);
         }
         txtName.setEditable(true);
-        grpSudokuBlocks.getParent().layout(true, true);
-        grpSudokuBlocks.redraw();
-        grpSudokuBlocks.update();
+        grpSudokuScrolled.getParent().layout(true, true);
+        grpSudokuScrolled.redraw();
+        grpSudokuScrolled.update();
         // grpSudokuBlocks.setEnabled(false);
         setSolveEnabled(false);
         setFreezeEnabled(true);
@@ -1157,12 +1201,12 @@ public class AppMain extends ApplicationWindow
         setFreezeEnabled(false);
         setSolveEnabled(false);
         grpSudokuName.setVisible(true);
-        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
+        ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
         txtName.setText(StringUtils.EMPTY);
         txtName.setEditable(true);
-        grpSudokuBlocks.getParent().layout(true, true);
-        grpSudokuBlocks.redraw();
-        grpSudokuBlocks.update();
+        grpSudokuScrolled.getParent().layout(true, true);
+        grpSudokuScrolled.redraw();
+        grpSudokuScrolled.update();
         for (Integer row : uiFields.keySet())
         {
             for (Integer col : uiFields.get(row).keySet())
@@ -1190,11 +1234,11 @@ public class AppMain extends ApplicationWindow
         setFreezeEnabled(false);
         setSolveEnabled(status != AppState.SOLVING);
         grpSudokuName.setVisible(false);
-        ((FormData) (grpSudokuBlocks.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
+        ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
         txtName.setEditable(false);
-        grpSudokuBlocks.getParent().layout(true, true);
-        grpSudokuBlocks.redraw();
-        grpSudokuBlocks.update();
+        grpSudokuScrolled.getParent().layout(true, true);
+        grpSudokuScrolled.redraw();
+        grpSudokuScrolled.update();
         for (Integer row : uiFields.keySet())
         {
             for (Integer col : uiFields.get(row).keySet())
@@ -1236,6 +1280,7 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+        grpSudokuScrolled.setMinSize(uiFields.get(0).get(0).solution.getParent().computeSize(SWT.DEFAULT, SWT.DEFAULT));
         return;
     }
 
@@ -1256,7 +1301,7 @@ public class AppMain extends ApplicationWindow
 
     private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound)
     {
-        grpSudokuBlocks.setText(mySudoku.getName());
+        ((Group) (cellComposites[0][0].getParent())).setText(mySudoku.getName());
         txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         setCompositeVisibility(mySudoku.getType());
