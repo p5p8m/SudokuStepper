@@ -31,7 +31,10 @@ public class NewSudokuAction extends SudokuAction
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
-                app.setSudokuPb(new Values(newSudokuType, app));
+                FreezeSudokuAction freezeSudokuAction = new FreezeSudokuAction(app, null, null);
+                freezeSudokuAction.run();
+
+                app.setSudokuPb(new Values(newSudokuType, app)); // Ewige Schleife beim 2. Aufruf
                 app.setState(AppState.CREATING);
                 app.updateSudokuFields(false, true, false);
                 // app.setSlideShowMode(app.getSlideShowEnabled());
