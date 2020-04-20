@@ -70,15 +70,25 @@ public abstract class OpenSudokuAction extends SudokuAction
                 if (fileToOpen != null)
                 {
                     System.out.println("Open file: " + fileToOpen);
-                    // add check if previous sudoku is saved
-                    app.setState(AppState.OPENING);
-                    app.setSudokuPb(new Values(SudokuType.SINGLE, app)); // default to be overwritten when reading
-                                                                         // in
-                    app.getSudokuPb().read(fileToOpen, alsoReadSolution);
-                    app.updateSudokuFields(false, true, false);
-                    // app.setSlideShowMode(app.getSlideShowEnabled());
-                    app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
-                    app.toggleSlideShow();
+                    try
+                    {
+                        // add check if previous sudoku is saved
+                        app.setState(AppState.OPENING);
+                        app.setSudokuPb(new Values(SudokuType.SINGLE, app)); // default to be overwritten when reading
+                                                                             // in
+                        app.getSudokuPb().read(fileToOpen, alsoReadSolution);
+                        app.updateSudokuFields(false, true, false);
+                        // app.setSlideShowMode(app.getSlideShowEnabled());
+                        app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
+                        app.toggleSlideShow();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                        errorBox.setMessage("Could not load Sudoku \"" + fileToOpen + "\"\n" + ex.getMessage() + "\n"
+                                + ex.getLocalizedMessage() + "\n" + ex.toString());
+                        errorBox.open();
+                    }
                 }
                 else
                 {

@@ -11,8 +11,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -615,7 +618,7 @@ public class Values
             dbFactory.setNamespaceAware(true);
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             dBuilder.setErrorHandler(new XmlErrorHandler());
-            Document doc = dBuilder.parse(fromFile);
+            Document doc = dBuilder.parse((new File(fromFile)).toURI().toString());
             doc.getDocumentElement().normalize();
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
             sudokuName = doc.getDocumentElement().getAttribute(SUDOKUNAME);
@@ -811,8 +814,8 @@ public class Values
             {
                 System.out.println("Exception: " + ex.getMessage());
                 MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
-                errorBox.setMessage("Could not load Sudoku. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage()
-                        + "\n" + ex.toString());
+                errorBox.setMessage("XML Validator could not load Sudoku. \n" + ex.getMessage() + "\n"
+                        + ex.getLocalizedMessage() + "\n" + ex.toString());
                 errorBox.open();
                 retVal = false;
             }
@@ -821,8 +824,8 @@ public class Values
         {
             System.out.println("Exception looking for Schema: " + ex.getMessage());
             MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
-            errorBox.setMessage("Could not load Schema. \n" + ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n"
-                    + ex.toString());
+            errorBox.setMessage("XML Validator could not load Schema. \n" + ex.getMessage() + "\n"
+                    + ex.getLocalizedMessage() + "\n" + ex.toString());
             errorBox.open();
             retVal = false;
 
