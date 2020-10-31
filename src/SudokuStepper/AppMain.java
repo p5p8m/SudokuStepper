@@ -1224,6 +1224,9 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
+        // grpSudokuScrolled.setMinSize(grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT,
+        // SWT.DEFAULT));
+
         txtName.setFocus();
 
     }
@@ -1280,7 +1283,9 @@ public class AppMain extends ApplicationWindow
                 }
             }
         }
-        grpSudokuScrolled.setMinSize(uiFields.get(0).get(0).solution.getParent().computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        // grpSudokuScrolled.setMinSize(uiFields.get(0).get(0).solution.getParent().computeSize(SWT.DEFAULT,
+        // SWT.DEFAULT));
+        grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
         return;
     }
 
@@ -1319,6 +1324,7 @@ public class AppMain extends ApplicationWindow
             errorBox.setMessage("There are illegal values in the sudoku");
             errorBox.open();
         }
+        grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
         setSolveEnabled(status != AppState.SOLVING);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
         condEnableSaveSudokuAction(mySudoku.isSaved());
