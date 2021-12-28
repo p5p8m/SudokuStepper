@@ -5,6 +5,7 @@ package SudokuStepper;
 
 import java.io.Console;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -58,6 +59,10 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 if (updated == SolutionProgress.NONE)
                 {
                     updated = detectTuples(sudoku);
+                }
+                if (updated == SolutionProgress.NONE)
+                {
+                    updated = detectTriples(sudoku);
                 }
                 if (updated == SolutionProgress.NONE)
                 {
@@ -536,6 +541,236 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             }
         }
         return (retVal);
+    }
+
+    private SolutionProgress detectTriples(Values sudoku) // Single sudoku
+    {
+        // ArrayList<ClosedTuples> retVal1 = new ArrayList<ClosedTuples>();
+        SolutionProgress retVal = SolutionProgress.NONE;
+        for (SubSudoku subSudoku : sudoku.getSudoku().getSubSudokus())
+        {
+            // check by rows first
+            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            {
+                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                {
+                    if (!sudoku.getCell(row, col).getCandidates().isEmpty())
+                    {
+                        for (int scndCol = col + 1; scndCol < AppMain.SINGLESUDOKUMAXCOLS; scndCol++)
+                        {
+                            if (!sudoku.getCell(row, scndCol).getCandidates().isEmpty())
+                            {
+                                for (int thrdCol = scndCol + 1; thrdCol < AppMain.SINGLESUDOKUMAXCOLS; thrdCol++)
+                                {
+                                    if (!sudoku.getCell(row, thrdCol).getCandidates().isEmpty())
+                                    {
+                                        List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                contentsUnion(sudoku.getCell(row, col).getCandidates(),
+                                                        sudoku.getCell(row, scndCol).getCandidates(),
+                                                        sudoku.getCell(row, thrdCol).getCandidates()));
+                                        if (locCandidates.size() == 3)
+                                        {
+                                            // Make a deep copy to avoid problems when the list is modified within the
+                                            // loop
+                                            for (LegalValues val : locCandidates)
+                                            {
+                                                for (int cleanedCol = 0; cleanedCol < AppMain.SINGLESUDOKUMAXCOLS; cleanedCol++)
+                                                {
+                                                    if (cleanedCol != col && cleanedCol != scndCol
+                                                            && cleanedCol != thrdCol && !sudoku.getCell(row, cleanedCol)
+                                                                    .getCandidates().isEmpty())
+                                                    {
+                                                        SolutionProgress nowUpdated = sudoku.eliminateCandidate(row,
+                                                                cleanedCol, val, true, false, true, false);
+                                                        retVal = retVal.combineWith(nowUpdated);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // check by columns then
+            for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+            {
+                for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                {
+                    if (!sudoku.getCell(row, col).getCandidates().isEmpty())
+                    {
+                        for (int scndRow = row + 1; scndRow < AppMain.SINGLESUDOKUMAXROWS; scndRow++)
+                        {
+                            if (!sudoku.getCell(scndRow, col).getCandidates().isEmpty())
+                            {
+                                for (int thrdRow = scndRow + 1; thrdRow < AppMain.SINGLESUDOKUMAXCOLS; thrdRow++)
+                                {
+                                    if (!sudoku.getCell(thrdRow, col).getCandidates().isEmpty())
+                                    {
+                                        List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                contentsUnion(sudoku.getCell(row, col).getCandidates(),
+                                                        sudoku.getCell(scndRow, col).getCandidates(),
+                                                        sudoku.getCell(thrdRow, col).getCandidates()));
+                                        if (locCandidates.size() == 3)
+                                        {
+                                            // Make a deep copy to avoid problems when the list is modified within the
+                                            // loop
+                                            for (LegalValues val : locCandidates)
+                                            {
+                                                for (int cleanedRow = 0; cleanedRow < AppMain.SINGLESUDOKUMAXCOLS; cleanedRow++)
+                                                {
+                                                    if (cleanedRow != row && cleanedRow != scndRow
+                                                            && cleanedRow != thrdRow && !sudoku.getCell(cleanedRow, col)
+                                                                    .getCandidates().isEmpty())
+                                                    {
+                                                        SolutionProgress nowUpdated = sudoku.eliminateCandidate(
+                                                                cleanedRow, col, val, true, false, true, false);
+                                                        retVal = retVal.combineWith(nowUpdated);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // check by blocks finally
+            for (int rowBlock = 0; rowBlock < AppMain.SINGLESUDOKUMAXROWS / AppMain.RECTANGLELENGTH; rowBlock++)
+            {
+                for (int colBlock = 0; colBlock < AppMain.SINGLESUDOKUMAXCOLS / AppMain.RECTANGLELENGTH; colBlock++)
+                {
+                    // Same block
+                    for (int rowInBlock = AppMain.RECTANGLELENGTH * rowBlock; rowInBlock < AppMain.RECTANGLELENGTH
+                            * (rowBlock + 1); rowInBlock++)
+                    {
+                        for (int colInBlock = AppMain.RECTANGLELENGTH * colBlock; colInBlock < AppMain.RECTANGLELENGTH
+                                * (colBlock + 1); colInBlock++)
+                        {
+                            if (!sudoku.getCell(rowInBlock, colInBlock).getCandidates().isEmpty())
+                            {
+                                for (int scndRowInBlock = AppMain.RECTANGLELENGTH
+                                        * rowBlock; scndRowInBlock < AppMain.RECTANGLELENGTH
+                                                * (rowBlock + 1); scndRowInBlock++)
+                                {
+                                    for (int scndColInBlock = AppMain.RECTANGLELENGTH
+                                            * colBlock; scndColInBlock < AppMain.RECTANGLELENGTH
+                                                    * (colBlock + 1); scndColInBlock++)
+                                    {
+
+                                        if (scndRowInBlock > rowInBlock
+                                                || (scndRowInBlock == rowInBlock && scndColInBlock > colInBlock))
+                                        {
+                                            if (!sudoku.getCell(scndRowInBlock, scndColInBlock).getCandidates()
+                                                    .isEmpty())
+                                            {
+                                                for (int thrdRowInBlock = AppMain.RECTANGLELENGTH
+                                                        * rowBlock; thrdRowInBlock < AppMain.RECTANGLELENGTH
+                                                                * (rowBlock + 1); thrdRowInBlock++)
+                                                {
+                                                    for (int thrdColInBlock = AppMain.RECTANGLELENGTH
+                                                            * colBlock; thrdColInBlock < AppMain.RECTANGLELENGTH
+                                                                    * (colBlock + 1); thrdColInBlock++)
+                                                    {
+                                                        if (thrdRowInBlock > scndRowInBlock
+                                                                || (thrdRowInBlock == scndRowInBlock
+                                                                        && thrdColInBlock > scndColInBlock))
+                                                        {
+                                                            if (!sudoku.getCell(thrdRowInBlock, thrdColInBlock)
+                                                                    .getCandidates().isEmpty())
+                                                            {
+                                                                List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                                        contentsUnion(
+                                                                                sudoku.getCell(rowInBlock, colInBlock)
+                                                                                        .getCandidates(),
+                                                                                sudoku.getCell(scndRowInBlock,
+                                                                                        scndColInBlock).getCandidates(),
+                                                                                sudoku.getCell(thrdRowInBlock,
+                                                                                        thrdColInBlock)
+                                                                                        .getCandidates()));
+                                                                if (locCandidates.size() == 3)
+                                                                {
+                                                                    // Make a deep copy to avoid problems when the list
+                                                                    // is
+                                                                    // modified within the loop
+                                                                    for (LegalValues val : locCandidates)
+                                                                    {
+                                                                        for (int cleanedRowInBlock = AppMain.RECTANGLELENGTH
+                                                                                * rowBlock; cleanedRowInBlock < AppMain.RECTANGLELENGTH
+                                                                                        * (rowBlock
+                                                                                                + 1); cleanedRowInBlock++)
+                                                                        {
+                                                                            for (int cleanedColInBlock = AppMain.RECTANGLELENGTH
+                                                                                    * colBlock; cleanedColInBlock < AppMain.RECTANGLELENGTH
+                                                                                            * (colBlock
+                                                                                                    + 1); cleanedColInBlock++)
+                                                                            {
+                                                                                if ((!((cleanedRowInBlock == rowInBlock
+                                                                                        && cleanedColInBlock == colInBlock)
+                                                                                        || (cleanedRowInBlock == scndRowInBlock
+                                                                                                && cleanedColInBlock == scndColInBlock)
+                                                                                        || (cleanedRowInBlock == thrdRowInBlock
+                                                                                                && cleanedColInBlock == thrdColInBlock)))
+                                                                                        && !sudoku.getCell(
+                                                                                                cleanedRowInBlock,
+                                                                                                cleanedColInBlock)
+                                                                                                .getCandidates()
+                                                                                                .isEmpty())
+                                                                                {
+                                                                                    SolutionProgress nowUpdated = sudoku
+                                                                                            .eliminateCandidate(
+                                                                                                    cleanedRowInBlock,
+                                                                                                    cleanedColInBlock,
+                                                                                                    val, true, false,
+                                                                                                    true, false);
+                                                                                    retVal = retVal
+                                                                                            .combineWith(nowUpdated);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return (retVal);
+    }
+
+    private List<LegalValues> contentsUnion(List<LegalValues> candidates1, List<LegalValues> candidates2,
+            List<LegalValues> candidates3)
+    {
+        // None of the input parameter may be null
+        ArrayList<LegalValues> retVal = deepCopy(candidates1);
+        for (LegalValues val : candidates2)
+        {
+            if (!retVal.contains(val))
+            {
+                retVal.add(val);
+            }
+        }
+        for (LegalValues val : candidates3)
+        {
+            if (!retVal.contains(val))
+            {
+                retVal.add(val);
+            }
+        }
+        return retVal;
     }
 
     // Detect if there is only one single cell in a row, column or block that still

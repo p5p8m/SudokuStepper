@@ -361,6 +361,9 @@ public class Values
             if (val != null)
             {
                 sudoku.getRowCol(globalRow, globalCol).getCandidates().remove(val);
+                System.out.println("Row: " + globalRow + ", Col: " + globalCol + ", Eliminated: " + val
+                        + ", Number of remaining values: "
+                        + sudoku.getRowCol(globalRow, globalCol).getCandidates().size());
                 for (CandidatesListener listener : candidatesListeners)
                 {
                     listener.candidatesUpdated(globalRow, globalCol, val, runsInUiThread);
