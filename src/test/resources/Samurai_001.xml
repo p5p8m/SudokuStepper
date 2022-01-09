@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<sudoku xmlns="http://www.example.org/SudokuStepper" name="Samurai_001" type="samurai">
+  <initial>
+    <content col="1" row="1">1</content>
+    <content col="5" row="5">2</content>
+    <content col="17" row="5">9</content>
+    <content col="8" row="8">3</content>
+    <content col="11" row="11">4</content>
+    <content col="14" row="14">5</content>
+    <content col="5" row="17">8</content>
+    <content col="17" row="17">6</content>
+    <content col="20" row="20">7</content>
+  </initial>
+  <solution/>
+</sudoku>
