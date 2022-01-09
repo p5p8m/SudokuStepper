@@ -63,6 +63,7 @@ public class AppMain extends ApplicationWindow
                                                                                                                 // SWT.BOLD);
     // null means: image by image, 0 means no pause
     private Integer   slideShowPause      = null;
+    private boolean   stopSlideShow       = false;
     private Thread    solvingThread       = null;
     private Composite appParent           = null;
     private Composite cellComposites[][]  = new Composite[MAXROWS / RECTANGLELENGTH][MAXCOLS / RECTANGLELENGTH];
@@ -73,30 +74,35 @@ public class AppMain extends ApplicationWindow
     }
 
     // private Integer previousSlideShowPause = null;
-    private Font             solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI", 8,
-                                                                           // SWT.NORMAL);
-    static final int         RECTANGLELENGTH       = 3;
-    static final int         CANDIDATESNUMBER      = 9;
-    static final int         CANDIDATESPERROW      = 3;
-    static final int         MAXCOLS               = 21;                   // 9 for single sudoku, 21 for sudoku samurai
-    static final int         MAXROWS               = 21;                   // 9 for single sudoku, 21 for sudoku samurai
-    static final int         SINGLESUDOKUMAXROWS   = 9;
-    static final int         SINGLESUDOKUMAXCOLS   = 9;
-    static final int         CELLSPERROW           = 3;
-    static final int         CELLSPERCOL           = 3;
+    private Font                solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI",
+                                                                              // 8,
+                                                                              // SWT.NORMAL);
+    static final int            RECTANGLELENGTH       = 3;
+    static final int            CANDIDATESNUMBER      = 9;
+    static final int            CANDIDATESPERROW      = 3;
+    static final int            MAXCOLS               = 21;                   // 9 for single sudoku, 21 for sudoku
+                                                                              // samurai
+    static final int            MAXROWS               = 21;                   // 9 for single sudoku, 21 for sudoku
+                                                                              // samurai
+    static final int            SINGLESUDOKUMAXROWS   = 9;
+    static final int            SINGLESUDOKUMAXCOLS   = 9;
+    static final int            CELLSPERROW           = 3;
+    static final int            CELLSPERCOL           = 3;
 
-    private static final int INITIAL_WIDTH         = 1250;                 // 552;
-    private static final int INITIAL_HEIGHT        = 4200;                 // 2100; // 915;
-    private static final int NAME_BOX_HEIGHT       = 55;
-    private static final int TOP_MARGIN            = 5;
-    private static final int COLOR_INPUT_BCKGRD    = SWT.COLOR_WHITE;
-    private static final int COLOR_INPUT_FOREGRD   = SWT.COLOR_BLACK;
-    private static final int COLOR_CONFLICT_BCKGRD = SWT.COLOR_RED;
-    private static final int COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
-    private static final int COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
-    private static final int COLOR_LAST_FOREGRD    = SWT.COLOR_MAGENTA;
-    private static final int COLOR_TNERR_FOREGRD   = SWT.COLOR_BLUE;
-    private static final int COLOR_PREV_FOREGRD    = SWT.COLOR_WHITE;
+    private static final int    INITIAL_WIDTH         = 1250;                 // 552;
+    private static final int    INITIAL_HEIGHT        = 4200;                 // 2100; // 915;
+    private static final int    NAME_BOX_HEIGHT       = 55;
+    private static final int    TOP_MARGIN            = 5;
+    private static final int    COLOR_INPUT_BCKGRD    = SWT.COLOR_WHITE;
+    private static final int    COLOR_INPUT_FOREGRD   = SWT.COLOR_BLACK;
+    private static final int    COLOR_CONFLICT_BCKGRD = SWT.COLOR_RED;
+    private static final int    COLOR_SOLT_BCKGRD     = SWT.COLOR_DARK_YELLOW;
+    private static final int    COLOR_SOLT_FOREGRD    = SWT.COLOR_BLACK;
+    private static final int    COLOR_LAST_FOREGRD    = SWT.COLOR_MAGENTA;
+    private static final int    COLOR_TNERR_FOREGRD   = SWT.COLOR_BLUE;
+    private static final int    COLOR_PREV_FOREGRD    = SWT.COLOR_WHITE;
+
+    private static final String secondUnitStr         = " s";
 
     /**
      * Launch the application.
@@ -167,6 +173,11 @@ public class AppMain extends ApplicationWindow
     Integer getSlideShowPause()
     { // Only valid if slide show is enabled
         return (slideShowPause);
+    }
+
+    boolean getStopSlideShow()
+    { // Only valid if slide show is enabled
+        return (stopSlideShow);
     }
 
     @Override
@@ -623,6 +634,8 @@ public class AppMain extends ApplicationWindow
                 System.out.println("Pressed Solve");
                 btnManual.setEnabled(false);
                 btnAutomatic.setEnabled(false);
+                stopSlideShow = false;
+                btnPause.setEnabled(slider.getEnabled());
                 // if (btnManual.getSelection())
                 // {
                 // btnNext.setEnabled(true);
@@ -691,12 +704,13 @@ public class AppMain extends ApplicationWindow
         fd_lblPause.left = new FormAttachment(btnNext, 0, SWT.LEFT);
         lblPause.setLayoutData(fd_lblPause);
         lblPause.setText("Pause:");
-
+        final int rightMarginSlider = -45;
+        final int rightMarginCurrentPauseValue = -5;
         slider = new Slider(groupSlide, SWT.NONE);
         FormData fd_slider = new FormData();
         fd_slider.left = new FormAttachment(lblPause, 5, SWT.RIGHT);
         fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
-        fd_slider.right = new FormAttachment(100, -40);
+        fd_slider.right = new FormAttachment(100, rightMarginSlider);
         slider.setLayoutData(fd_slider);
         slider.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
         slider.setToolTipText("Set the time to pause in seconds after findng a new cell solution value");
@@ -712,23 +726,48 @@ public class AppMain extends ApplicationWindow
         slider.setPageIncrement(10);
 
         Label lblNoPause = new Label(groupSlide, SWT.NONE);
-        lblNoPause.setText(Integer.toString(minSecondsPause) + " s");
+        lblNoPause.setText(Integer.toString(minSecondsPause) + secondUnitStr);
         FormData fd_lblNoPause = new FormData();
-        fd_lblNoPause.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
+        fd_lblNoPause.top = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
         fd_lblNoPause.left = new FormAttachment(slider, 0, SWT.LEFT);
         lblNoPause.setLayoutData(fd_lblNoPause);
 
         Label lblMinute = new Label(groupSlide, SWT.NONE);
-        lblMinute.setText(Integer.toString(maxSecondsPause) + " s");
+        lblMinute.setText(Integer.toString(maxSecondsPause) + secondUnitStr);
         FormData fd_ldlMinute = new FormData();
-        fd_ldlMinute.bottom = new FormAttachment(btnManual, 0, SWT.BOTTOM);
-        fd_ldlMinute.right = new FormAttachment(slider, 0, SWT.RIGHT);
+        fd_ldlMinute.top = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
+        fd_ldlMinute.right = new FormAttachment(100, rightMarginSlider - 10);
         lblMinute.setLayoutData(fd_ldlMinute);
+
+        btnPause = new Button(groupSlide, SWT.NONE);
+        btnPause.addSelectionListener(new SelectionAdapter()
+        {
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                System.out.println("Pressed Pause");
+                stopSlideShow = true;
+                // if (solvingThread != null)
+                // {
+                // synchronized (solvingThread)
+                // {
+                // solvingThread.notify();
+                // }
+                // }
+                setSolveEnabled(true);
+                btnPause.setEnabled(false);
+            }
+        });
+        FormData fd_btnPause = new FormData();
+        fd_btnPause.top = new FormAttachment(btnAutomatic, 3, SWT.BOTTOM);
+        fd_btnPause.right = new FormAttachment(100, rightMarginCurrentPauseValue);
+        btnPause.setLayoutData(fd_btnPause);
+        btnPause.setText("Pause");
 
         lblCurrent = new Label(groupSlide, SWT.RIGHT);
         FormData fd_lblCurrent = new FormData();
         fd_lblCurrent.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
-        fd_lblCurrent.right = new FormAttachment(100, -5);
+        fd_lblCurrent.right = new FormAttachment(100, rightMarginCurrentPauseValue);
         lblCurrent.setLayoutData(fd_lblCurrent);
         // groupSlideLabels.setBackground(SWTResourceManager.getColor(56, 56, 0));
         lblCurrent.setText(lblMinute.getText());
@@ -743,7 +782,7 @@ public class AppMain extends ApplicationWindow
             {
                 slideShowPause = slider.getSelection();
                 // System.out.println("Selected: " + slideShowPause);
-                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+                lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
             }
 
             @Override
@@ -751,7 +790,7 @@ public class AppMain extends ApplicationWindow
             { // Obviously never called
                 slideShowPause = slider.getSelection();
                 // System.out.println("DefaultSelected: " + slideShowPause);
-                lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+                lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
             }
         });
         // Button btnStop = new Button(groupSlide, SWT.NONE);
@@ -803,17 +842,17 @@ public class AppMain extends ApplicationWindow
         // groupSlideLabels.setEnabled(false);
         //
         // Label lblNoPause = new Label(groupSlideLabels, SWT.NONE);
-        // lblNoPause.setText(Integer.toString(minSecondsPause) + " s");
+        // lblNoPause.setText(Integer.toString(minSecondsPause) + secondUnitStr);
         // GridData gd_lblNoPause = new GridData(SWT.LEFT, SWT.CENTER);
         // lblNoPause.setLayoutData(gd_lblNoPause);
         //
         // Label lblCurrent = new Label(groupSlideLabels, SWT.NONE);
-        // lblCurrent.setText(Integer.toString(slider.getSelection()) + " s");
+        // lblCurrent.setText(Integer.toString(slider.getSelection()) + secondUnitStr);
         // GridData gd_lblCurrent = new GridData(SWT.CENTER, SWT.CENTER);
         // lblCurrent.setLayoutData(gd_lblCurrent);
         //
         // Label lblMinute = new Label(groupSlideLabels, SWT.NONE);
-        // lblMinute.setText(Integer.toString(maxSecondsPause) + " s");
+        // lblMinute.setText(Integer.toString(maxSecondsPause) + secondUnitStr);
         // GridData gd_ldlMinute = new GridData(SWT.RIGHT, SWT.CENTER);
         // lblMinute.setLayoutData(gd_ldlMinute);
         //
@@ -825,7 +864,7 @@ public class AppMain extends ApplicationWindow
         // {
         // // System.out.println("Selected: " + slider.getSelection());
         // slideShowPause = slider.getSelection();
-        // lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+        // lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
         // }
         //
         // @Override
@@ -833,7 +872,7 @@ public class AppMain extends ApplicationWindow
         // { // Obviously never called
         // // System.out.println("DefaultSelected: " + slider.getSelection());
         // slideShowPause = slider.getSelection();
-        // lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+        // lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
         // }
         // });
 
@@ -854,9 +893,11 @@ public class AppMain extends ApplicationWindow
                     lblPause.setEnabled(false);
                     lblMinute.setEnabled(false);
                     lblCurrent.setEnabled(false);
+                    btnPause.setEnabled(false);
                     slider.setEnabled(false);
                     btnNext.setEnabled(status == AppState.SOLVING);
                     slideShowPause = null;
+                    stopSlideShow = false;
                 }
             }
 
@@ -878,10 +919,12 @@ public class AppMain extends ApplicationWindow
                     lblPause.setEnabled(true);
                     lblMinute.setEnabled(true);
                     lblCurrent.setEnabled(true);
+                    btnPause.setEnabled(false);
                     slider.setEnabled(true);
                     btnNext.setEnabled(false);
                     slideShowPause = slider.getSelection();
-                    lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+                    stopSlideShow = false;
+                    lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
                 }
             }
 
@@ -902,6 +945,7 @@ public class AppMain extends ApplicationWindow
         lblPause.setEnabled(!manualWasEnabled);
         lblMinute.setEnabled(!manualWasEnabled);
         lblCurrent.setEnabled(!manualWasEnabled);
+        btnPause.setEnabled(!manualWasEnabled);
         slider.setEnabled(!manualWasEnabled);
         btnNext.setEnabled(manualWasEnabled);
         recursiveSetEnabled(groupSlide, false);
@@ -1080,6 +1124,7 @@ public class AppMain extends ApplicationWindow
     private Button            btnAutomatic                = null;
     private Slider            slider                      = null;
     private Button            btnNext                     = null;
+    private Button            btnPause                    = null;
     private Button            btnManual                   = null;
     private Group             groupSlide                  = null;
     private ScrolledComposite grpSudokuScrolled           = null;
@@ -1488,9 +1533,10 @@ public class AppMain extends ApplicationWindow
         {
             try
             {
-                if (slideShowPause == null)
-                { // Step by step
-                  // End thread
+                if (slideShowPause == null || // step by step
+                        stopSlideShow)
+                {
+                    // End thread
                     synchronized (solvingThread)
                     {
                         if (solvingThread != null)
@@ -1660,7 +1706,7 @@ public class AppMain extends ApplicationWindow
         }
         if (lblCurrent != null && slideShowPause != null)
         {
-            lblCurrent.setText(Integer.toString(slideShowPause) + " s");
+            lblCurrent.setText(Integer.toString(slideShowPause) + secondUnitStr);
         }
     }
 
