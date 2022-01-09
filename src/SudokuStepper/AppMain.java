@@ -696,8 +696,10 @@ public class AppMain extends ApplicationWindow
         FormData fd_slider = new FormData();
         fd_slider.left = new FormAttachment(lblPause, 5, SWT.RIGHT);
         fd_slider.bottom = new FormAttachment(btnAutomatic, 0, SWT.BOTTOM);
-        fd_slider.right = new FormAttachment(100, -35);
+        fd_slider.right = new FormAttachment(100, -40);
         slider.setLayoutData(fd_slider);
+        slider.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
+        slider.setToolTipText("Set the time to pause in seconds after findng a new cell solution value");
         final int minSecondsPause = 0;
         final int maxSecondsPause = 60;
         final int thumbWidth = 1;
@@ -723,7 +725,7 @@ public class AppMain extends ApplicationWindow
         fd_ldlMinute.right = new FormAttachment(slider, 0, SWT.RIGHT);
         lblMinute.setLayoutData(fd_ldlMinute);
 
-        lblCurrent = new Label(groupSlide, SWT.NONE);
+        lblCurrent = new Label(groupSlide, SWT.RIGHT);
         FormData fd_lblCurrent = new FormData();
         fd_lblCurrent.bottom = new FormAttachment(btnAutomatic, 2, SWT.BOTTOM);
         fd_lblCurrent.right = new FormAttachment(100, -5);
