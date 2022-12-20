@@ -8,7 +8,9 @@ import java.util.Stack;
 import java.util.Vector;
 import java.util.stream.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.URI;
@@ -596,18 +598,19 @@ public class Values
         getSudoku().reset();
     }
 
-    private static String SCHEMAFILENAME = "SudokuStepper\\SudokuStepper.xsd";
-    private static String SUDOKU         = "sudoku";
-    private static String INITIAL        = "initial";
-    private static String SOLUTION       = "solution";
-    private static String PROGRESS       = "progress";
-    private static String CONTENT        = "content";
-    private static String ROW            = "row";
-    private static String COL            = "col";
-    private static String CHOICES        = "choices";
-    private static String SUDOKUNAME     = "name";
-    private static String SUDOKUTYPE     = "type";
-    private static String SEPARATOR      = ", ";
+    private static String SCHEMAFILENAMEDBG = "SudokuStepper\\SudokuStepper.xsd";
+    private static String SCHEMAFILENAMEJAR = "SudokuStepper.xsd";
+    private static String SUDOKU            = "sudoku";
+    private static String INITIAL           = "initial";
+    private static String SOLUTION          = "solution";
+    private static String PROGRESS          = "progress";
+    private static String CONTENT           = "content";
+    private static String ROW               = "row";
+    private static String COL               = "col";
+    private static String CHOICES           = "choices";
+    private static String SUDOKUNAME        = "name";
+    private static String SUDOKUTYPE        = "type";
+    private static String SEPARATOR         = ", ";
 
     public void read(String fromFile, boolean alsoReadSolution)
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
@@ -798,17 +801,104 @@ public class Values
         {
             URL classesRootDir = getClass().getProtectionDomain().getCodeSource().getLocation();
             // Check if exists and is well-formed
-            Path xsdPath = Paths.get(Paths.get(classesRootDir.toURI()).toString(), SCHEMAFILENAME);
-            xsdPath = xsdPath.resolve(StringUtils.EMPTY);
-            File f = new File(xsdPath.toString());
-            if (!f.exists() || f.isDirectory() || !f.canRead())
+            final String xsdPath = (Paths.get(Paths.get(classesRootDir.toURI()).toString(), SCHEMAFILENAMEDBG)
+                    .resolve(StringUtils.EMPTY)).toString();
+            final File schemaFile = new File(xsdPath);
+            InputStream schemaStr = null;
+            // System.out.println("class: " + this.getClass().toString());
+            // System.out.println("classesRootDir: " + classesRootDir.toString());
+            // System.out.println("try resource: " + SCHEMAFILERELJAR);
+            // schemaStr = this.getClass().getResourceAsStream(SCHEMAFILERELJAR);
+            /*
+             * File file = null; String resource = "/com/myorg/foo.xml"; URL res =
+             * getClass().getResource(resource); if (res.getProtocol().equals("jar")) {
+             */
+            // final String root = "/";
+            // // final List<String> resources = new LinkedList<>();
+            // String resPath = root;
+            // try (final Scanner scanner = new
+            // Scanner(getClass().getResourceAsStream(resPath)))
+            // {
+            // while (scanner.hasNextLine())
+            // {
+            // final String line = scanner.nextLine();
+            // // System.out.println(resPath + line);
+            // if (line.equals("SudokuStepper.jar"))
+            // {
+            // resPath = resPath + line + "/";
+            // System.out.println("One level down: " + resPath);
+            // try (final Scanner scanner2 = new
+            // Scanner(getClass().getResourceAsStream(resPath)))
+            // {
+            // while (scanner2.hasNextLine())
+            // {
+            // final String line2 = scanner2.nextLine();
+            // // System.out.println(resPath + line2);
+            // if (line2.contains("SudokuStepper.xsd"))
+            // {
+            // System.out.println(resPath + line2);
+            // // resources.add(root + "/" + line); } }
+            // }
+            // }
+            // }
+            // }
+            // }
+            // resPath = root; // resources.add(root + "/" + line); } }
+            // // return resources;
+            // }
+            if (!schemaFile.exists() || schemaFile.isDirectory() || !schemaFile.canRead())
             {
-                throw (new IOException("Cannot find or read Schema: " + xsdPath.toString()));
+                // Path xsdPathJar = Paths.get(SCHEMAFILENAMEJAR);
+                /*
+                 * xsdPathJar = xsdPathJar.resolve(StringUtils.EMPTY); f = new
+                 * File(xsdPathJar.toString());
+                 */
+                // if (schemaStr == null)
+                // {
+                // System.out.println("try resource: " + SCHEMAFILENAMEJAR);
+                // ClassLoader classLoader = this.getClass().getClassLoader();
+                // System.out.println("Class Loader: " + classLoader.toString());
+                // schemaStr = classLoader
+                // .getResourceAsStream(Paths.get(Paths.get(classesRootDir.toURI()).toString(),
+                // SCHEMAFILENAMEJAR)
+                // .toString()); /* SCHEMAFILENAMEJAR); */
+                // if (schemaStr == null)
+                // {
+                // System.out.println("schemaStr/2: failed: " + SCHEMAFILENAMEJAR);
+                // String p = Paths.get(Paths.get(classesRootDir.toURI()).toString(),
+                // SCHEMAFILENAMEJAR).toString();
+                // schemaStr = this.getClass().getResourceAsStream(p);
+                // if (schemaStr == null)
+                // {
+                // System.out.println("schemaStr/3: failed: " + p);
+                // p = SCHEMAFILENAMEJAR; // "SudokuStepper.xsd";
+                // System.out.println("try resource: " + p);
+                // schemaStr = this.getClass().getResourceAsStream(p);
+                // if (schemaStr == null)
+                // {
+                // System.out.println("schemaStr/4: failed: " + p);
+                // }
+                // else
+                // {
+                // System.out.println("schemaStr/4: succeeded: " + p);
+                // }
+                // }
+                // }
+                // }
+                schemaStr = this.getClass().getResourceAsStream(SCHEMAFILENAMEJAR);
+                if (schemaStr == null)
+                {
+                    throw (new IOException("Cannot find or read Schema: " + xsdPath + " or " + SCHEMAFILENAMEJAR));
+                }
+            }
+            else
+            {
+                schemaStr = new FileInputStream(schemaFile);
             }
             try
             {
                 SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                Schema schema = factory.newSchema(new File(xsdPath.toString()));
+                Schema schema = factory.newSchema(new StreamSource(schemaStr));
                 Validator validator = schema.newValidator();
                 validator.validate(new StreamSource(new File(xmlPath)));
                 retVal = true;
