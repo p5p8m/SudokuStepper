@@ -24,9 +24,10 @@ public class SubSudoku
     public boolean isInSubSudoku(int globalRow, int globalCol)
     {
         boolean retVal = false;
-        if (globalRow >= upperLeftCornerGlobalRow && globalRow < upperLeftCornerGlobalRow + AppMain.SINGLESUDOKUMAXROWS
+        if (globalRow >= upperLeftCornerGlobalRow
+                && globalRow < upperLeftCornerGlobalRow + AppMain.getSingleSudokuMaxRows()
                 && globalCol >= upperLeftCornerGlobalCol
-                && globalCol < upperLeftCornerGlobalCol + AppMain.SINGLESUDOKUMAXCOLS)
+                && globalCol < upperLeftCornerGlobalCol + AppMain.getSingleSudokuMaxCols())
         {
             retVal = true;
         }
