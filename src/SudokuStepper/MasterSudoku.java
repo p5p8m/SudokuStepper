@@ -13,14 +13,17 @@ import SudokuStepper.Values.SudokuType;
  */
 public class MasterSudoku
 {
-    private SingleCellValue[][]  masterSudoku = new SingleCellValue[AppMain.MAXROWS][AppMain.MAXCOLS];
-    private ArrayList<SubSudoku> subSudokus   = new ArrayList<SubSudoku>();
-    private Values               values       = null;
+    private SingleCellValue[][]  masterSudoku     = new SingleCellValue[AppMain.OVERALLMAXROWS][AppMain.OVERALLMAXCOLS];
+    private ArrayList<SubSudoku> subSudokus       = new ArrayList<SubSudoku>();
+    private Values               values           = null;
+    private int                  candidatesNumber = 0;                                                                  // Dummy
+                                                                                                                        // Initialization
 
-    public MasterSudoku(SudokuType type, Values valuesIn)
+    public MasterSudoku(SudokuType type, Values valuesIn, int candNbr)
     {
         setSudokuType(type);
         values = valuesIn;
+        candidatesNumber = candNbr;
     }
 
     public void setSudokuType(SudokuType type)
@@ -86,7 +89,7 @@ public class MasterSudoku
 
     public void resetCell(int globalRow, int globalCol)
     {
-        masterSudoku[globalRow][globalCol] = new SingleCellValue();
+        masterSudoku[globalRow][globalCol] = new SingleCellValue(candidatesNumber);
     }
 
     public void reset()
@@ -106,19 +109,19 @@ public class MasterSudoku
         switch (type)
         {
         case SAMURAI:
-            if (globalRow / AppMain.CELLSPERROW == 3
-                    && (globalCol / AppMain.CELLSPERCOL < 2 || globalCol / AppMain.CELLSPERCOL > 4))
+            if (globalRow / AppMain.getCellsPerRow() == 3
+                    && (globalCol / AppMain.getCellsPerCol() < 2 || globalCol / AppMain.getCellsPerCol() > 4))
             {
                 retVal = false;
             }
-            else if (globalCol / AppMain.CELLSPERCOL == 3
-                    && (globalRow / AppMain.CELLSPERROW < 2 || globalRow / AppMain.CELLSPERROW > 4))
+            else if (globalCol / AppMain.getCellsPerCol() == 3
+                    && (globalRow / AppMain.getCellsPerRow() < 2 || globalRow / AppMain.getCellsPerRow() > 4))
             {
                 retVal = false;
             }
             break;
         default:
-            if (globalRow >= AppMain.SINGLESUDOKUMAXROWS || globalCol >= AppMain.SINGLESUDOKUMAXCOLS)
+            if (globalRow >= AppMain.getSingleSudokuMaxRows() || globalCol >= AppMain.getSingleSudokuMaxCols())
             {
                 retVal = false;
             }
