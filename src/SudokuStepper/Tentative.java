@@ -8,11 +8,12 @@ import java.util.List;
 import SudokuStepper.ListOfSolTraces;
 import SudokuStepper.Values.SudokuType;
 
-public class Tentative // Contains the tentative solution for a complete sudoku samurai
+public class Tentative<LegalValues extends Enum<LegalValues>> // Contains the tentative solution for a complete
+                                                              // sudoku samurai
 {
-    private MasterSudoku sudoku      = null;
-    private Bifurcation  bifurcation = null;
-    private Values       values      = null;
+    private MasterSudoku             sudoku      = null;
+    private Bifurcation<LegalValues> bifurcation = null;
+    private Values                   values      = null;
 
     public MasterSudoku getSudoku()
     {
@@ -61,8 +62,8 @@ public class Tentative // Contains the tentative solution for a complete sudoku 
         sudoku = new MasterSudoku(src.sudoku, type);
     }
 
-    public Tentative(SudokuType type, Values valuesIn)
+    public Tentative(SudokuType type, Values valuesIn, int candNbr)
     {
-        sudoku = new MasterSudoku(type, valuesIn);
+        sudoku = new MasterSudoku(type, valuesIn, candNbr);
     }
 }
