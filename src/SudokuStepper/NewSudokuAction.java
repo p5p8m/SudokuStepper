@@ -10,16 +10,19 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 
 public class NewSudokuAction extends SudokuAction
 {
-    private SudokuType newSudokuType = SudokuType.SINGLE;
+    private SudokuType   newSudokuType = SudokuType.SINGLE;
+    private SubAreaWidth subAreaWidth  = SubAreaWidth.THREE;
 
     public NewSudokuAction(AppMain appMain, Values.SudokuType type, String text, Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
         newSudokuType = type;
+        subAreaWidth = appMain.getSubAreaWidth();
     }
 
     @Override
