@@ -57,9 +57,9 @@ import org.w3c.dom.Element;
 /**
  * 
  */
-interface CandidatesListener
+interface CandidatesListener<LegalValuesGen>
 {
-    void candidatesUpdated(int row, int col, LegalValues val, boolean runsInUiThread);
+    void candidatesUpdated(int row, int col, LegalValuesGen val, boolean runsInUiThread);
 }
 
 interface CandidatesResetListener
@@ -91,7 +91,7 @@ interface FreezeListener
  * @author Pascal Represents the complete Sudoku Samurai
  *
  */
-public class Values
+public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
 {
 
     public enum SudokuType
@@ -99,9 +99,15 @@ public class Values
         SINGLE, SAMURAI
     }
 
+    public enum SubAreaWidth
+    {
+        THREE, FOUR;
+    }
+
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
     private SudokuType                    sudokuType               = SudokuType.SINGLE;
+    // private SubAreaWidth subAreaWidth = SubAreaWidth.THREE;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
     private AppMain                       appMain                  = null;
@@ -121,18 +127,19 @@ public class Values
         switch (sudokuType)
         {
         case SAMURAI:
-            retVal = AppMain.MAXROWS * AppMain.MAXCOLS - 8 * AppMain.RECTANGLELENGTH * AppMain.RECTANGLELENGTH;
+            retVal = AppMain.getMaxRows() * AppMain.getMaxCols()
+                    - 8 * AppMain.getRectangleLength() * AppMain.getRectangleLength();
             break;
         case SINGLE:
         default:
-            retVal = AppMain.SINGLESUDOKUMAXCOLS * AppMain.SINGLESUDOKUMAXROWS;
+            retVal = AppMain.getSingleSudokuMaxCols() * AppMain.getSingleSudokuMaxRows();
             break;
         }
         return (retVal);
     }
 
-    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValues eliminatedVal,
-            List<LegalValues> candidates)
+    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValuesGen eliminatedVal,
+            List<LegalValuesGen> candidates)
     {
         solutionTrace.addToSolutionTrace(values, globalRow, globalCol, eliminatedVal, candidates);
     }
@@ -167,7 +174,12 @@ public class Values
         return (sudokuType);
     }
 
-    public SolutionProgress addBifurcationNClone(int globalRow, int globalCol)
+    // public SubAreaWidth getSubAreaWidth()
+    // {
+    // return (singleSu);
+    // }
+
+    public SolutionProgress<LegalValuesGen> addBifurcationNClone(int globalRow, int globalCol)
     {
         // // For debugging
         // try
@@ -175,19 +187,19 @@ public class Values
         // Values pb = new Values();
         // Tentative oldSudoku = pb.sudokuCands.peek();
         // oldSudoku.setBifurcation(0, 0);
-        // oldSudoku.getSudoku()[1][1].setSolution(LegalValues.NINE, 1, 1, new
+        // oldSudoku.getSudoku()[1][1].setSolution(LegalValuesGen.NINE, 1, 1, new
         // ArrayList<SolutionListener>(), true,
         // false);
         // Tentative newSudoku = new Tentative(oldSudoku);
         // pb.sudokuCands.push(newSudoku);
-        // oldSudoku.getSudoku()[1][1].setSolution(LegalValues.ONE, 1, 1, new
+        // oldSudoku.getSudoku()[1][1].setSolution(LegalValuesGen.ONE, 1, 1, new
         // ArrayList<SolutionListener>(), true,
         // false);
         // oldSudoku.getSudoku()[0][0].candidates.remove(8);
-        // pb.sudokuCands.peek().getSudoku()[1][1].setSolution(LegalValues.TWO, 1, 1,
+        // pb.sudokuCands.peek().getSudoku()[1][1].setSolution(LegalValuesGen.TWO, 1, 1,
         // new ArrayList<SolutionListener>(), true, false);
         // pb.sudokuCands.peek().getSudoku()[0][1].candidates.removeIf(x -> x ==
-        // LegalValues.FIVE);
+        // LegalValuesGen.FIVE);
         // // System.out.println(System.identityHashCode(array[i]));
         // }
         // catch (Exception e)
@@ -200,7 +212,7 @@ public class Values
         SolutionProgress retVal = SolutionProgress.NONE;
         Tentative oldSudoku = sudokuCands.peek();
         Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
-        LegalValues toBeEliminatedVal = oldSudoku.setBifurcation(globalRow, globalCol);
+        LegalValuesGen toBeEliminatedVal = oldSudoku.setBifurcation(globalRow, globalCol);
         System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
                 + toBeEliminatedVal);
         sudokuCands.push(newSudoku);
@@ -214,7 +226,7 @@ public class Values
         return (sudokuCands.size() > 1);
     }
 
-    public SolutionProgress bifurqueOnceMore()
+    public <LegalValuesGen> SolutionProgress bifurqueOnceMore()
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         Bifurcation nextTry = null;
@@ -235,7 +247,7 @@ public class Values
             }
             int row = nextTry.getRow();
             int col = nextTry.getCol();
-            LegalValues toBeEliminatedVal = nextTry.getNextTry();
+            LegalValuesGen toBeEliminatedVal = nextTry.getNextTry();
             System.out.println("Try and Error rollback with row: " + row + ", col: " + col + ", now eliminating value: "
                     + toBeEliminatedVal);
             retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true, true);
@@ -283,7 +295,7 @@ public class Values
 
     public Values(SudokuType type, AppMain app)
     {
-        sudokuCands.push(new Tentative(type, this));
+        sudokuCands.push(new Tentative(type, this, app.getCandidatesNumber()));
         sudokuType = type;
         appMain = app;
         reset();
@@ -301,7 +313,7 @@ public class Values
         {
             row -= 1;
             col -= 1;
-            LegalValues val = LegalValues.from(value);
+            LegalValuesGen val = LegalValuesGen.from(value);
             MasterSudoku sudoku = getSudoku();
             sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
             sudoku.getRowCol(row, col).setInput(isAnInput);
@@ -352,8 +364,8 @@ public class Values
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValues val, boolean alsoSetSolution,
-            boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
+    public <LegalValuesGen> SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValuesGen val,
+            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku sudoku = getSudoku();
@@ -380,7 +392,8 @@ public class Values
             {
                 if (alsoSetSolution)
                 {
-                    LegalValues solution = sudoku.getRowCol(globalRow, globalCol).getCandidates().get(0);
+                    LegalValuesGen solution = (LegalValuesGen) sudoku.getRowCol(globalRow, globalCol).getCandidates()
+                            .get(0);
                     retVal = retVal.combineWith(SolutionProgress.SOLUTION);
                     sudoku.getRowCol(globalRow, globalCol).setInput(false);
                     sudoku.getRowCol(globalRow, globalCol).setTryNError(isATry);
@@ -400,9 +413,9 @@ public class Values
 
     void resetCandidates()
     {
-        for (int globalRow = 0; globalRow < AppMain.MAXROWS; globalRow++)
+        for (int globalRow = 0; globalRow < AppMain.getMaxRows(); globalRow++)
         {
-            for (int globalCol = 0; globalCol < AppMain.MAXCOLS; globalCol++)
+            for (int globalCol = 0; globalCol < AppMain.getMaxCols(); globalCol++)
             {
                 SingleCellValue cell = getCell(globalRow, globalCol);
                 if (cell.getSolution() == null)
@@ -419,8 +432,8 @@ public class Values
 
     // remove the value just set in the given cell the list of candidates from
     // all influenced cells, for master sudoku
-    public void updateCandidateList(int globalRow, int globalCol, LegalValues val, boolean runsInUiThread,
-            boolean markLastSolutionFound)
+    public <LegalValuesGen> void updateCandidateList(int globalRow, int globalCol, LegalValuesGen val,
+            boolean runsInUiThread, boolean markLastSolutionFound)
     {
         MasterSudoku masterSudoku = getSudoku();
         for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
@@ -430,9 +443,9 @@ public class Values
             if (subSudoku.getRowCol(localRow, localCol).getSolution() != null)
             { // First undo the value restrictions due to the previous value, but only where
               // not another cell continues justifying them
-                LegalValues oldVal = subSudoku.getRowCol(localRow, localCol).getSolution();
+                LegalValuesGen oldVal = subSudoku.getRowCol(localRow, localCol).getSolution();
                 // Same column
-                for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
+                for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                 {
                     if (!subSudoku.getRowCol(rowInCol, localCol).getCandidates().contains(oldVal)
                             && isValueACandidate(rowInCol, localCol, oldVal))
@@ -441,7 +454,7 @@ public class Values
                     }
                 }
                 // Same row
-                for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+                for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
                 {
                     if (!subSudoku.getRowCol(localRow, colInRow).getCandidates().contains(oldVal)
                             && isValueACandidate(localRow, colInRow, oldVal))
@@ -450,13 +463,13 @@ public class Values
                     }
                 }
                 // Same block
-                for (int rowInBlock = AppMain.RECTANGLELENGTH
-                        * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                                * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                for (int rowInBlock = AppMain.getRectangleLength()
+                        * (localRow / AppMain.getRectangleLength()); rowInBlock < AppMain.getRectangleLength()
+                                * (localRow / AppMain.getRectangleLength() + 1); rowInBlock++)
                 {
-                    for (int colInBlock = AppMain.RECTANGLELENGTH
-                            * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                    * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                    for (int colInBlock = AppMain.getRectangleLength()
+                            * (localCol / AppMain.getRectangleLength()); colInBlock < AppMain.getRectangleLength()
+                                    * (localCol / AppMain.getRectangleLength() + 1); colInBlock++)
                     {
                         if (!subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().contains(oldVal)
                                 && isValueACandidate(rowInBlock, colInBlock, oldVal))
@@ -476,12 +489,12 @@ public class Values
     // Check if the value is a possible candidate based on the values already set in
     // all influencing cells, val should not be null
     // Check is performed for a single sudoku, use local coordinates
-    private boolean isValueACandidate(int localRow, int localCol, LegalValues val)
+    private <LegalValuesGen> boolean isValueACandidate(int localRow, int localCol, LegalValuesGen val)
     {
         boolean retVal = true;
         MasterSudoku sudoku = getSudoku();
         // Same column
-        for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
+        for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
         {
             if (localRow != rowInCol && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution()))
             {
@@ -492,7 +505,7 @@ public class Values
         // Same row
         if (retVal)
         {
-            for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+            for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
             {
                 if (localCol != colInRow && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution()))
                 {
@@ -504,13 +517,13 @@ public class Values
         // Same block
         if (retVal)
         {
-            for (int rowInBlock = AppMain.RECTANGLELENGTH
-                    * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                            * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+            for (int rowInBlock = AppMain.getRectangleLength()
+                    * (localRow / AppMain.getRectangleLength()); rowInBlock < AppMain.getRectangleLength()
+                            * (localRow / AppMain.getRectangleLength() + 1); rowInBlock++)
             {
-                for (int colInBlock = AppMain.RECTANGLELENGTH
-                        * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                for (int colInBlock = AppMain.getRectangleLength()
+                        * (localCol / AppMain.getRectangleLength()); colInBlock < AppMain.getRectangleLength()
+                                * (localCol / AppMain.getRectangleLength() + 1); colInBlock++)
                 {
                     if ((localCol != colInBlock || localRow != rowInBlock)
                             && val.equals(sudoku.getRowCol(rowInBlock, colInBlock).getSolution()))
@@ -527,7 +540,7 @@ public class Values
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValues val,
+    <LegalValuesGen> SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValuesGen val,
             boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
@@ -537,7 +550,7 @@ public class Values
             int localRow = subSudoku.getLocalRow(globalRow);
             int localCol = subSudoku.getLocalCol(globalCol);
             // Same column
-            for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
+            for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
             {
                 if (subSudoku.getRowCol(rowInCol, localCol).getCandidates().contains(val))
                 {
@@ -552,7 +565,7 @@ public class Values
                 }
             }
             // Same row
-            for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+            for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
             {
                 if (subSudoku.getRowCol(localRow, colInRow).getCandidates().contains(val))
                 {
@@ -567,13 +580,13 @@ public class Values
                 }
             }
             // Same block
-            for (int rowInBlock = AppMain.RECTANGLELENGTH
-                    * (localRow / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                            * (localRow / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+            for (int rowInBlock = AppMain.getRectangleLength()
+                    * (localRow / AppMain.getRectangleLength()); rowInBlock < AppMain.getRectangleLength()
+                            * (localRow / AppMain.getRectangleLength() + 1); rowInBlock++)
             {
-                for (int colInBlock = AppMain.RECTANGLELENGTH
-                        * (localCol / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                * (localCol / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                for (int colInBlock = AppMain.getRectangleLength()
+                        * (localCol / AppMain.getRectangleLength()); colInBlock < AppMain.getRectangleLength()
+                                * (localCol / AppMain.getRectangleLength() + 1); colInBlock++)
                 {
                     if (subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().contains(val))
                     {
@@ -702,23 +715,23 @@ public class Values
     {
         List<List<int[]>> retVal = new ArrayList<List<int[]>>();
         // First reset from a possible previous run
-        for (int row = 0; row < AppMain.MAXROWS; row++)
+        for (int row = 0; row < AppMain.OVERALLMAXROWS; row++)
         {
-            for (int col = 0; col < AppMain.MAXCOLS; col++)
+            for (int col = 0; col < AppMain.OVERALLMAXCOLS; col++)
             {
                 getCell(row, col).setAConflict(false);
             }
         }
         for (SubSudoku subSudoku : getSudoku().getSubSudokus())
         {
-            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     if (subSudoku.getRowCol(row, col).getCandidates().isEmpty())
                     {
                         // Same column
-                        for (int rowInCol = row + 1; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
+                        for (int rowInCol = row + 1; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                         {
                             if (subSudoku.getRowCol(rowInCol, col).getCandidates().isEmpty()
                                     && subSudoku.getRowCol(rowInCol, col).getSolution() == subSudoku.getRowCol(row, col)
@@ -735,7 +748,7 @@ public class Values
                             }
                         }
                         // Same row
-                        for (int colInRow = col + 1; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+                        for (int colInRow = col + 1; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
                         {
                             if (subSudoku.getRowCol(row, colInRow).getCandidates().isEmpty()
                                     && subSudoku.getRowCol(row, colInRow).getSolution() == subSudoku.getRowCol(row, col)
@@ -752,13 +765,13 @@ public class Values
                             }
                         }
                         // Same block
-                        for (int rowInBlock = AppMain.RECTANGLELENGTH
-                                * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                                        * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                        for (int rowInBlock = AppMain.getRectangleLength()
+                                * (row / AppMain.getRectangleLength()); rowInBlock < AppMain.getRectangleLength()
+                                        * (row / AppMain.getRectangleLength() + 1); rowInBlock++)
                         {
-                            for (int colInBlock = AppMain.RECTANGLELENGTH
-                                    * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                            * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                            for (int colInBlock = AppMain.getRectangleLength()
+                                    * (col / AppMain.getRectangleLength()); colInBlock < AppMain.getRectangleLength()
+                                            * (col / AppMain.getRectangleLength() + 1); colInBlock++)
                             {
                                 if ((rowInBlock >= row || colInBlock >= col)
                                         && (rowInBlock != row || colInBlock != col))
@@ -951,9 +964,9 @@ public class Values
             for (Element elt : elts)
             {
                 int numberNodes = 0;
-                for (int row = 0; row < AppMain.MAXROWS; row++)
+                for (int row = 0; row < AppMain.getMaxRows(); row++)
                 {
-                    for (int col = 0; col < AppMain.MAXCOLS; col++)
+                    for (int col = 0; col < AppMain.getMaxCols(); col++)
                     {
                         if (sudoku.isRowColUsed(sudokuType, row, col))
                         {
@@ -990,7 +1003,7 @@ public class Values
                         if (singleTrace.getChoices() != null)
                         {
                             int loopCount = 0;
-                            for (LegalValues val : singleTrace.getChoices())
+                            for (LegalValuesGen val : singleTrace.getChoices())
                             {
                                 if (loopCount > 0)
                                 {
@@ -1067,7 +1080,7 @@ public class Values
  * List<SolutionTrace> listTraces = new Vector<SolutionTrace>();
  * 
  * public void addToSolutionTrace(Values values, int globalRow, int globalCol,
- * LegalValues eliminatedVal, List<LegalValues> candidates) {
+ * LegalValuesGen eliminatedVal, List<LegalValuesGen> candidates) {
  * listTraces.add(values.new SolutionTrace(globalRow, globalCol, eliminatedVal,
  * candidates)); }
  * 
@@ -1093,45 +1106,45 @@ public class Values
  */
 /*
  * private class SolutionTrace { private int row; private int col; private
- * LegalValues val; private List<LegalValues> choices;
+ * LegalValuesGen val; private List<LegalValuesGen> choices;
  * 
- * public SolutionTrace(int rowIn, int colIn, LegalValues valIn,
- * List<LegalValues> choicesIn) { row = rowIn; col = colIn; val = valIn; choices
- * = choicesIn; }
+ * public SolutionTrace(int rowIn, int colIn, LegalValuesGen valIn,
+ * List<LegalValuesGen> choicesIn) { row = rowIn; col = colIn; val = valIn;
+ * choices = choicesIn; }
  * 
  * public int getRow() { return (row); }
  * 
  * public int getCol() { return (col); }
  * 
- * public LegalValues getValue() { return (val); }
+ * public LegalValuesGen getValue() { return (val); }
  * 
- * public List<LegalValues> getChoices() { return (choices); }
+ * public List<LegalValuesGen> getChoices() { return (choices); }
  * 
  * }
  */
 
-class Bifurcation
+class Bifurcation<LegalValuesGen extends Enum<LegalValuesGen>>
 {
-    private int               rowInt;
-    private int               colInt;
+    private int                  rowInt;
+    private int                  colInt;
     // The last choice in the list shows how to come from the (n-1)-th sudoku (to
     // which this object is attached) to the n-th sudoku in the stack
     // The list gets longer the more different solution you try
-    private List<LegalValues> choices = new ArrayList<LegalValues>();
+    private List<LegalValuesGen> choices = new ArrayList<LegalValuesGen>();
 
-    public Bifurcation(int row, int col, LegalValues val)
+    public Bifurcation(int row, int col, LegalValuesGen val)
     {
         rowInt = row;
         colInt = col;
         choices.add(val);
     }
 
-    public LegalValues getNextTry()
+    public LegalValuesGen getNextTry()
     {
         return (this.choices.get(choices.size() - 1));
     }
 
-    public Bifurcation addNewTry(LegalValues toBeEliminatedVal)
+    public Bifurcation addNewTry(LegalValuesGen toBeEliminatedVal)
     {
         Bifurcation retVal = this;
         retVal.choices.add(toBeEliminatedVal);
