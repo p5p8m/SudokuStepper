@@ -34,6 +34,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
     {
         System.out.println("Running solution algorithm");
         boolean activateSolveBtn = true;
+        int noOfPossibleSolutions = 0;
         try
         {
             Values sudoku = app.getSudokuPb();
@@ -60,7 +61,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 {
                     updated = detectTuples(sudoku);
                 }
-                if (updated == SolutionProgress.NONE)
+                if (updated == SolutionProgress.NONE && app.useTripleRecognition)
                 {
                     updated = detectTriples(sudoku);
                 }
@@ -85,7 +86,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             while (((updated != SolutionProgress.NONE || (newNumOfSolutions < sudoku.getNumberOfCellsToBeSolved()
                     && oldNumOfSolutions < newNumOfSolutions)) && !errorDetected)
                     && !(newNumOfSolutions == sudoku.getNumberOfCellsToBeSolved() && !errorDetected)
-            /* && (!slideShowEnabled || slideShowPause != null) */);
+                    /* && (!slideShowEnabled || slideShowPause != null) */);
             System.out.println("Leaved loop");
             // app.getDisplay().asyncExec(new Runnable()
             // {
@@ -128,11 +129,33 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             else
             {
                 activateSolveBtn = false;
+
+                // Check if there are possibly other solutions
+                ListOfSolTraces firstSolution = app.getSudokuPb().getSolutionTrace();
+                for (SolutionTrace trace : firstSolution)
+                {
+                    List<LegalValues> choices = trace.getChoices();
+                    if (choices != null)
+                    {
+                        noOfPossibleSolutions += choices.size();
+                    }
+                }
+                if (noOfPossibleSolutions > 0)
+                {
+                    final int noOfPossibleSolutionsInt = noOfPossibleSolutions;
+                    app.getDisplay().asyncExec(new Runnable()
+                    {
+                        public void run()
+                        {
+                            MessageBox infoBox = new MessageBox(new Shell(), SWT.ICON_INFORMATION);
+                            infoBox.setMessage("Number of possible solutions: " + noOfPossibleSolutionsInt);
+                            infoBox.open();
+                        }
+                    });
+                }
             }
         }
-        catch (
-
-        Exception ex)
+        catch (Exception ex)
         {
             ex.printStackTrace();
             app.getDisplay().asyncExec(new Runnable()
@@ -149,7 +172,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         }
         finally
         {
-            app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn));
+            app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn, noOfPossibleSolutions > 0));
             app.setSolvingThread(null);
             System.out.println("Leaving Solving thread");
         }
@@ -158,18 +181,20 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
     class SolveBtnRunnable implements Runnable
     {
         private boolean activateSolveBtn;
+        private boolean activateNextSolBtn;
 
-        SolveBtnRunnable(boolean activateBtn)
+        SolveBtnRunnable(boolean activateSolveBtnIn, boolean activateNextSolBtnIn)
         {
             super();
-            activateSolveBtn = activateBtn;
+            activateSolveBtn = activateSolveBtnIn;
+            activateNextSolBtn = activateNextSolBtnIn;
         }
 
         @Override
         public void run()
         {
             app.setState(AppState.EMPTY);
-            app.setSolveEnabled(activateSolveBtn);
+            app.setSolveEnabled(activateSolveBtn, activateNextSolBtn);
         }
 
     }
@@ -180,9 +205,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
         {
             // same row
-            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     if (subSudoku.getRowCol(row, col).getCandidates().size() == 1)
                     {
@@ -281,9 +306,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             Integer globalColMarked = null;
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
             {
-                for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
-                    for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                    for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                     {
                         if (!subSudoku.getRowCol(row, col).getCandidates().isEmpty())
                         {
@@ -331,9 +356,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         for (SubSudoku subSudoku : sudoku.getSudoku().getSubSudokus())
         {
             // check by rows first
-            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     if (!sudoku.getCell(row, col).getCandidates().isEmpty())
                     {
@@ -342,7 +367,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                         // col).candidates);
                         // System.out.println("row: " + row + ", col: " + col + ", start numCands: " +
                         // unionList.size());
-                        for (int scndCol = col + 1; scndCol < AppMain.SINGLESUDOKUMAXCOLS; scndCol++)
+                        for (int scndCol = col + 1; scndCol < AppMain.getSingleSudokuMaxCols(); scndCol++)
                         {
                             if (!sudoku.getCell(row, scndCol).getCandidates().isEmpty())
                             {
@@ -355,7 +380,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                             sudoku.getCell(row, col).getCandidates());
                                     for (LegalValues val : locCandidates)
                                     {
-                                        for (int cleanedCol = 0; cleanedCol < AppMain.SINGLESUDOKUMAXCOLS; cleanedCol++)
+                                        for (int cleanedCol = 0; cleanedCol < AppMain
+                                                .getSingleSudokuMaxCols(); cleanedCol++)
                                         {
                                             if (cleanedCol != col && cleanedCol != scndCol
                                                     && !sudoku.getCell(row, cleanedCol).getCandidates().isEmpty())
@@ -386,9 +412,9 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 }
             }
             // check by columns then
-            for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+            for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
             {
-                for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
                     if (!sudoku.getCell(row, col).getCandidates().isEmpty())
                     {
@@ -397,7 +423,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                         // col).candidates);
                         // System.out.println("row: " + row + ", col: " + col + ", start numCands: " +
                         // unionList.size());
-                        for (int scndRow = row + 1; scndRow < AppMain.SINGLESUDOKUMAXROWS; scndRow++)
+                        for (int scndRow = row + 1; scndRow < AppMain.getSingleSudokuMaxRows(); scndRow++)
                         {
                             if (!sudoku.getCell(scndRow, col).getCandidates().isEmpty())
                             {
@@ -410,7 +436,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                             sudoku.getCell(row, col).getCandidates());
                                     for (LegalValues val : locCandidates)
                                     {
-                                        for (int cleanedRow = 0; cleanedRow < AppMain.SINGLESUDOKUMAXROWS; cleanedRow++)
+                                        for (int cleanedRow = 0; cleanedRow < AppMain
+                                                .getSingleSudokuMaxRows(); cleanedRow++)
                                         {
                                             if (cleanedRow != row && cleanedRow != scndRow
                                                     && !sudoku.getCell(cleanedRow, col).getCandidates().isEmpty())
@@ -441,16 +468,18 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 }
             }
             // check by blocks finally
-            for (int rowBlock = 0; rowBlock < AppMain.SINGLESUDOKUMAXROWS / AppMain.RECTANGLELENGTH; rowBlock++)
+            for (int rowBlock = 0; rowBlock < AppMain.getSingleSudokuMaxRows()
+                    / AppMain.getRectangleLength(); rowBlock++)
             {
-                for (int colBlock = 0; colBlock < AppMain.SINGLESUDOKUMAXCOLS / AppMain.RECTANGLELENGTH; colBlock++)
+                for (int colBlock = 0; colBlock < AppMain.getSingleSudokuMaxCols()
+                        / AppMain.getRectangleLength(); colBlock++)
                 {
                     // Same block
-                    for (int rowInBlock = AppMain.RECTANGLELENGTH * rowBlock; rowInBlock < AppMain.RECTANGLELENGTH
-                            * (rowBlock + 1); rowInBlock++)
+                    for (int rowInBlock = AppMain.getRectangleLength() * rowBlock; rowInBlock < AppMain
+                            .getRectangleLength() * (rowBlock + 1); rowInBlock++)
                     {
-                        for (int colInBlock = AppMain.RECTANGLELENGTH * colBlock; colInBlock < AppMain.RECTANGLELENGTH
-                                * (colBlock + 1); colInBlock++)
+                        for (int colInBlock = AppMain.getRectangleLength() * colBlock; colInBlock < AppMain
+                                .getRectangleLength() * (colBlock + 1); colInBlock++)
                         {
                             if (!sudoku.getCell(rowInBlock, colInBlock).getCandidates().isEmpty())
                             {
@@ -460,12 +489,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 // System.out.println("row: " + row + ", col: " + col + ", start numCands: " +
                                 // unionList.size());
                                 // Same block
-                                for (int scndRowInBlock = AppMain.RECTANGLELENGTH
-                                        * rowBlock; scndRowInBlock < AppMain.RECTANGLELENGTH
+                                for (int scndRowInBlock = AppMain.getRectangleLength()
+                                        * rowBlock; scndRowInBlock < AppMain.getRectangleLength()
                                                 * (rowBlock + 1); scndRowInBlock++)
                                 {
-                                    for (int scndColInBlock = AppMain.RECTANGLELENGTH
-                                            * colBlock; scndColInBlock < AppMain.RECTANGLELENGTH
+                                    for (int scndColInBlock = AppMain.getRectangleLength()
+                                            * colBlock; scndColInBlock < AppMain.getRectangleLength()
                                                     * (colBlock + 1); scndColInBlock++)
                                     {
 
@@ -484,12 +513,14 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                             sudoku.getCell(rowInBlock, colInBlock).getCandidates());
                                                     for (LegalValues val : locCandidates)
                                                     {
-                                                        for (int cleanedRowInBlock = AppMain.RECTANGLELENGTH
-                                                                * rowBlock; cleanedRowInBlock < AppMain.RECTANGLELENGTH
+                                                        for (int cleanedRowInBlock = AppMain.getRectangleLength()
+                                                                * rowBlock; cleanedRowInBlock < AppMain
+                                                                        .getRectangleLength()
                                                                         * (rowBlock + 1); cleanedRowInBlock++)
                                                         {
-                                                            for (int cleanedColInBlock = AppMain.RECTANGLELENGTH
-                                                                    * colBlock; cleanedColInBlock < AppMain.RECTANGLELENGTH
+                                                            for (int cleanedColInBlock = AppMain.getRectangleLength()
+                                                                    * colBlock; cleanedColInBlock < AppMain
+                                                                            .getRectangleLength()
                                                                             * (colBlock + 1); cleanedColInBlock++)
                                                             {
                                                                 if ((cleanedRowInBlock != rowInBlock
@@ -510,25 +541,6 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                             }
                                                         }
                                                     }
-                                                    // intersectList.retainAll(sudoku.getCell(row, scndCol).candidates);
-                                                    // unionList.addAll(sudoku.getCell(row, scndCol).candidates);
-                                                    // unionList =
-                                                    // unionList.stream().distinct().collect(Collectors.toList());
-                                                    // Collections.sort(unionList, sortLegalValues);
-                                                    // Collections.sort(intersectList, sortLegalValues);
-                                                    // System.out.println("row: " + row + ", col: " + col + ", union: "
-                                                    // +
-                                                    // unionList);
-                                                    // System.out.println("row: " + row + ", col: " + col + ",
-                                                    // intersection:
-                                                    // " +
-                                                    // intersectList);
-                                                    // System.out.println("row: " + row + ", col: " + col + ", Both same
-                                                    // contents: "
-                                                    // + sameContents(intersectList, unionList));
-                                                    // System.out.println("row: " + row + ", col: " + col + ", original
-                                                    // cands: "
-                                                    // + sudoku.getCell(row, col).candidates);
                                                 }
                                             }
                                         }
@@ -550,17 +562,17 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         for (SubSudoku subSudoku : sudoku.getSudoku().getSubSudokus())
         {
             // check by rows first
-            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     if (!sudoku.getCell(row, col).getCandidates().isEmpty())
                     {
-                        for (int scndCol = col + 1; scndCol < AppMain.SINGLESUDOKUMAXCOLS; scndCol++)
+                        for (int scndCol = col + 1; scndCol < AppMain.getSingleSudokuMaxCols(); scndCol++)
                         {
                             if (!sudoku.getCell(row, scndCol).getCandidates().isEmpty())
                             {
-                                for (int thrdCol = scndCol + 1; thrdCol < AppMain.SINGLESUDOKUMAXCOLS; thrdCol++)
+                                for (int thrdCol = scndCol + 1; thrdCol < AppMain.getSingleSudokuMaxCols(); thrdCol++)
                                 {
                                     if (!sudoku.getCell(row, thrdCol).getCandidates().isEmpty())
                                     {
@@ -574,7 +586,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                             // loop
                                             for (LegalValues val : locCandidates)
                                             {
-                                                for (int cleanedCol = 0; cleanedCol < AppMain.SINGLESUDOKUMAXCOLS; cleanedCol++)
+                                                for (int cleanedCol = 0; cleanedCol < AppMain
+                                                        .getSingleSudokuMaxCols(); cleanedCol++)
                                                 {
                                                     if (cleanedCol != col && cleanedCol != scndCol
                                                             && cleanedCol != thrdCol && !sudoku.getCell(row, cleanedCol)
@@ -595,17 +608,17 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 }
             }
             // check by columns then
-            for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+            for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
             {
-                for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
                     if (!sudoku.getCell(row, col).getCandidates().isEmpty())
                     {
-                        for (int scndRow = row + 1; scndRow < AppMain.SINGLESUDOKUMAXROWS; scndRow++)
+                        for (int scndRow = row + 1; scndRow < AppMain.getSingleSudokuMaxRows(); scndRow++)
                         {
                             if (!sudoku.getCell(scndRow, col).getCandidates().isEmpty())
                             {
-                                for (int thrdRow = scndRow + 1; thrdRow < AppMain.SINGLESUDOKUMAXCOLS; thrdRow++)
+                                for (int thrdRow = scndRow + 1; thrdRow < AppMain.getSingleSudokuMaxCols(); thrdRow++)
                                 {
                                     if (!sudoku.getCell(thrdRow, col).getCandidates().isEmpty())
                                     {
@@ -619,7 +632,8 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                             // loop
                                             for (LegalValues val : locCandidates)
                                             {
-                                                for (int cleanedRow = 0; cleanedRow < AppMain.SINGLESUDOKUMAXCOLS; cleanedRow++)
+                                                for (int cleanedRow = 0; cleanedRow < AppMain
+                                                        .getSingleSudokuMaxCols(); cleanedRow++)
                                                 {
                                                     if (cleanedRow != row && cleanedRow != scndRow
                                                             && cleanedRow != thrdRow && !sudoku.getCell(cleanedRow, col)
@@ -640,25 +654,27 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 }
             }
             // check by blocks finally
-            for (int rowBlock = 0; rowBlock < AppMain.SINGLESUDOKUMAXROWS / AppMain.RECTANGLELENGTH; rowBlock++)
+            for (int rowBlock = 0; rowBlock < AppMain.getSingleSudokuMaxRows()
+                    / AppMain.getRectangleLength(); rowBlock++)
             {
-                for (int colBlock = 0; colBlock < AppMain.SINGLESUDOKUMAXCOLS / AppMain.RECTANGLELENGTH; colBlock++)
+                for (int colBlock = 0; colBlock < AppMain.getSingleSudokuMaxCols()
+                        / AppMain.getRectangleLength(); colBlock++)
                 {
                     // Same block
-                    for (int rowInBlock = AppMain.RECTANGLELENGTH * rowBlock; rowInBlock < AppMain.RECTANGLELENGTH
-                            * (rowBlock + 1); rowInBlock++)
+                    for (int rowInBlock = AppMain.getRectangleLength() * rowBlock; rowInBlock < AppMain
+                            .getRectangleLength() * (rowBlock + 1); rowInBlock++)
                     {
-                        for (int colInBlock = AppMain.RECTANGLELENGTH * colBlock; colInBlock < AppMain.RECTANGLELENGTH
-                                * (colBlock + 1); colInBlock++)
+                        for (int colInBlock = AppMain.getRectangleLength() * colBlock; colInBlock < AppMain
+                                .getRectangleLength() * (colBlock + 1); colInBlock++)
                         {
                             if (!sudoku.getCell(rowInBlock, colInBlock).getCandidates().isEmpty())
                             {
-                                for (int scndRowInBlock = AppMain.RECTANGLELENGTH
-                                        * rowBlock; scndRowInBlock < AppMain.RECTANGLELENGTH
+                                for (int scndRowInBlock = AppMain.getRectangleLength()
+                                        * rowBlock; scndRowInBlock < AppMain.getRectangleLength()
                                                 * (rowBlock + 1); scndRowInBlock++)
                                 {
-                                    for (int scndColInBlock = AppMain.RECTANGLELENGTH
-                                            * colBlock; scndColInBlock < AppMain.RECTANGLELENGTH
+                                    for (int scndColInBlock = AppMain.getRectangleLength()
+                                            * colBlock; scndColInBlock < AppMain.getRectangleLength()
                                                     * (colBlock + 1); scndColInBlock++)
                                     {
 
@@ -668,12 +684,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                             if (!sudoku.getCell(scndRowInBlock, scndColInBlock).getCandidates()
                                                     .isEmpty())
                                             {
-                                                for (int thrdRowInBlock = AppMain.RECTANGLELENGTH
-                                                        * rowBlock; thrdRowInBlock < AppMain.RECTANGLELENGTH
+                                                for (int thrdRowInBlock = AppMain.getRectangleLength()
+                                                        * rowBlock; thrdRowInBlock < AppMain.getRectangleLength()
                                                                 * (rowBlock + 1); thrdRowInBlock++)
                                                 {
-                                                    for (int thrdColInBlock = AppMain.RECTANGLELENGTH
-                                                            * colBlock; thrdColInBlock < AppMain.RECTANGLELENGTH
+                                                    for (int thrdColInBlock = AppMain.getRectangleLength()
+                                                            * colBlock; thrdColInBlock < AppMain.getRectangleLength()
                                                                     * (colBlock + 1); thrdColInBlock++)
                                                     {
                                                         if (thrdRowInBlock > scndRowInBlock
@@ -699,13 +715,17 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                                                     // modified within the loop
                                                                     for (LegalValues val : locCandidates)
                                                                     {
-                                                                        for (int cleanedRowInBlock = AppMain.RECTANGLELENGTH
-                                                                                * rowBlock; cleanedRowInBlock < AppMain.RECTANGLELENGTH
+                                                                        for (int cleanedRowInBlock = AppMain
+                                                                                .getRectangleLength()
+                                                                                * rowBlock; cleanedRowInBlock < AppMain
+                                                                                        .getRectangleLength()
                                                                                         * (rowBlock
                                                                                                 + 1); cleanedRowInBlock++)
                                                                         {
-                                                                            for (int cleanedColInBlock = AppMain.RECTANGLELENGTH
-                                                                                    * colBlock; cleanedColInBlock < AppMain.RECTANGLELENGTH
+                                                                            for (int cleanedColInBlock = AppMain
+                                                                                    .getRectangleLength()
+                                                                                    * colBlock; cleanedColInBlock < AppMain
+                                                                                            .getRectangleLength()
                                                                                             * (colBlock
                                                                                                     + 1); cleanedColInBlock++)
                                                                             {
@@ -783,12 +803,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         {
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
             {
-                for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
                     for (LegalValues val : LegalValues.values())
                     {
                         List<Integer> cols = new ArrayList<Integer>();
-                        for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                        for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                         {
                             if (subSudoku.getRowCol(row, col).getCandidates().contains(val))
                             {
@@ -843,12 +863,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
             {
                 // same column
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     for (LegalValues val : LegalValues.values())
                     {
                         List<Integer> rows = new ArrayList<Integer>();
-                        for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+                        for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                         {
                             if (subSudoku.getRowCol(row, col).getCandidates().contains(val))
                             {
@@ -900,19 +920,21 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         {
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
             {
-                for (int rowBlock = 0; rowBlock < AppMain.SINGLESUDOKUMAXROWS / AppMain.RECTANGLELENGTH; rowBlock++)
+                for (int rowBlock = 0; rowBlock < AppMain.getSingleSudokuMaxRows()
+                        / AppMain.getRectangleLength(); rowBlock++)
                 {
-                    for (int colBlock = 0; colBlock < AppMain.SINGLESUDOKUMAXCOLS / AppMain.RECTANGLELENGTH; colBlock++)
+                    for (int colBlock = 0; colBlock < AppMain.getSingleSudokuMaxCols()
+                            / AppMain.getRectangleLength(); colBlock++)
                     {
                         for (LegalValues val : LegalValues.values())
                         {
                             List<Integer[]> cells = new ArrayList<Integer[]>();
                             // Same block
-                            for (int rowInBlock = AppMain.RECTANGLELENGTH
-                                    * rowBlock; rowInBlock < AppMain.RECTANGLELENGTH * (rowBlock + 1); rowInBlock++)
+                            for (int rowInBlock = AppMain.getRectangleLength() * rowBlock; rowInBlock < AppMain
+                                    .getRectangleLength() * (rowBlock + 1); rowInBlock++)
                             {
-                                for (int colInBlock = AppMain.RECTANGLELENGTH
-                                        * colBlock; colInBlock < AppMain.RECTANGLELENGTH * (colBlock + 1); colInBlock++)
+                                for (int colInBlock = AppMain.getRectangleLength() * colBlock; colInBlock < AppMain
+                                        .getRectangleLength() * (colBlock + 1); colInBlock++)
                                 {
                                     SingleCellValue sVal = subSudoku.getRowCol(rowInBlock, colInBlock);
                                     if (sVal != null && sVal.getCandidates().contains(val))
@@ -982,17 +1004,17 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
         {
             updatedSub = SolutionProgress.NONE;
-            for (int row = 0; row < AppMain.SINGLESUDOKUMAXROWS; row++)
+            for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
-                for (int col = 0; col < AppMain.SINGLESUDOKUMAXCOLS; col++)
+                for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
                     if (subSudoku.getRowCol(row, col).getCandidates().isEmpty())
                     {
-                        LegalValues valToEliminate = subSudoku.getRowCol(row, col).getSolution();
+                        LegalValuesGen valToEliminate = subSudoku.getRowCol(row, col).getSolution();
                         // Same column
                         if (updatedSub != SolutionProgress.SOLUTION)
                         {
-                            for (int rowInCol = 0; rowInCol < AppMain.SINGLESUDOKUMAXROWS; rowInCol++)
+                            for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                             {
                                 if (rowInCol != row)
                                 {
@@ -1006,7 +1028,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                         if (updatedSub != SolutionProgress.SOLUTION)
                         {
                             // Same row
-                            for (int colInRow = 0; colInRow < AppMain.SINGLESUDOKUMAXCOLS; colInRow++)
+                            for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
                             {
                                 if (colInRow != col)
                                 {
@@ -1020,13 +1042,14 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                         if (updatedSub != SolutionProgress.SOLUTION)
                         {
                             // Same block
-                            for (int rowInBlock = AppMain.RECTANGLELENGTH
-                                    * (row / AppMain.RECTANGLELENGTH); rowInBlock < AppMain.RECTANGLELENGTH
-                                            * (row / AppMain.RECTANGLELENGTH + 1); rowInBlock++)
+                            for (int rowInBlock = AppMain.getRectangleLength()
+                                    * (row / AppMain.getRectangleLength()); rowInBlock < AppMain.getRectangleLength()
+                                            * (row / AppMain.getRectangleLength() + 1); rowInBlock++)
                             {
-                                for (int colInBlock = AppMain.RECTANGLELENGTH
-                                        * (col / AppMain.RECTANGLELENGTH); colInBlock < AppMain.RECTANGLELENGTH
-                                                * (col / AppMain.RECTANGLELENGTH + 1); colInBlock++)
+                                for (int colInBlock = AppMain.getRectangleLength()
+                                        * (col / AppMain.getRectangleLength()); colInBlock < AppMain
+                                                .getRectangleLength()
+                                                * (col / AppMain.getRectangleLength() + 1); colInBlock++)
                                 {
                                     if (rowInBlock != row || colInBlock != col)
                                     {
