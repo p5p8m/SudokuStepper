@@ -2,6 +2,7 @@ package SudokuStepper;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
 // import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
+import org.eclipse.osgi.container.Module.Settings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StackLayout;
@@ -24,6 +26,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -47,26 +50,31 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.ibm.icu.impl.duration.TimeUnit;
 
+import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 import SudokuStepper.ListOfSolTraces;
 
-public class AppMain extends ApplicationWindow
+public class AppMain<LegalValuesGen> extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
 {
-    private Action    action;
-    private Values    mySudoku            = null;
+    private Action        action;
+    private Values        mySudoku                  = null;
     // remember the last candidate whose status was changed
-    private Text      lastUpdatedCandText = null;
-    private Font      solutionFont        = null;                                                               // SWTResourceManager.getFont("Segoe
-                                                                                                                // UI",
-                                                                                                                // 30,
-                                                                                                                // SWT.BOLD);
+    private Text          lastUpdatedCandText       = null;
+    private Font          solutionFont              = null; // SWTResourceManager.getFont("Segoe
+                                                            // UI",
+                                                            // 30,
+                                                            // SWT.BOLD);
     // null means: image by image, 0 means no pause
-    private Integer   slideShowPause      = null;
-    private boolean   stopSlideShow       = false;
-    private Thread    solvingThread       = null;
-    private Composite appParent           = null;
-    private Composite cellComposites[][]  = new Composite[MAXROWS / RECTANGLELENGTH][MAXCOLS / RECTANGLELENGTH];
+    private Integer       slideShowPause            = null;
+    private boolean       stopSlideShow             = false;
+    private Thread        solvingThread             = null;
+    private Composite     appParent                 = null;
+    private Composite[][] cellCompositesPtr         = null;
+    private Group         grpSudokuScrolledContents = null;
+    // For performance useTripleRecognition should be true. False is to be used for
+    // debugging
+    static final boolean  useTripleRecognition      = true;
 
     void setSolvingThread(Thread solvingTh)
     {
@@ -74,20 +82,87 @@ public class AppMain extends ApplicationWindow
     }
 
     // private Integer previousSlideShowPause = null;
-    private Font                solutionSmallFont     = null;                 // SWTResourceManager.getFont("Segoe UI",
-                                                                              // 8,
-                                                                              // SWT.NORMAL);
-    static final int            RECTANGLELENGTH       = 3;
-    static final int            CANDIDATESNUMBER      = 9;
-    static final int            CANDIDATESPERROW      = 3;
-    static final int            MAXCOLS               = 21;                   // 9 for single sudoku, 21 for sudoku
-                                                                              // samurai
-    static final int            MAXROWS               = 21;                   // 9 for single sudoku, 21 for sudoku
-                                                                              // samurai
-    static final int            SINGLESUDOKUMAXROWS   = 9;
-    static final int            SINGLESUDOKUMAXCOLS   = 9;
-    static final int            CELLSPERROW           = 3;
-    static final int            CELLSPERCOL           = 3;
+    private Font             solutionSmallFont      = null; // SWTResourceManager.getFont("Segoe
+                                                            // UI",
+                                                            // 8,
+                                                            // SWT.NORMAL);
+    private static final int OVERALLRECTANGLELENGTH = 4;
+
+    // static final int CANDIDATESNUMBER = 9;
+    public static int getCandidatesNumber()
+    {
+        return (getIntByReflection("getCandidatesNumber"));
+    }
+
+    // static final int CANDIDATESPERROW = 3;
+    public static int getCandidatesPerRow()
+    {
+        return (getIntByReflection("getCandidatesPerRow"));
+    }
+
+    static final int OVERALLMAXCOLS = 21; // No samurai with 4x4 sudokus because of memory limitations
+    static final int OVERALLMAXROWS = 21;
+
+    // 9 for single sudoku, 21 for sudoku
+    // samurai when 9 values are possible
+    // 16 for single sudoku, 40 for sudoku
+    // samurai when 16 values are possible
+    public static int getMaxRows()
+    {
+        return (getIntByReflection("getMaxRows"));
+    }
+
+    public static int getMaxCols()
+    {
+        return (getIntByReflection("getMaxCols"));
+    }
+
+    static final int OVERALLSINGLESUDOKUMAXROWS = 16;
+    static final int OVERALLSINGLESUDOKUMAXCOLS = 16;
+    static final int OVERALLCELLSPERROW         = 4;
+    static final int OVERALLCELLSPERCOL         = 4;
+
+    public static int getSingleSudokuMaxRows()
+    {
+        int retVal = 0; // Dummy initialization
+        switch (singleSudokuWidth)
+        {
+        case FOUR:
+            retVal = 16;
+            break;
+        case THREE:
+        default:
+            retVal = 9;
+            break;
+        }
+        return (retVal);
+    }
+
+    public static int getSingleSudokuMaxCols()
+    {
+        return (getSingleSudokuMaxRows());
+    }
+
+    public static int getCellsPerRow()
+    {
+        int retVal = 0; // Dummy initialization
+        switch (singleSudokuWidth)
+        {
+        case FOUR:
+            retVal = 4;
+            break;
+        case THREE:
+        default:
+            retVal = 3;
+            break;
+        }
+        return (retVal);
+    }
+
+    public static int getCellsPerCol()
+    {
+        return (getCellsPerRow());
+    }
 
     private static final int    INITIAL_WIDTH         = 1250;                 // 552;
     private static final int    INITIAL_HEIGHT        = 4200;                 // 2100; // 915;
@@ -125,9 +200,8 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    // first key is the row (1...9), second key is the column(1...9)
-    private Map<Integer, Map<Integer, SolNCandTexts>> uiFields = new HashMap<Integer, Map<Integer, SolNCandTexts>>(
-            CANDIDATESPERROW);
+    // first key is the row (1...9/16), second key is the column(1...9/16)
+    private Map<Integer, Map<Integer, SolNCandTexts>> uiFields = null;
 
     /**
      * Create the application window.
@@ -209,7 +283,12 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private AppState status = AppState.EMPTY;
+    private static Values.SubAreaWidth singleSudokuWidth   = Values.SubAreaWidth.FOUR; // Must be 3 or 4 currently
+    private static Class               legalValuesClass    = LegalValues.class;
+    private static LegalValues         l9                  = LegalValues.ONE;
+    private static LegalValues_16      l16                 = LegalValues_16.ONE;
+    public static Object               LegalValuePrototype = l9;
+    private AppState                   status              = AppState.EMPTY;
 
     public void setState(AppState val)
     {
@@ -218,7 +297,7 @@ public class AppMain extends ApplicationWindow
         status = val;
         if (val == AppState.SOLVING || mySudoku == null)
         {
-            setSolveEnabled(false);
+            setSolveEnabled(false, false);
             if (btnNext != null)
             {
                 btnNext.setEnabled((status == AppState.SOLVING || btnManual.isEnabled()) && btnManual.getSelection());
@@ -238,7 +317,7 @@ public class AppMain extends ApplicationWindow
                     btnNext.setEnabled(false);
                 }
             }
-            setSolveEnabled(true);
+            setSolveEnabled(true, false);
         }
         else if (val == AppState.CREATING)
         {
@@ -265,20 +344,20 @@ public class AppMain extends ApplicationWindow
         return (mySudoku);
     }
 
-    public void setSudokuPb(Values newSudoku)
+    public void setSudokuPb<LegalValuesGen>(Values newSudoku)
     {
         mySudoku = newSudoku;
         if (mySudoku != null)
         {
-            for (int row = 0; row < MAXROWS; row++)
+            for (int row = 0; row < getMaxRows(); row++)
             {
-                for (int col = 0; col < MAXCOLS; col++)
+                for (int col = 0; col < getMaxCols(); col++)
                 {
                     SolNCandTexts uiField = uiFields.get(row).get(col);
                     SingleCellValue sVal = mySudoku.getCell(row, col);
                     if (sVal != null)
                     {
-                        LegalValues value = sVal.getSolution();
+                        LegalValuesGen value = sVal.getSolution();
                         if (value != null)
                         {
                             uiField.solution.setText(Integer.toString(value.val()));
@@ -293,7 +372,7 @@ public class AppMain extends ApplicationWindow
                         uiField.solution.setText(StringUtils.EMPTY);
                     }
                     uiField.input.setText(StringUtils.EMPTY);
-                    for (int ind = 0; ind < CANDIDATESNUMBER; ind++)
+                    for (int ind = 0; ind < getCandidatesNumber(); ind++)
                     { // Eliminate single settings from other sudokus
                         uiField.candidates.get(ind).setVisible(true);
                     }
@@ -312,24 +391,44 @@ public class AppMain extends ApplicationWindow
     {
         public Text       solution;
         public Combo      input;
-        public List<Text> candidates = new Vector<Text>(CANDIDATESNUMBER);
+        public List<Text> candidates = null;
+
+        public SolNCandTexts()
+        {
+            candidates = new Vector<Text>(getCandidatesNumber());
+        }
     }
 
     protected void setCompositeVisibility(SudokuType type)
     {
-        for (int rowBlock = 0; rowBlock < MAXROWS / RECTANGLELENGTH; rowBlock++)
+        // System.out.println("SIZE: cellComposites[" + cellComposites.length + "][" +
+        // cellComposites[0].length + "]");
+        if (cellCompositesPtr != null)
         {
-            for (int colBlock = 0; colBlock < MAXCOLS / RECTANGLELENGTH; colBlock++)
+            for (int rowBlock = 0; rowBlock < getMaxRows() / getRectangleLength(); rowBlock++)
             {
-                switch (type)
+                for (int colBlock = 0; colBlock < getMaxCols() / getRectangleLength(); colBlock++)
                 {
-                case SAMURAI:
-                    cellComposites[rowBlock][colBlock].setVisible((colBlock != 3 || (rowBlock > 1 && rowBlock < 5))
-                            && (rowBlock != 3 || (colBlock > 1 && colBlock < 5)));
-                    break;
-                default:
-                    cellComposites[rowBlock][colBlock].setVisible(rowBlock < 3 && colBlock < 3);
-                    break;
+                    switch (singleSudokuWidth)
+                    {
+                    case FOUR:
+                        // To be completed
+                        break;
+                    case THREE:
+                        switch (type)
+                        {
+                        case SAMURAI:
+                            // System.out.println("cellComposites[" + rowBlock + "][" + colBlock + "]");
+                            cellCompositesPtr[rowBlock][colBlock]
+                                    .setVisible((colBlock != 3 || (rowBlock > 1 && rowBlock < 5))
+                                            && (rowBlock != 3 || (colBlock > 1 && colBlock < 5)));
+                            break;
+                        default:
+                            cellCompositesPtr[rowBlock][colBlock].setVisible(rowBlock < 3 && colBlock < 3);
+                            break;
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -340,7 +439,7 @@ public class AppMain extends ApplicationWindow
      * 
      * @param parent
      */
-    // @Override
+    @Override
     protected Control createContents(Composite parent)
     {
         appParent = parent;
@@ -392,8 +491,11 @@ public class AppMain extends ApplicationWindow
                 {
                     input = input.trim();
                 }
-                mySudoku.setName(input);
-                ((Group) (cellComposites[0][0].getParent())).setText(input);
+                if (cellCompositesPtr != null)
+                {
+                    mySudoku.setName(input);
+                    ((Group) (cellCompositesPtr[0][0].getParent())).setText(input);
+                }
             }
         });
         //
@@ -408,8 +510,8 @@ public class AppMain extends ApplicationWindow
         grpSudokuScrolled.setLayoutData(fd_grpSudokublocksScrolled);
         grpSudokuScrolled.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_MAGENTA));
 
-        Group grpSudokuScrolledContents = new Group(grpSudokuScrolled, SWT.NONE);
-        grpSudokuScrolledContents.setLayout(new GridLayout(MAXCOLS / RECTANGLELENGTH, true));
+        grpSudokuScrolledContents = new Group(grpSudokuScrolled, SWT.NONE);
+        grpSudokuScrolledContents.setLayout(new GridLayout(getMaxCols() / getRectangleLength(), true));
         grpSudokuScrolledContents.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         // for (int i = 0; i < 20; i++)
@@ -424,163 +526,7 @@ public class AppMain extends ApplicationWindow
         // layoutData.marginTop = 5;
         // layoutData.marginBottom = 5;
         // grpSudokuBlocks.setLayoutData(layoutData);
-
-        //
-        // Sudoku itsself
-        //
-        for (int blockRow = 1; blockRow <= MAXROWS / RECTANGLELENGTH; blockRow++)
-        {
-            for (int blockCol = 1; blockCol <= MAXCOLS / RECTANGLELENGTH; blockCol++)
-            {
-                Composite cellComposite = new Composite(grpSudokuScrolledContents, SWT.NONE);
-                cellComposites[blockRow - 1][blockCol - 1] = cellComposite;
-                cellComposite.setBackground(myDisplay.getSystemColor(SWT.COLOR_GREEN));
-                cellComposite.setLayout(new GridLayout(RECTANGLELENGTH, false));
-                for (int row = 1; row <= RECTANGLELENGTH; row++)
-                {
-                    for (int col = 1; col <= RECTANGLELENGTH; col++)
-                    {
-
-                        Composite composite_111 = new Composite(cellComposite, SWT.NONE);
-                        StackLayout gl_composite_111 = new StackLayout();
-
-                        composite_111.setLayout(gl_composite_111);
-                        // Create text for the display of solutions
-                        Text solutionText = new Text(composite_111, SWT.BORDER | SWT.CENTER);
-                        solutionText.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
-                        solutionText.setFont(solutionFont);
-                        solutionText.setText(Integer.toString(((row - 1) * RECTANGLELENGTH + col)));
-                        solutionText.setToolTipText("Input or solution");
-                        gl_composite_111.topControl = solutionText;
-                        int totalRow = (blockRow - 1) * RECTANGLELENGTH + row - 1;
-                        int totalCol = (blockCol - 1) * RECTANGLELENGTH + col - 1;
-                        if (!uiFields.containsKey(totalRow))
-                        {
-                            uiFields.put(totalRow, new HashMap<Integer, SolNCandTexts>(CANDIDATESPERROW));
-                        }
-                        if (!uiFields.get(totalRow).containsKey(totalCol))
-                        {
-                            uiFields.get(totalRow).put(totalCol, new SolNCandTexts());
-                        }
-                        uiFields.get(totalRow).get(totalCol).solution = solutionText;
-                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new
-                        // Listener()
-                        // {
-                        // public void handleEvent(Event e)
-                        // {
-                        //// System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: "
-                        // + totalCol);
-                        // }
-                        // });
-                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new
-                        // Listener()
-                        // {
-                        // public void handleEvent(Event e)
-                        // {
-                        //// System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " +
-                        // totalCol);
-                        // }
-                        // });
-                        // Create combo box for input of a new Sudoku
-                        Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
-
-                        String[] items = new String[LegalValues.values().length];
-                        // You need to set a list of items to avoid an exception
-                        int valInd = 0;
-                        for (LegalValues val : LegalValues.values())
-                        {
-                            items[valInd] = Integer.toString(val.val());
-                            valInd++;
-                        }
-                        combo.setItems(items);
-                        combo.setFont(solutionFont);
-                        combo.setToolTipText("Choose the initial value for this cell if any");
-                        combo.addModifyListener(new ModifyListener()
-                        {
-
-                            @Override
-                            public void modifyText(ModifyEvent arg0)
-                            {
-                                if (status == AppState.CREATING)
-                                {
-                                    String input = combo.getText();
-                                    if (input != null)
-                                    {
-                                        input = input.trim();
-                                    }
-                                    // combo.setText(input); Infinite stack
-                                    if (!input.isEmpty())
-                                    {
-                                        boolean found = false;
-                                        for (String valid : combo.getItems())
-                                        {
-                                            if (input.equals(valid))
-                                            {
-                                                found = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!found)
-                                        {
-                                            setStatus(input + " is an invalid value for this cell!");
-                                            combo.setText(StringUtils.EMPTY);
-                                        }
-                                        else
-                                        {
-                                            setStatus(StringUtils.EMPTY);
-                                            LegalValues val = LegalValues.from(Integer.parseInt(input));
-                                            mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
-                                            mySudoku.getCell(totalRow, totalCol).getCandidates().clear();
-                                            mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
-                                                    null, true, false);
-                                            mySudoku.getCell(totalRow, totalCol).setInput(true);
-                                            mySudoku.setSaved(false);
-
-                                        }
-                                    }
-                                    else
-                                    {
-                                        mySudoku.resetCell(totalRow, totalCol);
-                                    }
-                                    List<List<int[]>> conflicts = mySudoku.areContentsLegal();
-                                    inputUpdated();
-                                    boolean freezeAllowed = conflicts.size() == 0
-                                            && mySudoku.getNumberOfSolutions() > 0;
-                                    setFreezeEnabled(freezeAllowed);
-                                }
-
-                            }
-                        });
-                        combo.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
-                        uiFields.get(totalRow).get(totalCol).input = combo;
-
-                        Composite composite_1110 = new Composite(composite_111, SWT.NONE);
-                        composite_1110.setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
-                        GridLayout gl_composite_1110 = new GridLayout(RECTANGLELENGTH, false);
-                        gl_composite_1110.horizontalSpacing = 2;
-                        gl_composite_1110.verticalSpacing = 1;
-                        gl_composite_1110.marginWidth = 0;
-                        gl_composite_1110.marginHeight = 0;
-                        composite_1110.setLayout(gl_composite_1110);
-                        gl_composite_111.topControl = composite_1110;
-                        for (int rowSub = 1; rowSub <= RECTANGLELENGTH; rowSub++)
-                        {
-                            for (int colSub = 1; colSub <= RECTANGLELENGTH; colSub++)
-                            {
-
-                                Text candidateText = new Text(composite_1110, SWT.BORDER | SWT.READ_ONLY);
-                                candidateText.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
-                                candidateText.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
-                                candidateText.setFont(solutionSmallFont);
-                                candidateText.setText(Integer.toString(((rowSub - 1) * RECTANGLELENGTH + colSub)));
-                                // solutionText.setToolTipText("01234");
-                                uiFields.get(totalRow).get(totalCol).candidates.add(candidateText);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        createSudokuContents();
         grpSudokuScrolled.setContent(grpSudokuScrolledContents);
         grpSudokuScrolled.setExpandHorizontal(true);
         grpSudokuScrolled.setExpandVertical(true);
@@ -645,7 +591,31 @@ public class AppMain extends ApplicationWindow
             }
         });
         btnSolve.setText("Solve");
-        setSolveEnabled(false);
+        setSolveEnabled(false, false);
+
+        btnOthSolutions = new Button(grpButtons, SWT.NONE);
+        btnOthSolutions.addSelectionListener(new SelectionAdapter()
+        {
+
+            @Override
+            public void widgetSelected(SelectionEvent e)
+            {
+                System.out.println("Pressed OtherSolutions");
+                btnManual.setEnabled(false);
+                btnAutomatic.setEnabled(false);
+                stopSlideShow = false;
+                btnPause.setEnabled(false);
+                // if (btnManual.getSelection())
+                // {
+                // btnNext.setEnabled(true);
+                // }
+                nextSolutionSudokuAction.run();
+                System.out.println("Started searching for next solution");
+            }
+        });
+        btnOthSolutions.setText("Next Solution");
+        btnOthSolutions.setEnabled(false);
+
         //
         // Slides for manual and automatic modes
         //
@@ -754,7 +724,7 @@ public class AppMain extends ApplicationWindow
                 // solvingThread.notify();
                 // }
                 // }
-                setSolveEnabled(true);
+                setSolveEnabled(true, false);
                 btnPause.setEnabled(false);
             }
         });
@@ -980,6 +950,200 @@ public class AppMain extends ApplicationWindow
         return OverallContainer;
     }
 
+    public static int getRectangleLength()
+    {
+        return (getIntByReflection(""));
+    }
+
+    /**
+     * @param sudokuContents
+     */
+    protected void createSudokuContents()
+    {
+        SubAreaWidth subAreaWidth = this.getSubAreaWidth();
+        uiFields = new HashMap<Integer, Map<Integer, SolNCandTexts>>(getCandidatesPerRow());
+        int textCounter = 0;
+        // Delete all children if they already exist
+        Control[] children = grpSudokuScrolledContents.getChildren();
+        for (Control child : children)
+        {
+            child.dispose();
+        }
+        //
+        // Sudoku itsself
+        //
+        cellCompositesPtr = new Composite[getMaxRows() / getRectangleLength()][getMaxCols() / getRectangleLength()];
+        // Compute size
+        Text candidateTextSample = new Text(grpSudokuScrolledContents, SWT.BORDER | SWT.READ_ONLY);
+        candidateTextSample.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
+        candidateTextSample.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
+        candidateTextSample.setFont(solutionSmallFont);
+        candidateTextSample.setText(Integer.toString(getRectangleLength() * getRectangleLength()));
+        Rectangle textRect = candidateTextSample.getBounds();
+        candidateTextSample.dispose();
+
+        for (int blockRow = 1; blockRow <= getMaxRows() / getRectangleLength(); blockRow++)
+        {
+            for (int blockCol = 1; blockCol <= getMaxCols() / getRectangleLength(); blockCol++)
+            {
+                // System.out.println("blockRow=" + blockRow + ", blockCol=" + blockCol);
+                Composite cellComposite = new Composite(grpSudokuScrolledContents, SWT.NONE);
+                cellCompositesPtr[blockRow - 1][blockCol - 1] = cellComposite;
+                cellComposite.setBackground(myDisplay.getSystemColor(SWT.COLOR_GREEN));
+                cellComposite.setLayout(new GridLayout(getRectangleLength(), false));
+                for (int row = 1; row <= getRectangleLength(); row++)
+                {
+                    for (int col = 1; col <= getRectangleLength(); col++)
+                    {
+                        // System.out.println("row=" + row + ", col=" + col);
+
+                        Composite composite_111 = new Composite(cellComposite, SWT.NONE);
+                        StackLayout gl_composite_111 = new StackLayout();
+
+                        composite_111.setLayout(gl_composite_111);
+                        // Create text for the display of solutions
+                        Text solutionText = new Text(composite_111, SWT.BORDER | SWT.CENTER);
+                        solutionText.setBackground(myDisplay.getSystemColor(COLOR_SOLT_BCKGRD));
+                        solutionText.setFont(solutionFont);
+                        solutionText.setText(Integer.toString(((row - 1) * getRectangleLength() + col)));
+                        solutionText.setToolTipText("Input or solution");
+                        gl_composite_111.topControl = solutionText;
+                        int totalRow = (blockRow - 1) * getRectangleLength() + row - 1;
+                        int totalCol = (blockCol - 1) * getRectangleLength() + col - 1;
+                        if (!uiFields.containsKey(totalRow))
+                        {
+                            uiFields.put(totalRow, new HashMap<Integer, SolNCandTexts>(getCandidatesPerRow()));
+                        }
+                        if (!uiFields.get(totalRow).containsKey(totalCol))
+                        {
+                            uiFields.get(totalRow).put(totalCol, new SolNCandTexts());
+                        }
+                        uiFields.get(totalRow).get(totalCol).solution = solutionText;
+                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new
+                        // Listener()
+                        // {
+                        // public void handleEvent(Event e)
+                        // {
+                        //// System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: "
+                        // + totalCol);
+                        // }
+                        // });
+                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new
+                        // Listener()
+                        // {
+                        // public void handleEvent(Event e)
+                        // {
+                        //// System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " +
+                        // totalCol);
+                        // }
+                        // });
+                        // Create combo box for input of a new Sudoku
+                        Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
+
+                        String[] items = new String[LegalValues.values().length];
+                        // You need to set a list of items to avoid an exception
+                        int valInd = 0;
+                        for (LegalValues val : LegalValues.values())
+                        {
+                            items[valInd] = Integer.toString(val.val());
+                            valInd++;
+                        }
+                        combo.setItems(items);
+                        combo.setFont(solutionFont);
+                        combo.setToolTipText("Choose the initial value for this cell if any");
+                        combo.addModifyListener(new ModifyListener()
+                        {
+
+                            @Override
+                            public void modifyText(ModifyEvent arg0)
+                            {
+                                if (status == AppState.CREATING)
+                                {
+                                    String input = combo.getText();
+                                    if (input != null)
+                                    {
+                                        input = input.trim();
+                                    }
+                                    // combo.setText(input); Infinite stack
+                                    if (!input.isEmpty())
+                                    {
+                                        boolean found = false;
+                                        for (String valid : combo.getItems())
+                                        {
+                                            if (input.equals(valid))
+                                            {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found)
+                                        {
+                                            setStatus(input + " is an invalid value for this cell!");
+                                            combo.setText(StringUtils.EMPTY);
+                                        }
+                                        else
+                                        {
+                                            setStatus(StringUtils.EMPTY);
+                                            LegalValues val = LegalValues.from(Integer.parseInt(input));
+                                            mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
+                                            mySudoku.getCell(totalRow, totalCol).getCandidates().clear();
+                                            mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
+                                                    null, true, false);
+                                            mySudoku.getCell(totalRow, totalCol).setInput(true);
+                                            mySudoku.setSaved(false);
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        mySudoku.resetCell(totalRow, totalCol);
+                                    }
+                                    List<List<int[]>> conflicts = mySudoku.areContentsLegal();
+                                    inputUpdated();
+                                    boolean freezeAllowed = conflicts.size() == 0
+                                            && mySudoku.getNumberOfSolutions() > 0;
+                                    setFreezeEnabled(freezeAllowed);
+                                }
+
+                            }
+                        });
+                        combo.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
+                        uiFields.get(totalRow).get(totalCol).input = combo;
+
+                        Composite composite_1110 = new Composite(composite_111, SWT.NONE);
+                        composite_1110.setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
+                        GridLayout gl_composite_1110 = new GridLayout(getRectangleLength(), false);
+                        gl_composite_1110.horizontalSpacing = 2;
+                        gl_composite_1110.verticalSpacing = 1;
+                        gl_composite_1110.marginWidth = 0;
+                        gl_composite_1110.marginHeight = 0;
+                        composite_1110.setLayout(gl_composite_1110);
+                        gl_composite_111.topControl = composite_1110;
+                        for (int rowSub = 1; rowSub <= getRectangleLength(); rowSub++)
+                        {
+                            for (int colSub = 1; colSub <= getRectangleLength(); colSub++)
+                            {
+                                textCounter++;
+                                // System.out.println(
+                                // "textCounter=" + textCounter + ", rowSub=" + rowSub + ", colSub=" + colSub);
+
+                                Text candidateText = new Text(composite_1110, SWT.BORDER | SWT.READ_ONLY);
+                                candidateText.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
+                                candidateText.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
+                                candidateText.setFont(solutionSmallFont);
+                                candidateText.setText(Integer.toString((rowSub - 1) * getRectangleLength() + colSub));
+                                candidateText.setBounds(textRect);
+                                // solutionText.setToolTipText("01234");
+                                uiFields.get(totalRow).get(totalCol).candidates.add(candidateText);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println("Crated " + textCounter + " text elements");
+    }
+
     private boolean firstTimeEnabled = true;
     private boolean manualWasEnabled = true;
 
@@ -1001,7 +1165,7 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    public void setSolveEnabled(boolean enabled)
+    public void setSolveEnabled(boolean enabled, boolean activateNextSolBtnIn)
     {
         if (btnSolve != null)
         {
@@ -1011,13 +1175,25 @@ public class AppMain extends ApplicationWindow
         {
             btnSlideShow.setEnabled(enabled);
         }
+        if (btnOthSolutions != null)
+        {
+            btnOthSolutions.setEnabled(enabled);
+        }
         if (solveSudokuAction != null)
         {
             solveSudokuAction.setEnabled(enabled);
         }
+        if (nextSolutionSudokuAction != null)
+        {
+            nextSolutionSudokuAction.setEnabled(!enabled);
+        }
         if (toggleSlideShowSudokuAction != null)
         {
             toggleSlideShowSudokuAction.setEnabled(enabled);
+        }
+        if (btnOthSolutions != null)
+        {
+            btnOthSolutions.setEnabled(activateNextSolBtnIn);
         }
         // if (!enabled)
         // {
@@ -1095,6 +1271,11 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
+    private Action            use16ValuesAction           = new UpdateNumOfValuesAction(this, LegalValues_16.class,
+            Values.SubAreaWidth.FOUR, "&4x4 Fields", SWT.CTRL + KeyEvent.VK_6);
+    private Action            use9ValuesAction            = new UpdateNumOfValuesAction(this, LegalValues.class,
+            Values.SubAreaWidth.THREE, "&3x3 Fields", SWT.CTRL + KeyEvent.VK_9);
+
     private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
             SWT.CTRL + KeyEvent.VK_R);
     private Action            newSudokuSingleAction       = new NewSudokuAction(this, Values.SudokuType.SINGLE,
@@ -1112,12 +1293,15 @@ public class AppMain extends ApplicationWindow
     private Action            toggleSlideShowSudokuAction = new ToggleSlideShowSudokuAction(this, "S&lide Show On/Off",
             KeyEvent.VK_L);
     private Action            solveSudokuAction           = new SolveSudokuAction(this, "&Solve", KeyEvent.VK_S);
+    private Action            nextSolutionSudokuAction    = new NextSolutionSudokuAction(this, "&Next Solution",
+            KeyEvent.VK_N);
     private Action            exitSudokuAction            = new ExitSudokuAction(this, "&Exit",
             SWT.CTRL + KeyEvent.VK_E);
     private Action            freezeSudokuAction          = new FreezeSudokuAction(this, "&Freeze",
             SWT.CTRL + KeyEvent.VK_F);
     private Action            aboutSudokuAction           = new AboutSudokuAction(this, "&About",
             SWT.CTRL + SWT.SHIFT + KeyEvent.VK_A);
+    private Button            btnOthSolutions             = null;
     private Button            btnSolve                    = null;
     private Button            btnFreeze                   = null;
     private Button            btnSlideShow                = null;
@@ -1148,6 +1332,7 @@ public class AppMain extends ApplicationWindow
         menuMgr.add(fileMenuMgr);
         fileMenuMgr.add(newSudokuSingleAction);
         fileMenuMgr.add(newSudokuSamuraiAction);
+        condEnableNewSamuraiAction();
         fileMenuMgr.add(openProblemSudokuAction);
         fileMenuMgr.add(openSolutionSudokuAction);
         fileMenuMgr.add(saveSudokuAction);
@@ -1166,10 +1351,16 @@ public class AppMain extends ApplicationWindow
         actionMenuMgr.add(toggleSlideShowSudokuAction);
         toggleSlideShowSudokuAction.setEnabled(false);
         actionMenuMgr.add(solveSudokuAction);
-        setSolveEnabled(false);
+        setSolveEnabled(false, false);
 
         actionMenuMgr.add(renameSudokuAction);
         renameSudokuAction.setEnabled(false);
+
+        MenuManager settingsMenuMgr = new MenuManager("Settings");
+        settingsMenuMgr.setVisible(true);
+        menuMgr.add(settingsMenuMgr);
+        settingsMenuMgr.add(use9ValuesAction);
+        settingsMenuMgr.add(use16ValuesAction);
 
         MenuManager helpMenuMgr = new MenuManager("Help");
         helpMenuMgr.setVisible(true);
@@ -1224,15 +1415,15 @@ public class AppMain extends ApplicationWindow
         grpSudokuScrolled.redraw();
         grpSudokuScrolled.update();
         // grpSudokuBlocks.setEnabled(false);
-        setSolveEnabled(false);
+        setSolveEnabled(false, false);
         setFreezeEnabled(true);
         renameSudokuAction.setEnabled(false);
 
         // must reset visible all solution fields because they got hidden by the line:
         // grpSudokuBlocks.getParent().layout(true, true);
-        for (int row = 0; row < MAXROWS; row++)
+        for (int row = 0; row < getMaxRows(); row++)
         {
-            for (int col = 0; col < MAXCOLS; col++)
+            for (int col = 0; col < getMaxCols(); col++)
             {
                 if (!uiFields.get(row).get(col).solution.getText().isEmpty())
                 {
@@ -1246,7 +1437,7 @@ public class AppMain extends ApplicationWindow
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
-        setSolveEnabled(false);
+        setSolveEnabled(false, false);
         grpSudokuName.setVisible(true);
         ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
         txtName.setText(StringUtils.EMPTY);
@@ -1263,7 +1454,7 @@ public class AppMain extends ApplicationWindow
                 uiField.solution.setVisible(false);
                 // uiField.input.setText(StringUtils.EMPTY);
                 uiField.input.setVisible(true);
-                for (int ind = 0; ind < CANDIDATESNUMBER; ind++)
+                for (int ind = 0; ind < getCandidatesNumber(); ind++)
                 {
                     Text cand = uiField.candidates.get(ind);
                     // cand.setVisible(false);
@@ -1282,7 +1473,7 @@ public class AppMain extends ApplicationWindow
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
-        setSolveEnabled(status != AppState.SOLVING);
+        setSolveEnabled(status != AppState.SOLVING, false);
         grpSudokuName.setVisible(false);
         ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN);
         txtName.setEditable(false);
@@ -1310,7 +1501,7 @@ public class AppMain extends ApplicationWindow
                     Boolean visible = true;
                     String candidate = null;
                     Boolean alreadyVisible = false;
-                    for (int ind = 0; ind < CANDIDATESNUMBER; ind++)
+                    for (int ind = 0; ind < getCandidatesNumber(); ind++)
                     {
                         Text cand = uiField.candidates.get(ind);
                         if (!keepCandidatesVisibility)
@@ -1353,7 +1544,7 @@ public class AppMain extends ApplicationWindow
 
     private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound)
     {
-        ((Group) (cellComposites[0][0].getParent())).setText(mySudoku.getName());
+        ((Group) (cellCompositesPtr[0][0].getParent())).setText(mySudoku.getName());
         txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         setCompositeVisibility(mySudoku.getType());
@@ -1372,7 +1563,7 @@ public class AppMain extends ApplicationWindow
             errorBox.open();
         }
         grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        setSolveEnabled(status != AppState.SOLVING);
+        setSolveEnabled(status != AppState.SOLVING, false);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
         condEnableSaveSudokuAction(mySudoku.isSaved());
         renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);
@@ -1401,8 +1592,8 @@ public class AppMain extends ApplicationWindow
     }
 
     // set the given candidate invisible for the given cell
-    @Override
-    public void candidatesUpdated(int row, int col, LegalValues val, boolean runsInUiThread)
+    // @Override
+    public <LegalValuesGen> void candidatesUpdated(int row, int col, LegalValuesGen val, boolean runsInUiThread)
     {
         myDisplay.asyncExec(new Runnable()
         {
@@ -1422,9 +1613,9 @@ public class AppMain extends ApplicationWindow
 
     public void candidatesReset()
     {
-        for (int row = 0; row < MAXROWS; row++)
+        for (int row = 0; row < getMaxRows(); row++)
         {
-            for (int col = 0; col < MAXCOLS; col++)
+            for (int col = 0; col < getMaxCols(); col++)
             {
                 if (mySudoku.getCell(row, col).getSolution() == null)
                 {
@@ -1473,9 +1664,9 @@ public class AppMain extends ApplicationWindow
     // To be called only when manually creating a sudoku
     public void inputUpdated()
     {
-        for (int row = 0; row < MAXROWS; row++)
+        for (int row = 0; row < getMaxRows(); row++)
         {
-            for (int col = 0; col < MAXCOLS; col++)
+            for (int col = 0; col < getMaxCols(); col++)
             {
                 uiFields.get(row).get(col).input.setVisible(true);
                 uiFields.get(row).get(col).solution.setVisible(false);
@@ -1484,11 +1675,11 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private void updateSolution(int row, int col, boolean markLastSolutionFound)
+    private <LegalValuesGen> void updateSolution(int row, int col, boolean markLastSolutionFound)
     {
         uiFields.get(row).get(col).input.setVisible(false);
         uiFields.get(row).get(col).solution.setVisible(true);
-        LegalValues solutionVal = mySudoku.getCell(row, col).getSolution();
+        LegalValuesGen solutionVal = mySudoku.getCell(row, col).getSolution();
         uiFields.get(row).get(col).solution.setText(Integer.toString(solutionVal.val()));
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
         // Also update the solution trace (even if not necessary in the case of
@@ -1503,7 +1694,7 @@ public class AppMain extends ApplicationWindow
     {
         if (markLastSolutionFound && !runsInUiThread)
         { // we are only updating the UI so no need to update the trace
-            LegalValues solutionVal = mySudoku.getCell(row, col).getSolution();
+            LegalValuesGen solutionVal = mySudoku.getCell(row, col).getSolution();
             mySudoku.addToSolutionTrace(mySudoku, row, col, solutionVal, null);
         }
         // myDisplay.asyncExec(new Runnable()
@@ -1710,4 +1901,83 @@ public class AppMain extends ApplicationWindow
         }
     }
 
+    public void startUpdatingNumOfFields(Class newLegalValuesClass, Values.SubAreaWidth newVal)
+    {
+        Values.SubAreaWidth oldWidth = this.getSubAreaWidth();
+        Class oldCLass = this.getLegalValuesClass();
+        if (newLegalValuesClass != oldCLass)
+        {
+            if (newLegalValuesClass == LegalValues_16.class)
+            {
+                mySudoku.getSudoku().setSudokuType(SudokuType.SINGLE);
+            }
+            singleSudokuWidth = newVal;
+            legalValuesClass = newLegalValuesClass;
+            condEnableNewSamuraiAction();
+            createSudokuContents();
+            setCompositeVisibility(mySudoku.getType());
+        }
+    }
+
+    /**
+     * @param newVal
+     */
+    void condEnableNewSamuraiAction()
+    {
+        if (legalValuesClass == LegalValues_16.class)
+        {
+            newSudokuSamuraiAction.setEnabled(false);
+        }
+        else // LegalValues.class
+        {
+            newSudokuSamuraiAction.setEnabled(true);
+        }
+    }
+
+    public SubAreaWidth getSubAreaWidth()
+    {
+        // TODO Auto-generated method stub
+        return singleSudokuWidth;
+    }
+
+    public Class getLegalValuesClass()
+    {
+        // TODO Auto-generated method stub
+        return legalValuesClass;
+    }
+
+    private static int getIntByReflection(String methodName)
+    {
+        int retVal = 0;
+        try
+        {
+            retVal = (int) legalValuesClass.getMethod(methodName, null, null).invoke(null, null);
+        }
+        catch (IllegalAccessException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IllegalArgumentException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (InvocationTargetException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (NoSuchMethodException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (SecurityException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return (retVal);
+    }
 }
