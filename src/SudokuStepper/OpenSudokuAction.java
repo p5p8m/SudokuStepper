@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 
 /**
@@ -74,8 +75,10 @@ public abstract class OpenSudokuAction extends SudokuAction
                     {
                         // add check if previous sudoku is saved
                         app.setState(AppState.OPENING);
-                        app.setSudokuPb(new Values(SudokuType.SINGLE, app)); // default to be overwritten when reading
-                                                                             // in
+                        app.setSudokuPb(new Values(SudokuType.SINGLE, app)); // default to be
+                                                                             // overwritten when
+                                                                             // reading
+                        // in
                         app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                         app.updateSudokuFields(false, true, false);
                         // app.setSlideShowMode(app.getSlideShowEnabled());
