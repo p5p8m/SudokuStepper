@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class SingleCellValue
+public class SingleCellValue<LegalValuesGen extends Enum<LegalValuesGen>> // expected to be an enum for legalValues
 {
-    private boolean           isInput     = false;
-    private boolean           isTryNError = false;
-    private boolean           isAConflict = false;
-    private List<LegalValues> candidates  = new Vector<LegalValues>(AppMain.CANDIDATESNUMBER);
-    private LegalValues       solution    = null;
+    private boolean              isInput          = false;
+    private boolean              isTryNError      = false;
+    private boolean              isAConflict      = false;
+    private List<LegalValuesGen> candidates       = null;
+    private int                  candidatesNumber = 0;    // Dummy initialization
+    private LegalValuesGen       solution         = null;
 
-    public void setSolution(LegalValues val, int row, int col, List<SolutionListener> solutionListeners,
+    public void setSolution(LegalValuesGen val, int row, int col, List<SolutionListener> solutionListeners,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
         solution = val;
@@ -25,9 +26,9 @@ public class SingleCellValue
         }
     }
 
-    public SingleCellValue(SingleCellValue src)
+    public SingleCellValue(SingleCellValue<LegalValuesGen> src)
     {
-        for (LegalValues val : src.getCandidates())
+        for (LegalValuesGen val : src.getCandidates())
         {
             getCandidates().add(val);
         }
@@ -35,15 +36,19 @@ public class SingleCellValue
         isTryNError = src.isTryNError;
         setAConflict(src.isAConflict());
         solution = src.solution;
+        candidatesNumber = src.candidatesNumber;
+        candidates = new Vector<LegalValuesGen>(candidatesNumber);
     }
 
-    public LegalValues getSolution()
+    public LegalValuesGen getSolution()
     {
         return (solution);
     }
 
-    public SingleCellValue()
+    public SingleCellValue(int candidatesNbr)
     {
+        candidatesNumber = candidatesNbr;
+        candidates = new Vector<LegalValuesGen>(candidatesNumber);
         initCandidates();
     }
 
@@ -53,7 +58,7 @@ public class SingleCellValue
     void initCandidates()
     {
         getCandidates().clear();
-        for (LegalValues val : LegalValues.values())
+        for (LegalValuesGen val : LegalValuesGen.values())
         {
             getCandidates().add(val);
         }
@@ -89,12 +94,12 @@ public class SingleCellValue
         this.isAConflict = isAConflict;
     }
 
-    public List<LegalValues> getCandidates()
+    public List<LegalValuesGen> getCandidates()
     {
         return candidates;
     }
 
-    public void setCandidates(List<LegalValues> candidates)
+    public void setCandidates(List<LegalValuesGen> candidates)
     {
         this.candidates = candidates;
     }
