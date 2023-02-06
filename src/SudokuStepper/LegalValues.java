@@ -7,78 +7,32 @@ package SudokuStepper;
  * @author Pascal
  *
  */
-public enum LegalValues // implements LegalValuesInterface
+public class LegalValues extends LegalValuesGenClass
 {
-    ONE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), SIX(6), SEVEN(7), EIGHT(8), NINE(9);
-
-    private final int        val;
-    private static final int RECTANGLELENGTH     = 3;
-    private static final int CANDIDATESNUMBER    = 9;
-    private static final int CANDIDATESPERROW    = 3;
-    private static final int CANDIDATESPERCOL    = 3;
-    private static final int SINGLESUDOKUMAXROWS = 9;
-    private static final int SINGLESUDOKUMAXCOLS = 9;
-    private static final int CELLSPERROW         = 3;
-    private static final int CELLSPERCOL         = 3;
-
-    private LegalValues(int value)
+    // ONE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), SIX(6), SEVEN(7), EIGHT(8),
+    // NINE(9);
+    static
     {
-        val = value;
+        RECTANGLELENGTH = 3;
+        CANDIDATESNUMBER = 9;
+        CANDIDATESPERROW = 3;
+        CANDIDATESPERCOL = 3;
+        SINGLESUDOKUMAXROWS = 9;
+        SINGLESUDOKUMAXCOLS = 9;
+        CELLSPERROW = 3;
+        CELLSPERCOL = 3;
+        LOWBOUND = 1;
+        HIGHBOUND = 9;
     }
 
-    private static LegalValues[] vals = null;
-
-    public static LegalValues from(int i)
+    public LegalValues(int value) throws IllegalArgumentException
     {
-        if (LegalValues.vals == null)
-        {
-            LegalValues.vals = LegalValues.values();
-        }
-        return LegalValues.vals[i - 1];
+        super(value);
     }
 
-    public int val()
+    // @Override
+    public static LegalValues newInstance(int Value)
     {
-        return (val);
-    }
-
-    public static int getCandidatesNumber()
-    {
-        return (CANDIDATESNUMBER);
-    }
-
-    public static int getRectangleLength()
-    {
-        return (RECTANGLELENGTH);
-    }
-
-    public static int getCandidatesPerRow()
-    {
-        return (CANDIDATESPERROW);
-    }
-
-    public static int getCandidatesPerCol()
-    {
-        return (CANDIDATESPERCOL);
-    }
-
-    public static int getSingleSudokuMaxRows()
-    {
-        return (SINGLESUDOKUMAXROWS);
-    }
-
-    public static int getSingleSudokuMaxCols()
-    {
-        return (SINGLESUDOKUMAXCOLS);
-    }
-
-    public static int getCellsPerRow()
-    {
-        return (CELLSPERROW);
-    }
-
-    public static int getCellsPerCol()
-    {
-        return (CELLSPERCOL);
+        return (new LegalValues(Value));
     }
 }

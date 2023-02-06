@@ -57,14 +57,14 @@ import org.w3c.dom.Element;
 /**
  * 
  */
-interface CandidatesListener<LegalValuesGen>
+interface CandidatesListener
 {
-    void candidatesUpdated(int row, int col, LegalValuesGen val, boolean runsInUiThread);
+    <LegalValuesGen extends LegalValuesGenClass> void candidatesUpdated(int row, int col, LegalValuesGen val);
 }
 
-interface CandidatesResetListener
+interface CandidatesResetListener // <LegalValuesGen extends LegalValuesGenClass>
 {
-    void candidatesReset();
+    public <LegalValuesGen extends LegalValuesGenClass> void candidatesReset();
 }
 
 interface RollbackListener
@@ -91,7 +91,7 @@ interface FreezeListener
  * @author Pascal Represents the complete Sudoku Samurai
  *
  */
-public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
+public class Values<LegalValuesGen extends LegalValuesGenClass>
 {
 
     public enum SudokuType
@@ -179,7 +179,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
     // return (singleSu);
     // }
 
-    public SolutionProgress<LegalValuesGen> addBifurcationNClone(int globalRow, int globalCol)
+    public SolutionProgress addBifurcationNClone(int globalRow, int globalCol)
     {
         // // For debugging
         // try
@@ -212,7 +212,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
         SolutionProgress retVal = SolutionProgress.NONE;
         Tentative oldSudoku = sudokuCands.peek();
         Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
-        LegalValuesGen toBeEliminatedVal = oldSudoku.setBifurcation(globalRow, globalCol);
+        LegalValuesGen toBeEliminatedVal = (LegalValuesGen) oldSudoku.setBifurcation(globalRow, globalCol);
         System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
                 + toBeEliminatedVal);
         sudokuCands.push(newSudoku);
@@ -226,10 +226,10 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
         return (sudokuCands.size() > 1);
     }
 
-    public <LegalValuesGen> SolutionProgress bifurqueOnceMore()
+    public <LegalValuesGen extends LegalValuesGenClass> SolutionProgress bifurqueOnceMore()
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        Bifurcation nextTry = null;
+        Bifurcation<LegalValuesGen> nextTry = null;
         Tentative oldSudoku = null;
         while (nextTry == null && sudokuCands.size() > 1)
         {
@@ -306,14 +306,15 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
 
     }
 
-    public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound,
-            boolean isAnInput, boolean isATry) throws InvalidValueException
+    public <LegalValuesGen extends LegalValuesGenClass> void initCell(int row, int col, int value,
+            boolean runsInUiThread, boolean markLastSolutionFound, boolean isAnInput, boolean isATry)
+            throws InvalidValueException
     {
         try
         {
             row -= 1;
             col -= 1;
-            LegalValuesGen val = LegalValuesGen.from(value);
+            LegalValuesGen val = (LegalValuesGen) LegalValuesGen.newInstance(value);
             MasterSudoku sudoku = getSudoku();
             sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
             sudoku.getRowCol(row, col).setInput(isAnInput);
@@ -364,8 +365,9 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public <LegalValuesGen> SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValuesGen val,
-            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
+    public <LegalValuesGen extends LegalValuesGenClass> SolutionProgress eliminateCandidate(int globalRow,
+            int globalCol, LegalValuesGen val, boolean alsoSetSolution, boolean runsInUiThread,
+            boolean markLastSolutionFound, boolean isATry)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku sudoku = getSudoku();
@@ -380,7 +382,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
                         + sudoku.getRowCol(globalRow, globalCol).getCandidates().size());
                 for (CandidatesListener listener : candidatesListeners)
                 {
-                    listener.candidatesUpdated(globalRow, globalCol, val, runsInUiThread);
+                    listener.candidatesUpdated(globalRow, globalCol, val);
                 }
             }
             setSaved(false);
@@ -432,8 +434,8 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
 
     // remove the value just set in the given cell the list of candidates from
     // all influenced cells, for master sudoku
-    public <LegalValuesGen> void updateCandidateList(int globalRow, int globalCol, LegalValuesGen val,
-            boolean runsInUiThread, boolean markLastSolutionFound)
+    public <LegalValuesGen extends LegalValuesGenClass> void updateCandidateList(int globalRow, int globalCol,
+            LegalValuesGen val, boolean runsInUiThread, boolean markLastSolutionFound)
     {
         MasterSudoku masterSudoku = getSudoku();
         for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
@@ -443,7 +445,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
             if (subSudoku.getRowCol(localRow, localCol).getSolution() != null)
             { // First undo the value restrictions due to the previous value, but only where
               // not another cell continues justifying them
-                LegalValuesGen oldVal = subSudoku.getRowCol(localRow, localCol).getSolution();
+                LegalValuesGen oldVal = (LegalValuesGen) subSudoku.getRowCol(localRow, localCol).getSolution();
                 // Same column
                 for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                 {
@@ -540,8 +542,9 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    <LegalValuesGen> SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValuesGen val,
-            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound)
+    <LegalValuesGen extends LegalValuesGenClass> SolutionProgress reduceInfluencedCellCandidates(int globalRow,
+            int globalCol, LegalValuesGen val, boolean alsoSetSolution, boolean runsInUiThread,
+            boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku masterSudoku = getSudoku();
@@ -939,7 +942,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
         return retVal;
     }
 
-    public void save(String outputFile, ListOfSolTraces trace)
+    public void save(String outputFile, ListOfSolTraces<LegalValuesGen> trace)
     {
         try
         {
@@ -1003,7 +1006,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
                         if (singleTrace.getChoices() != null)
                         {
                             int loopCount = 0;
-                            for (LegalValuesGen val : singleTrace.getChoices())
+                            for (LegalValuesGen val : (List<LegalValuesGen>) singleTrace.getChoices())
                             {
                                 if (loopCount > 0)
                                 {
@@ -1069,7 +1072,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
     /**
      * @return the solutionTrace
      */
-    public ListOfSolTraces getSolutionTrace()
+    public ListOfSolTraces<LegalValuesGen> getSolutionTrace()
     {
         return solutionTrace;
     }
@@ -1123,7 +1126,7 @@ public class Values<LegalValuesGen extends Enum<LegalValuesGen>>
  * }
  */
 
-class Bifurcation<LegalValuesGen extends Enum<LegalValuesGen>>
+class Bifurcation<LegalValuesGen extends LegalValuesGenClass>
 {
     private int                  rowInt;
     private int                  colInt;
@@ -1138,6 +1141,12 @@ class Bifurcation<LegalValuesGen extends Enum<LegalValuesGen>>
         colInt = col;
         choices.add(val);
     }
+    // public static Bifurcation newInstance(int row, int col, LegalValuesGen val)
+    // {
+    // Bifurcation<LegalValuesGen> newObj = new Bifurcation<LegalValuesGen>(int row,
+    // int col, LegalValuesGen val);
+    // return (newObj);
+    // }
 
     public LegalValuesGen getNextTry()
     {
@@ -1146,7 +1155,7 @@ class Bifurcation<LegalValuesGen extends Enum<LegalValuesGen>>
 
     public Bifurcation addNewTry(LegalValuesGen toBeEliminatedVal)
     {
-        Bifurcation retVal = this;
+        Bifurcation<LegalValuesGen> retVal = this;
         retVal.choices.add(toBeEliminatedVal);
         return retVal;
     }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class SingleCellValue<LegalValuesGen extends Enum<LegalValuesGen>> // expected to be an enum for legalValues
+public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
 {
     private boolean              isInput          = false;
     private boolean              isTryNError      = false;
@@ -58,9 +58,9 @@ public class SingleCellValue<LegalValuesGen extends Enum<LegalValuesGen>> // exp
     void initCandidates()
     {
         getCandidates().clear();
-        for (LegalValuesGen val : LegalValuesGen.values())
+        for (LegalValuesGenClass val : LegalValuesGen.values())
         {
-            getCandidates().add(val);
+            getCandidates().add((LegalValuesGen) val);
         }
     }
 

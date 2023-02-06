@@ -1,6 +1,7 @@
 package SudokuStepper;
 
-public interface SolutionListener
+public interface SolutionListener // <LegalValuesGen extends LegalValuesGenClass>
 {
-    void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound);
+    <LegalValuesGen extends LegalValuesGenClass> void solutionUpdated(int row, int col, boolean runsInUiThread,
+            boolean markLastSolutionFound);
 }

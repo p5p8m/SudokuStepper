@@ -22,7 +22,7 @@ import SudokuStepper.Values.SudokuType;
  * @author Pascal
  *
  */
-public class SolveAlgorithm extends SudokuAction implements Runnable
+public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends SudokuAction implements Runnable
 {
     public SolveAlgorithm(AppMain appMain, String text, Integer acceleratorKey)
     {
@@ -86,7 +86,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             while (((updated != SolutionProgress.NONE || (newNumOfSolutions < sudoku.getNumberOfCellsToBeSolved()
                     && oldNumOfSolutions < newNumOfSolutions)) && !errorDetected)
                     && !(newNumOfSolutions == sudoku.getNumberOfCellsToBeSolved() && !errorDetected)
-                    /* && (!slideShowEnabled || slideShowPause != null) */);
+            /* && (!slideShowEnabled || slideShowPause != null) */);
             System.out.println("Leaved loop");
             // app.getDisplay().asyncExec(new Runnable()
             // {
@@ -131,10 +131,10 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 activateSolveBtn = false;
 
                 // Check if there are possibly other solutions
-                ListOfSolTraces firstSolution = app.getSudokuPb().getSolutionTrace();
+                ListOfSolTraces<LegalValuesGen> firstSolution = app.getSudokuPb().getSolutionTrace();
                 for (SolutionTrace trace : firstSolution)
                 {
-                    List<LegalValues> choices = trace.getChoices();
+                    List<LegalValuesGen> choices = trace.getChoices();
                     if (choices != null)
                     {
                         noOfPossibleSolutions += choices.size();
@@ -251,13 +251,13 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
     // }
     // }
 
-    private ArrayList<LegalValues> deepCopy(List<LegalValues> src)
+    private ArrayList<LegalValuesGen> deepCopy(List<LegalValuesGen> src)
     {
-        ArrayList<LegalValues> retVal = null;
+        ArrayList<LegalValuesGen> retVal = null;
         if (src != null)
         {
-            retVal = new ArrayList<LegalValues>(src.size());
-            for (LegalValues val : src)
+            retVal = new ArrayList<LegalValuesGen>(src.size());
+            for (LegalValuesGen val : src)
             {
                 retVal.add(val);
             }
@@ -265,15 +265,15 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         return (retVal);
     }
 
-    Comparator<LegalValues> sortLegalValues = new Comparator<LegalValues>()
+    Comparator<LegalValuesGen> sortLegalValues = new Comparator<LegalValuesGen>()
     {
-        public int compare(LegalValues v1, LegalValues v2)
+        public int compare(LegalValuesGen v1, LegalValuesGen v2)
         {
             return (v1.val() - v2.val());
         }
     };
 
-    private boolean sameContents(List<LegalValues> l1, List<LegalValues> l2)
+    private boolean sameContents(List<LegalValuesGen> l1, List<LegalValuesGen> l2)
     {
         boolean retVal = l1.size() == l2.size();
         if (retVal)
@@ -296,12 +296,12 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         return (retVal);
     }
 
-    private SolutionProgress useTryAndError(Values masterSudoku)
+    private <LegalValuesGen extends LegalValuesGenClass> SolutionProgress useTryAndError(Values masterSudoku)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         try
         {
-            int numCandidates = LegalValues.values().length;
+            int numCandidates = LegalValuesGen.values().size();
             Integer globalRowMarked = null;
             Integer globalColMarked = null;
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
@@ -771,19 +771,19 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
         return (retVal);
     }
 
-    private List<LegalValues> contentsUnion(List<LegalValues> candidates1, List<LegalValues> candidates2,
-            List<LegalValues> candidates3)
+    private List<LegalValuesGen> contentsUnion(List<LegalValuesGen> candidates1, List<LegalValuesGen> candidates2,
+            List<LegalValuesGen> candidates3)
     {
         // None of the input parameter may be null
-        ArrayList<LegalValues> retVal = deepCopy(candidates1);
-        for (LegalValues val : candidates2)
+        ArrayList<LegalValuesGen> retVal = deepCopy(candidates1);
+        for (LegalValuesGen val : candidates2)
         {
             if (!retVal.contains(val))
             {
                 retVal.add(val);
             }
         }
-        for (LegalValues val : candidates3)
+        for (LegalValuesGen val : candidates3)
         {
             if (!retVal.contains(val))
             {
@@ -805,7 +805,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
             {
                 for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
-                    for (LegalValues val : LegalValues.values())
+                    for (LegalValuesGenClass val : LegalValuesGen.values())
                     {
                         List<Integer> cols = new ArrayList<Integer>();
                         for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
@@ -830,7 +830,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                             }
                             else
                             {
-                                for (LegalValues otherVal : LegalValues.values())
+                                for (LegalValuesGenClass otherVal : LegalValuesGen.values())
                                 {
                                     if (otherVal != val)
                                     {
@@ -865,7 +865,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 // same column
                 for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
-                    for (LegalValues val : LegalValues.values())
+                    for (LegalValuesGenClass val : LegalValuesGen.values())
                     {
                         List<Integer> rows = new ArrayList<Integer>();
                         for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
@@ -890,7 +890,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                             }
                             else
                             {
-                                for (LegalValues otherVal : LegalValues.values())
+                                for (LegalValuesGenClass otherVal : LegalValuesGen.values())
                                 {
                                     if (otherVal != val)
                                     {
@@ -926,7 +926,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                     for (int colBlock = 0; colBlock < AppMain.getSingleSudokuMaxCols()
                             / AppMain.getRectangleLength(); colBlock++)
                     {
-                        for (LegalValues val : LegalValues.values())
+                        for (LegalValuesGenClass val : LegalValuesGen.values())
                         {
                             List<Integer[]> cells = new ArrayList<Integer[]>();
                             // Same block
@@ -963,7 +963,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                                 }
                                 else
                                 {
-                                    for (LegalValues otherVal : LegalValues.values())
+                                    for (LegalValuesGenClass otherVal : LegalValuesGen.values())
                                     {
                                         if (otherVal != val)
                                         {
@@ -1010,7 +1010,7 @@ public class SolveAlgorithm extends SudokuAction implements Runnable
                 {
                     if (subSudoku.getRowCol(row, col).getCandidates().isEmpty())
                     {
-                        LegalValuesGen valToEliminate = subSudoku.getRowCol(row, col).getSolution();
+                        LegalValuesGen valToEliminate = (LegalValuesGen) subSudoku.getRowCol(row, col).getSolution();
                         // Same column
                         if (updatedSub != SolutionProgress.SOLUTION)
                         {

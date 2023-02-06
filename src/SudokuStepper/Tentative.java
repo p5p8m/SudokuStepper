@@ -8,26 +8,27 @@ import java.util.List;
 import SudokuStepper.ListOfSolTraces;
 import SudokuStepper.Values.SudokuType;
 
-public class Tentative<LegalValues extends Enum<LegalValues>> // Contains the tentative solution for a complete
-                                                              // sudoku samurai
+public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains the tentative solution for a complete
+// sudoku samurai
 {
-    private MasterSudoku             sudoku      = null;
-    private Bifurcation<LegalValues> bifurcation = null;
-    private Values                   values      = null;
+    private MasterSudoku                sudoku      = null;
+    private Bifurcation<LegalValuesGen> bifurcation = null;
+    private Values                      values      = null;
 
     public MasterSudoku getSudoku()
     {
         return (sudoku);
     }
 
-    public Bifurcation getNextTry()
+    public Bifurcation<LegalValuesGen> getNextTry()
     {
-        Bifurcation retVal = null;
+        Bifurcation<LegalValuesGen> retVal = null;
         int numPossibleTries = sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).getCandidates().size();
         int numPrevTries = bifurcation.getNumPreviousTries();
         if (numPrevTries < numPossibleTries)
         {
-            LegalValues toBeEliminatedVal = sudoku.getRowCol(bifurcation.getRow(), bifurcation.getCol()).getCandidates()
+            LegalValuesGen toBeEliminatedVal = (LegalValuesGen) sudoku
+                    .getRowCol(bifurcation.getRow(), bifurcation.getCol()).getCandidates()
                     // If you start with index 0 in the list of candidates:
                     // .get(numPrevTries);
                     // if you start with the last in the list
@@ -43,16 +44,22 @@ public class Tentative<LegalValues extends Enum<LegalValues>> // Contains the te
         return retVal;
     }
 
-    public LegalValues setBifurcation(int globalRow, int globalCol)
+    public <LegalValuesGen extends LegalValuesGenClass> LegalValuesGen setBifurcation(int globalRow, int globalCol)
     {
-        List<LegalValues> candidates = sudoku.getRowCol(globalRow, globalCol).getCandidates();
-        LegalValues eliminatedVal = candidates.get(sudoku.getRowCol(globalRow, globalCol).getCandidates().size() - 1); // .get(0);
+        List<LegalValuesGen> candidates = sudoku.getRowCol(globalRow, globalCol).getCandidates();
+        LegalValuesGen eliminatedVal = candidates
+                .get(sudoku.getRowCol(globalRow, globalCol).getCandidates().size() - 1); // .get(0);
         // Interested to see if the other solution is also legal?
         // eliminatedVal = sudoku.getRowCol(globalRow, globalCol).candidates
         // .get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1);
         // Change accordingly with code in getNextTry
         sudoku.getValues().addToSolutionTrace(sudoku.getValues(), globalRow, globalCol, eliminatedVal, candidates);
-        bifurcation = new Bifurcation(globalRow, globalCol, eliminatedVal);
+        int zero = 0;
+        int infinity = 1 / zero; // Just to make sure the temporary comment out for the next statement is not
+                                 // forgotten
+        // bifurcation = (Bifurcation<LegalValuesGen>) new
+        // Bifurcation<LegalValuesGen>(globalRow, globalCol,
+        // eliminatedVal);
         return (eliminatedVal);
     }
 

@@ -4,12 +4,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-public class ListOfSolTraces implements Iterable<SolutionTrace>
+public class ListOfSolTraces<LegalValuesGen extends LegalValuesGenClass> implements Iterable<SolutionTrace>
 {
     private List<SolutionTrace> listTraces = new Vector<SolutionTrace>();
 
-    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValues eliminatedVal,
-            List<LegalValues> candidates)
+    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValuesGen eliminatedVal,
+            List<LegalValuesGen> candidates)
     {
         listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
         System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "

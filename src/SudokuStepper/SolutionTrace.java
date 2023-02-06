@@ -2,14 +2,14 @@ package SudokuStepper;
 
 import java.util.List;
 
-public class SolutionTrace<LegalValuesGen>
+public class SolutionTrace<LegalValuesGen extends LegalValuesGenClass>
 {
     private int                  row;
     private int                  col;
     private LegalValuesGen       val;
     private List<LegalValuesGen> choices;
 
-    public <LegalValuesGen> SolutionTrace(int rowIn, int colIn, LegalValuesGen valIn, List<LegalValuesGen> choicesIn)
+    public SolutionTrace(int rowIn, int colIn, LegalValuesGen valIn, List<LegalValuesGen> choicesIn)
     {
         row = rowIn;
         col = colIn;
@@ -27,12 +27,12 @@ public class SolutionTrace<LegalValuesGen>
         return (col);
     }
 
-    public <LegalValuesGen> LegalValuesGen getValue()
+    public LegalValuesGen getValue()
     {
         return (val);
     }
 
-    public <LegalValuesGen> List<LegalValuesGen> getChoices()
+    public List<LegalValuesGen> getChoices()
     {
         return (choices);
     }

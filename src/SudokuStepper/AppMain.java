@@ -54,7 +54,7 @@ import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 import SudokuStepper.ListOfSolTraces;
 
-public class AppMain<LegalValuesGen> extends ApplicationWindow
+public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
 {
     private Action        action;
@@ -283,12 +283,9 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
         }
     }
 
-    private static Values.SubAreaWidth singleSudokuWidth   = Values.SubAreaWidth.FOUR; // Must be 3 or 4 currently
-    private static Class               legalValuesClass    = LegalValues.class;
-    private static LegalValues         l9                  = LegalValues.ONE;
-    private static LegalValues_16      l16                 = LegalValues_16.ONE;
-    public static Object               LegalValuePrototype = l9;
-    private AppState                   status              = AppState.EMPTY;
+    private static Values.SubAreaWidth singleSudokuWidth = Values.SubAreaWidth.FOUR; // Must be 3 or 4 currently
+    private static Class               legalValuesClass  = LegalValues_16.class;
+    private AppState                   status            = AppState.EMPTY;
 
     public void setState(AppState val)
     {
@@ -344,7 +341,7 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
         return (mySudoku);
     }
 
-    public void setSudokuPb<LegalValuesGen>(Values newSudoku)
+    public <LegalValuesGen extends LegalValuesGenClass> void setSudokuPb(Values newSudoku)
     {
         mySudoku = newSudoku;
         if (mySudoku != null)
@@ -357,7 +354,7 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
                     SingleCellValue sVal = mySudoku.getCell(row, col);
                     if (sVal != null)
                     {
-                        LegalValuesGen value = sVal.getSolution();
+                        LegalValuesGen value = (LegalValuesGen) sVal.getSolution();
                         if (value != null)
                         {
                             uiField.solution.setText(Integer.toString(value.val()));
@@ -958,7 +955,7 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
     /**
      * @param sudokuContents
      */
-    protected void createSudokuContents()
+    protected <LegalValuesGen extends LegalValuesGenClass> void createSudokuContents()
     {
         SubAreaWidth subAreaWidth = this.getSubAreaWidth();
         uiFields = new HashMap<Integer, Map<Integer, SolNCandTexts>>(getCandidatesPerRow());
@@ -1040,10 +1037,10 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
                         // Create combo box for input of a new Sudoku
                         Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
 
-                        String[] items = new String[LegalValues.values().length];
+                        String[] items = new String[LegalValuesGen.values().size()];
                         // You need to set a list of items to avoid an exception
                         int valInd = 0;
-                        for (LegalValues val : LegalValues.values())
+                        for (LegalValuesGenClass val : LegalValuesGen.values())
                         {
                             items[valInd] = Integer.toString(val.val());
                             valInd++;
@@ -1084,7 +1081,8 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
                                         else
                                         {
                                             setStatus(StringUtils.EMPTY);
-                                            LegalValues val = LegalValues.from(Integer.parseInt(input));
+                                            LegalValuesGen val = (LegalValuesGen) LegalValuesGen
+                                                    .newInstance(Integer.parseInt(input));
                                             mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
                                             mySudoku.getCell(totalRow, totalCol).getCandidates().clear();
                                             mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow, totalCol,
@@ -1469,7 +1467,8 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
 
     }
 
-    void freeze(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound)
+    <LegalValuesGen extends LegalValuesGenClass> void freeze(boolean keepCandidatesVisibility, boolean runsInUiThread,
+            boolean markLastSolutionFound)
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
@@ -1507,8 +1506,8 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
                         if (!keepCandidatesVisibility)
                         {
                             candidate = cand.getText();
-                            visible = candidate != null && sVal != null
-                                    && sVal.getCandidates().contains(LegalValues.from(Integer.parseInt(candidate)));
+                            visible = candidate != null && sVal != null && sVal.getCandidates()
+                                    .contains((LegalValuesGen) LegalValuesGen.newInstance(Integer.parseInt(candidate)));
                             cand.setVisible(visible);
                             if (visible)
                             {
@@ -1593,7 +1592,24 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
 
     // set the given candidate invisible for the given cell
     // @Override
-    public <LegalValuesGen> void candidatesUpdated(int row, int col, LegalValuesGen val, boolean runsInUiThread)
+    // public void candidatesUpdated(int row, int col, LegalValuesGenClass val,
+    // boolean runsInUiThread)
+    // {
+    // candidatesUpdatedInternals(row, col, val);
+    // }
+    //
+    // public void candidatesUpdated(int row, int col, LegalValues_16 val, boolean
+    // runsInUiThread)
+    // {
+    // candidatesUpdatedInternals(row, col, val);
+    // }
+    //
+    /**
+     * @param row
+     * @param col
+     * @param val
+     */
+    public <LegalValuesGen extends LegalValuesGenClass> void candidatesUpdated(int row, int col, LegalValuesGen val)
     {
         myDisplay.asyncExec(new Runnable()
         {
@@ -1611,7 +1627,7 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
         });
     }
 
-    public void candidatesReset()
+    public <LegalValuesGen extends LegalValuesGenClass> void candidatesReset()
     {
         for (int row = 0; row < getMaxRows(); row++)
         {
@@ -1621,8 +1637,8 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
                 {
                     for (Text candText : uiFields.get(row).get(col).candidates)
                     {
-                        if (mySudoku.getCell(row, col).getCandidates()
-                                .contains(LegalValues.from(Integer.parseInt(candText.getText()))))
+                        if (mySudoku.getCell(row, col).getCandidates().contains(
+                                (LegalValuesGen) LegalValuesGen.newInstance(Integer.parseInt(candText.getText()))))
                         {
                             candText.setVisible(true);
                         }
@@ -1675,11 +1691,12 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
         }
     }
 
-    private <LegalValuesGen> void updateSolution(int row, int col, boolean markLastSolutionFound)
+    private <LegalValuesGen extends LegalValuesGenClass> void updateSolution(int row, int col,
+            boolean markLastSolutionFound)
     {
         uiFields.get(row).get(col).input.setVisible(false);
         uiFields.get(row).get(col).solution.setVisible(true);
-        LegalValuesGen solutionVal = mySudoku.getCell(row, col).getSolution();
+        LegalValuesGen solutionVal = (LegalValuesGen) mySudoku.getCell(row, col).getSolution();
         uiFields.get(row).get(col).solution.setText(Integer.toString(solutionVal.val()));
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
         // Also update the solution trace (even if not necessary in the case of
@@ -1690,11 +1707,12 @@ public class AppMain<LegalValuesGen> extends ApplicationWindow
         // }
     }
 
-    public void solutionUpdated(int row, int col, boolean runsInUiThread, boolean markLastSolutionFound)
+    public <LegalValuesGen extends LegalValuesGenClass> void solutionUpdated(int row, int col, boolean runsInUiThread,
+            boolean markLastSolutionFound)
     {
         if (markLastSolutionFound && !runsInUiThread)
         { // we are only updating the UI so no need to update the trace
-            LegalValuesGen solutionVal = mySudoku.getCell(row, col).getSolution();
+            LegalValuesGen solutionVal = (LegalValuesGen) mySudoku.getCell(row, col).getSolution();
             mySudoku.addToSolutionTrace(mySudoku, row, col, solutionVal, null);
         }
         // myDisplay.asyncExec(new Runnable()
