@@ -12,6 +12,7 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
 // sudoku samurai
 {
     private MasterSudoku                sudoku      = null;
+
     private Bifurcation<LegalValuesGen> bifurcation = null;
     private Values                      values      = null;
 
@@ -44,7 +45,7 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
         return retVal;
     }
 
-    public <LegalValuesGen extends LegalValuesGenClass> LegalValuesGen setBifurcation(int globalRow, int globalCol)
+    public LegalValuesGen setBifurcation(int globalRow, int globalCol)
     {
         List<LegalValuesGen> candidates = sudoku.getRowCol(globalRow, globalCol).getCandidates();
         LegalValuesGen eliminatedVal = candidates
@@ -54,12 +55,7 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
         // .get(sudoku.getRowCol(globalRow, globalCol).candidates.size() - 1);
         // Change accordingly with code in getNextTry
         sudoku.getValues().addToSolutionTrace(sudoku.getValues(), globalRow, globalCol, eliminatedVal, candidates);
-        int zero = 0;
-        int infinity = 1 / zero; // Just to make sure the temporary comment out for the next statement is not
-                                 // forgotten
-        // bifurcation = (Bifurcation<LegalValuesGen>) new
-        // Bifurcation<LegalValuesGen>(globalRow, globalCol,
-        // eliminatedVal);
+        bifurcation = new Bifurcation<LegalValuesGen>(globalRow, globalCol, eliminatedVal);
         return (eliminatedVal);
     }
 
