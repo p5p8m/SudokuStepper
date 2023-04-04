@@ -107,6 +107,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
     private SudokuType                    sudokuType               = SudokuType.SINGLE;
+    private Class                         legalValuesClass         = LegalValues.class;
     // private SubAreaWidth subAreaWidth = SubAreaWidth.THREE;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
@@ -172,6 +173,11 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     public SudokuType getType()
     {
         return (sudokuType);
+    }
+
+    public Class getLegalValueClass()
+    {
+        return (legalValuesClass);
     }
 
     // public SubAreaWidth getSubAreaWidth()
@@ -293,10 +299,11 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         getSudoku().resetCell(globalRow, globalCol);
     }
 
-    public Values(SudokuType type, AppMain app)
+    public Values(SudokuType type, Class legalValClass, AppMain app)
     {
         sudokuCands.push(new Tentative(type, this, app.getCandidatesNumber()));
         sudokuType = type;
+        legalValuesClass = legalValClass;
         appMain = app;
         reset();
     }
@@ -314,7 +321,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         {
             row -= 1;
             col -= 1;
-            LegalValuesGen val = (LegalValuesGen) LegalValuesGen.newInstance(value);
+            LegalValuesGen val = (LegalValuesGen) (legalValuesClass.getConstructor(int.class).newInstance(value));
             MasterSudoku sudoku = getSudoku();
             sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
             sudoku.getRowCol(row, col).setInput(isAnInput);
@@ -377,7 +384,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             if (val != null)
             {
                 sudoku.getRowCol(globalRow, globalCol).getCandidates().remove(val);
-                System.out.println("Row: " + globalRow + ", Col: " + globalCol + ", Eliminated: " + val
+                System.out.println("Row: " + globalRow + ", Col: " + globalCol + ", Eliminated: " + val.val()
                         + ", Number of remaining values: "
                         + sudoku.getRowCol(globalRow, globalCol).getCandidates().size());
                 for (CandidatesListener listener : candidatesListeners)
@@ -498,7 +505,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         // Same column
         for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
         {
-            if (localRow != rowInCol && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution()))
+            if (localRow != rowInCol && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution().val()))
             {
                 retVal = false;
                 break;
@@ -509,7 +516,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         {
             for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
             {
-                if (localCol != colInRow && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution()))
+                if (localCol != colInRow && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution().val()))
                 {
                     retVal = false;
                     break;
@@ -528,7 +535,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                                 * (localCol / AppMain.getRectangleLength() + 1); colInBlock++)
                 {
                     if ((localCol != colInBlock || localRow != rowInBlock)
-                            && val.equals(sudoku.getRowCol(rowInBlock, colInBlock).getSolution()))
+                            && val.equals(sudoku.getRowCol(rowInBlock, colInBlock).getSolution().val()))
                     {
                         retVal = false;
                         break;
@@ -614,25 +621,26 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         getSudoku().reset();
     }
 
-    private static String SCHEMAFILENAMEDBG = "SudokuStepper\\SudokuStepper.xsd";
-    private static String SCHEMAFILENAMEJAR = "SudokuStepper.xsd";
-    private static String SUDOKU            = "sudoku";
-    private static String INITIAL           = "initial";
-    private static String SOLUTION          = "solution";
-    private static String PROGRESS          = "progress";
-    private static String CONTENT           = "content";
-    private static String ROW               = "row";
-    private static String COL               = "col";
-    private static String CHOICES           = "choices";
-    private static String SUDOKUNAME        = "name";
-    private static String SUDOKUTYPE        = "type";
-    private static String SEPARATOR         = ", ";
+    private static String SCHEMAFILENAMEDBG  = "SudokuStepper\\SudokuStepper.xsd";
+    private static String SCHEMAFILENAMEJAR  = "SudokuStepper.xsd";
+    private static String SUDOKU             = "sudoku";
+    private static String INITIAL            = "initial";
+    private static String SOLUTION           = "solution";
+    private static String PROGRESS           = "progress";
+    private static String CONTENT            = "content";
+    private static String ROW                = "row";
+    private static String COL                = "col";
+    private static String CHOICES            = "choices";
+    private static String SUDOKUNAME         = "name";
+    private static String SUDOKUTYPE         = "type";
+    private static String HIGHESTVALUEINCELL = "highestValueInCell";
+    private static String SEPARATOR          = ", ";
 
-    public void read(String fromFile, boolean alsoReadSolution)
+    public SudokuType read(String fromFile, boolean alsoReadSolution)
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
     {
+        SudokuType retVal = SudokuType.SINGLE;
         reset();
-
         if (validateXmlSchema(fromFile))
         {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -645,15 +653,35 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
             sudokuName = doc.getDocumentElement().getAttribute(SUDOKUNAME);
             String sudokuTypeString = doc.getDocumentElement().getAttribute(SUDOKUTYPE);
+
             try
             {
-                sudokuType = SudokuType.valueOf(sudokuTypeString.toUpperCase());
+                retVal = SudokuType.valueOf(sudokuTypeString.toUpperCase());
             }
             catch (IllegalArgumentException ex)
             {
-                sudokuType = SudokuType.SINGLE;
+                retVal = SudokuType.SINGLE;
             }
-            getSudoku().setSudokuType(sudokuType);
+            String highestValueInCell = doc.getDocumentElement().getAttribute(HIGHESTVALUEINCELL);
+            try
+            {
+                switch (Integer.parseInt(highestValueInCell))
+                {
+                case 16:
+                    legalValuesClass = LegalValues_16.class;
+                    break;
+                case 9:
+                default:
+                    legalValuesClass = LegalValues.class;
+                    break;
+                }
+            }
+            catch (IllegalArgumentException ex) // also occurs when no explicit attribute present
+            {
+                legalValuesClass = LegalValues.class;
+            }
+
+            getSudoku().setSudokuType(retVal);
             NodeList initialContents = doc.getElementsByTagName(INITIAL); // Only one expected
             NodeList solutionContents = doc.getElementsByTagName(SOLUTION); // Only one expected
             List<NodeList> allContents = new ArrayList<NodeList>();
@@ -710,6 +738,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 listener.savedUpdated(isSaved(), true);
             }
         }
+        sudokuType = retVal;
+        return (retVal);
     }
 
     // Returns a list of conflicts, if the list is empty there are no conflicts
@@ -737,8 +767,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                         for (int rowInCol = row + 1; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                         {
                             if (subSudoku.getRowCol(rowInCol, col).getCandidates().isEmpty()
-                                    && subSudoku.getRowCol(rowInCol, col).getSolution() == subSudoku.getRowCol(row, col)
-                                            .getSolution())
+                                    && subSudoku.getRowCol(rowInCol, col).getSolution().val() == subSudoku
+                                            .getRowCol(row, col).getSolution().val())
                             {
                                 subSudoku.getRowCol(row, col).setAConflict(true);
                                 subSudoku.getRowCol(rowInCol, col).setAConflict(true);
@@ -754,8 +784,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                         for (int colInRow = col + 1; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
                         {
                             if (subSudoku.getRowCol(row, colInRow).getCandidates().isEmpty()
-                                    && subSudoku.getRowCol(row, colInRow).getSolution() == subSudoku.getRowCol(row, col)
-                                            .getSolution())
+                                    && subSudoku.getRowCol(row, colInRow).getSolution().val() == subSudoku
+                                            .getRowCol(row, col).getSolution().val())
                             {
                                 subSudoku.getRowCol(row, col).setAConflict(true);
                                 subSudoku.getRowCol(row, colInRow).setAConflict(true);
@@ -780,8 +810,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                                         && (rowInBlock != row || colInBlock != col))
                                 {
                                     if (subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().isEmpty()
-                                            && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution() == subSudoku
-                                                    .getRowCol(row, col).getSolution())
+                                            && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution()
+                                                    .val() == subSudoku.getRowCol(row, col).getSolution().val())
                                     {
                                         subSudoku.getRowCol(row, col).setAConflict(true);
                                         subSudoku.getRowCol(rowInBlock, colInBlock).setAConflict(true);
@@ -956,6 +986,12 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                     "http://www.example.org/SudokuStepper");
             rootElement.setAttribute(SUDOKUNAME, sudokuName);
             rootElement.setAttribute(SUDOKUTYPE, sudokuType.name().toLowerCase());
+            int attrValInt = 9;
+            if (legalValuesClass == LegalValues_16.class)
+            {
+                attrValInt = 16;
+            }
+            rootElement.setAttribute(HIGHESTVALUEINCELL, Integer.toString(attrValInt));
             newDoc.appendChild(rootElement);
             Element initialElt = newDoc.createElement(INITIAL);
             rootElement.appendChild(initialElt);

@@ -1,5 +1,10 @@
 package SudokuStepper;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Pascal For values from 1 to 16
  *
@@ -23,20 +28,80 @@ public class LegalValues_16 extends LegalValuesGenClass
     // FOURTEEN(14),
     // FIFTEEN(15),
     // SIXTEEN(16);
+    private static int               RECTANGLELENGTH     = 4;
+    private static int               CANDIDATESNUMBER    = 16;
+    private static int               CANDIDATESPERROW    = 4;
+    private static int               CANDIDATESPERCOL    = 4;
+    private static int               OVERALLMAXROWS      = 16;                                                       // No
+                                                                                                                     // samurai
+                                                                                                                     // sudoku
+                                                                                                                     // supported
+    private static int               OVERALLMAXCOLS      = 16;                                                       // No
+                                                                                                                     // samurai
+                                                                                                                     // sudoku
+                                                                                                                     // supported
+    private static int               SINGLESUDOKUMAXROWS = 16;
+    private static int               SINGLESUDOKUMAXCOLS = 16;
+    private static int               CELLSPERROW         = 4;
+    private static int               CELLSPERCOL         = 4;
+    private static int               LOWBOUND            = 1;
+    private static int               HIGHBOUND           = 16;
+    // Only a to g expected as non-digit values
+    public static final List<String> valuesPattern       = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9",
+            "a", "b", "c", "d", "e", "f", "g");
+    // public static final HashMap<String, String> alternatePatterns = new
+    // HashMap<String, String>(); // just
     static
     {
-        RECTANGLELENGTH = 4;
-        CANDIDATESNUMBER = 16;
-        CANDIDATESPERROW = 4;
-        CANDIDATESPERCOL = 4;
-        OVERALLMAXROWS = 16; // No samurai sudoku supported
-        OVERALLMAXCOLS = 16; // No samurai sudoku supported
-        SINGLESUDOKUMAXROWS = 16;
-        SINGLESUDOKUMAXCOLS = 16;
-        CELLSPERROW = 4;
-        CELLSPERCOL = 4;
-        LOWBOUND = 1;
-        HIGHBOUND = 16;
+        try
+        {
+            ownClass = Class.forName("SudokuStepper.LegalValues_16");
+        }
+        catch (ClassNotFoundException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        // alternatePatterns.put("00", "1");
+        // alternatePatterns.put("01", "2");
+        // alternatePatterns.put("02", "3");
+        // alternatePatterns.put("03", "4");
+        // alternatePatterns.put("04", "5");
+        // alternatePatterns.put("05", "6");
+        // alternatePatterns.put("07", "7");
+        // alternatePatterns.put("08", "8");
+        // alternatePatterns.put("09", "9");
+        // alternatePatterns.put("x0", "a");
+        // alternatePatterns.put("x1", "b");
+        // alternatePatterns.put("x2", "c");
+        // alternatePatterns.put("x3", "d");
+        // alternatePatterns.put("x4", "e");
+        // alternatePatterns.put("x5", "f");
+        // alternatePatterns.put("x6", "g");
+    }
+
+    // public static HashMap getAlternatePatterns()
+    // {
+    // return (alternatePatterns);
+    // }
+
+    public static int getLowBound()
+    {
+        return (LOWBOUND);
+    }
+
+    public static int getHighBound()
+    {
+        return (HIGHBOUND);
+    }
+
+    // to
+    // avoid
+    // exception
+
+    public LegalValues_16(String value) throws IllegalArgumentException
+    {
+        super(value);
     }
 
     public LegalValues_16(int value) throws IllegalArgumentException
@@ -44,9 +109,78 @@ public class LegalValues_16 extends LegalValuesGenClass
         super(value);
     }
 
-    // @Override
-    public static LegalValues_16 newInstance(int Value)
+    public static int getCandidatesNumber()
     {
-        return (new LegalValues_16(Value));
+        return (CANDIDATESNUMBER);
     }
+
+    public static int getRectangleLength()
+    {
+        return (RECTANGLELENGTH);
+    }
+
+    public static int getCandidatesPerRow()
+    {
+        return (CANDIDATESPERROW);
+    }
+
+    public static int getCandidatesPerCol()
+    {
+        return (CANDIDATESPERCOL);
+    }
+
+    public static int getMaxRows()
+    {
+        return (OVERALLMAXROWS);
+    }
+
+    public static int getMaxCols()
+    {
+        return (OVERALLMAXCOLS);
+    }
+
+    public static int getSingleSudokuMaxRows()
+    {
+        return (SINGLESUDOKUMAXROWS);
+    }
+
+    public static int getSingleSudokuMaxCols()
+    {
+        return (SINGLESUDOKUMAXCOLS);
+    }
+
+    public static int getCellsPerRow()
+    {
+        return (CELLSPERROW);
+    }
+
+    public static int getCellsPerCol()
+    {
+        return (CELLSPERCOL);
+    }
+
+    // // @Override
+    // public static LegalValues_16 newInstance(String val)
+    // {
+    // int valInt = 0;
+    // if (val != null)
+    // {
+    // val = val.trim().toUpperCase();
+    // if (val == "G")
+    // {
+    // valInt = 16;
+    // }
+    // else
+    // {
+    // valInt = Integer.parseInt(val, 16);
+    // }
+    // }
+    // return (newInstance(valInt));
+    // }
+    //
+    // // @Override
+    // public static LegalValues_16 newInstance(int val)
+    // {
+    // return (new LegalValues_16(val));
+    // }
 }

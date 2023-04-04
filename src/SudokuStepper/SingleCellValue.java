@@ -28,6 +28,7 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
 
     public SingleCellValue(SingleCellValue<LegalValuesGen> src)
     {
+        candidates = new Vector<LegalValuesGen>(candidatesNumber);
         for (LegalValuesGen val : src.getCandidates())
         {
             getCandidates().add(val);
@@ -37,7 +38,6 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
         setAConflict(src.isAConflict());
         solution = src.solution;
         candidatesNumber = src.candidatesNumber;
-        candidates = new Vector<LegalValuesGen>(candidatesNumber);
     }
 
     public LegalValuesGen getSolution()
@@ -58,7 +58,7 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
     void initCandidates()
     {
         getCandidates().clear();
-        for (LegalValuesGenClass val : LegalValuesGen.values())
+        for (LegalValuesGenClass val : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
         {
             getCandidates().add((LegalValuesGen) val);
         }
@@ -99,8 +99,8 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
         return candidates;
     }
 
-    public void setCandidates(List<LegalValuesGen> candidates)
+    public void setCandidates(List<LegalValuesGen> newCandidates)
     {
-        this.candidates = candidates;
+        this.candidates = newCandidates;
     }
 }

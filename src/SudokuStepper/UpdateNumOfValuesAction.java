@@ -7,17 +7,19 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import SudokuStepper.Values.SudokuType;
+
 public class UpdateNumOfValuesAction extends SudokuAction
 {
     Values.SubAreaWidth newVal      = Values.SubAreaWidth.THREE; // Dummy initialization
     Class               newValClass = null;
 
-    public UpdateNumOfValuesAction(AppMain appMain, Class legalValuesClass, Values.SubAreaWidth val, String text,
+    public UpdateNumOfValuesAction(AppMain appMain, Class newLegalValuesClass, Values.SubAreaWidth val, String text,
             Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
         newVal = val;
-        newValClass = legalValuesClass;
+        newValClass = newLegalValuesClass;
     }
 
     @Override
@@ -31,11 +33,13 @@ public class UpdateNumOfValuesAction extends SudokuAction
             Cursor cursor = new Cursor(display, SWT.CURSOR_WAIT);
             shell.setCursor(cursor);
             display.update();
-            app.startUpdatingNumOfFields(newValClass, newVal);
+            app.startUpdatingNumOfFields(newValClass, newVal, SudokuType.SINGLE);
+            // app.setLegalValuesSwitchEnabled();
             cursor.dispose();
         }
         catch (Exception ex)
         {
+            ex.printStackTrace();
             MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
             errorBox.setMessage("Could not update the number of fields. \n" + ex.getMessage() + "\n"
                     + ex.getLocalizedMessage() + "\n" + ex.toString());

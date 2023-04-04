@@ -3,6 +3,7 @@
  */
 package SudokuStepper;
 
+import java.io.Console;
 import java.util.List;
 
 import org.eclipse.jface.action.Action;
@@ -73,13 +74,19 @@ public abstract class OpenSudokuAction extends SudokuAction
                     System.out.println("Open file: " + fileToOpen);
                     try
                     {
-                        // add check if previous sudoku is saved
                         app.setState(AppState.OPENING);
-                        app.setSudokuPb(new Values(SudokuType.SINGLE, app)); // default to be
-                                                                             // overwritten when
-                                                                             // reading
+                        app.setSudokuPb(new Values(SudokuType.SINGLE, LegalValues.class, app)); // default to be
+                        // overwritten when
+                        // reading
                         // in
-                        app.getSudokuPb().read(fileToOpen, alsoReadSolution);
+                        SudokuType newSudokuType = app.getSudokuPb().read(fileToOpen, alsoReadSolution);
+                        Values.SubAreaWidth newVal = Values.SubAreaWidth.THREE;
+                        Class newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
+                        if (newLegalValuesClass == LegalValues_16.class)
+                        {
+                            newVal = Values.SubAreaWidth.FOUR;
+                        }
+                        app.startUpdatingNumOfFields(newLegalValuesClass, newVal, newSudokuType);
                         app.updateSudokuFields(false, true, false);
                         // app.setSlideShowMode(app.getSlideShowEnabled());
                         app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
@@ -90,6 +97,7 @@ public abstract class OpenSudokuAction extends SudokuAction
                         MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
                         errorBox.setMessage("Could not load Sudoku \"" + fileToOpen + "\"\n" + ex.getMessage() + "\n"
                                 + ex.getLocalizedMessage() + "\n" + ex.toString());
+                        ex.printStackTrace();
                         errorBox.open();
                     }
                 }

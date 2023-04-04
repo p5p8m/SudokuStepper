@@ -103,6 +103,14 @@
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
+         <xs:attribute name="highestValueInCell" type="xs:integer"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>Expected to be 9 (implicit
+                  default) or 16
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
       </xs:complexType>
    </xs:element>
 </xs:schema>

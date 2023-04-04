@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
@@ -15,14 +16,17 @@ import SudokuStepper.Values.SudokuType;
 
 public class NewSudokuAction extends SudokuAction
 {
-    private SudokuType   newSudokuType = SudokuType.SINGLE;
-    private SubAreaWidth subAreaWidth  = SubAreaWidth.THREE;
+    private SudokuType   newSudokuType   = SudokuType.SINGLE;
+    private SubAreaWidth newSubAreaWidth = SubAreaWidth.THREE;
+    private Class        newValClass     = null;
 
-    public NewSudokuAction(AppMain appMain, Values.SudokuType type, String text, Integer acceleratorKey)
+    public NewSudokuAction(AppMain appMain, Values.SudokuType type, Class newLegalValuesClass,
+            Values.SubAreaWidth subAreaWidth, String text, Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
         newSudokuType = type;
-        subAreaWidth = appMain.getSubAreaWidth();
+        newSubAreaWidth = subAreaWidth;
+        newValClass = newLegalValuesClass;
     }
 
     @Override
@@ -34,10 +38,25 @@ public class NewSudokuAction extends SudokuAction
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
+                System.out.println("UpdateNumOfValuesAction.run: " + newSubAreaWidth.toString());
+                try
+                {
+                    app.startUpdatingNumOfFields(newValClass, newSubAreaWidth, newSudokuType);
+                    // app.setLegalValuesSwitchEnabled();
+                }
+                catch (Exception ex)
+                {
+                    ex.printStackTrace();
+                    MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                    errorBox.setMessage("Could not update the number of fields. \n" + ex.getMessage() + "\n"
+                            + ex.getLocalizedMessage() + "\n" + ex.toString());
+                    errorBox.open();
+                }
                 FreezeSudokuAction freezeSudokuAction = new FreezeSudokuAction(app, null, null);
                 freezeSudokuAction.run();
 
-                app.setSudokuPb(new Values(newSudokuType, app)); // Ewige Schleife beim 2. Aufruf
+                app.setSudokuPb(new Values(newSudokuType, app.getLegalValClassUi(), app)); // Ewige Schleife beim 2.
+                                                                                           // Aufruf
                 app.setState(AppState.CREATING);
                 app.updateSudokuFields(false, true, false);
                 // app.setSlideShowMode(app.getSlideShowEnabled());

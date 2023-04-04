@@ -13,7 +13,7 @@ public class ListOfSolTraces<LegalValuesGen extends LegalValuesGenClass> impleme
     {
         listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
         System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "
-                + eliminatedVal.toString() + ", Candidates: " + (candidates == null ? "null" : candidates.toString()));
+                + eliminatedVal.val() + ", Candidates: " + (candidates == null ? "null" : candidates.toString()));
     }
 
     public void clear()
