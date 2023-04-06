@@ -51,6 +51,7 @@ public class LegalValues_16 extends LegalValuesGenClass
             "a", "b", "c", "d", "e", "f", "g");
     // public static final HashMap<String, String> alternatePatterns = new
     // HashMap<String, String>(); // just
+    private static Class             ownClass            = null;
     static
     {
         try
@@ -98,15 +99,21 @@ public class LegalValues_16 extends LegalValuesGenClass
     // to
     // avoid
     // exception
+    // @Override
+    // public static Class getOwnClass()
+    // {
+    // Class retVal = ownClass;
+    // return (retVal);
+    // }
 
     public LegalValues_16(String value) throws IllegalArgumentException
     {
-        super(value);
+        super(ownClass, value);
     }
 
     public LegalValues_16(int value) throws IllegalArgumentException
     {
-        super(value);
+        super(ownClass, value);
     }
 
     public static int getCandidatesNumber()

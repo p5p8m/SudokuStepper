@@ -26,6 +26,12 @@ public class MasterSudoku
         candidatesNumber = candNbr;
     }
 
+    public void updateCandidatesNumber(Class legalValuesClass, int newVal)
+    {
+        candidatesNumber = newVal;
+        reset(legalValuesClass);
+    }
+
     public void setSudokuType(SudokuType type)
     {
         subSudokus.add(new SubSudoku(this, 0, 0));
@@ -87,18 +93,19 @@ public class MasterSudoku
         return masterSudoku;
     }
 
-    public void resetCell(int globalRow, int globalCol)
+    public void resetCell(Class legalValuesClass, int globalRow, int globalCol)
     {
-        masterSudoku[globalRow][globalCol] = new SingleCellValue(candidatesNumber);
+        masterSudoku[globalRow][globalCol] = new SingleCellValue<LegalValuesGenClass>(legalValuesClass,
+                candidatesNumber);
     }
 
-    public void reset()
+    public void reset(Class legalValuesClass)
     {
         for (int globalRow = 0; globalRow < getHeight(); globalRow++)
         {
             for (int globalCol = 0; globalCol < getWidth(); globalCol++)
             {
-                resetCell(globalRow, globalCol);
+                resetCell(legalValuesClass, globalRow, globalCol);
             }
         }
     }

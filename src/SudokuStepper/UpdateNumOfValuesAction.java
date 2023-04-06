@@ -1,6 +1,5 @@
 package SudokuStepper;
 
-import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Display;
@@ -28,6 +27,8 @@ public class UpdateNumOfValuesAction extends SudokuAction
         System.out.println("UpdateNumOfValuesAction.run: " + newVal.toString());
         try
         {
+            Object o = null;
+            Class c = o.getClass(); // Just to make sure it is never used
             Display display = app.getDisplay();
             Shell shell = new Shell(display);
             Cursor cursor = new Cursor(display, SWT.CURSOR_WAIT);

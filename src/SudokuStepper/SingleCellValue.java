@@ -1,6 +1,8 @@
 package SudokuStepper;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -45,20 +47,20 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
         return (solution);
     }
 
-    public SingleCellValue(int candidatesNbr)
+    public SingleCellValue(Class legalValuesClass, int candidatesNbr)
     {
         candidatesNumber = candidatesNbr;
-        candidates = new Vector<LegalValuesGen>(candidatesNumber);
-        initCandidates();
+        candidates = new ArrayList<>(candidatesNumber);
+        initCandidates(legalValuesClass);
     }
 
     /**
      * Reinitialize the list of candidates to contain all legal values
      */
-    void initCandidates()
+    void initCandidates(Class legalValuesClass)
     {
         getCandidates().clear();
-        for (LegalValuesGenClass val : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+        for (LegalValuesGenClass val : LegalValuesGen.values(legalValuesClass))
         {
             getCandidates().add((LegalValuesGen) val);
         }

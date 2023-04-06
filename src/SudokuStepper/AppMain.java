@@ -1151,7 +1151,7 @@ public class AppMain extends ApplicationWindow
                                     }
                                     else
                                     {
-                                        mySudoku.resetCell(totalRow, totalCol);
+                                        mySudoku.resetCell(legalValClassUi, totalRow, totalCol);
                                     }
                                     List<List<int[]>> conflicts = mySudoku.areContentsLegal();
                                     inputUpdated();
@@ -1164,16 +1164,16 @@ public class AppMain extends ApplicationWindow
                         });
                         combo.setBackground(myDisplay.getSystemColor(COLOR_INPUT_BCKGRD));
                         uiFields.get(totalRow).get(totalCol).input = combo;
-
-                        Composite composite_1110 = new Composite(composite_111, SWT.NONE);
-                        composite_1110.setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
-                        GridLayout gl_composite_1110 = new GridLayout(getRectangleLength(), false);
-                        gl_composite_1110.horizontalSpacing = 2;
-                        gl_composite_1110.verticalSpacing = 1;
-                        gl_composite_1110.marginWidth = 0;
-                        gl_composite_1110.marginHeight = 0;
-                        composite_1110.setLayout(gl_composite_1110);
-                        gl_composite_111.topControl = composite_1110;
+                        // Create the small boxes showing the still possible solutions if visible
+                        Composite possibleSolValues = new Composite(composite_111, SWT.NONE);
+                        possibleSolValues.setBackground(myDisplay.getSystemColor(SWT.COLOR_BLUE));
+                        GridLayout gl_possibleSolValues = new GridLayout(getRectangleLength(), false);
+                        gl_possibleSolValues.horizontalSpacing = 2;
+                        gl_possibleSolValues.verticalSpacing = 1;
+                        gl_possibleSolValues.marginWidth = 0;
+                        gl_possibleSolValues.marginHeight = 0;
+                        possibleSolValues.setLayout(gl_possibleSolValues);
+                        gl_composite_111.topControl = possibleSolValues;
                         for (int rowSub = 1; rowSub <= getRectangleLength(); rowSub++)
                         {
                             for (int colSub = 1; colSub <= getRectangleLength(); colSub++)
@@ -1182,7 +1182,7 @@ public class AppMain extends ApplicationWindow
                                 // System.out.println(
                                 // "textCounter=" + textCounter + ", rowSub=" + rowSub + ", colSub=" + colSub);
 
-                                Text candidateText = new Text(composite_1110, SWT.BORDER | SWT.READ_ONLY);
+                                Text candidateText = new Text(possibleSolValues, SWT.BORDER | SWT.READ_ONLY);
                                 candidateText.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
                                 candidateText.setBackground(myDisplay.getSystemColor(SWT.COLOR_DARK_GRAY));
                                 candidateText.setFont(solutionSmallFont);
@@ -2032,10 +2032,10 @@ public class AppMain extends ApplicationWindow
             legalValClassUi = newLegalValClassUi;
             // condEnableNewSamuraiAction();
             createSudokuContents(newSudokuType);
-            if (mySudoku != null)
-            {
-                setCompositeVisibility(mySudoku.getType());
-            }
+            // if (mySudoku != null) // Already included in createSudokuContents
+            // {
+            // setCompositeVisibility(mySudoku.getType());
+            // }
             cursor.dispose();
         }
         if (mySudoku != null)

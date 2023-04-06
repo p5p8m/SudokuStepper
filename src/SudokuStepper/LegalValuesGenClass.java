@@ -25,20 +25,20 @@ import java.util.stream.Stream;
 
 public abstract class LegalValuesGenClass // implements LegalValuesConstr
 {
-    private final int      val;
-    protected static Class ownClass = null;
-    static
-    {
-        try
-        {
-            ownClass = Class.forName("SudokuStepper.LegalValuesGenClass");
-        }
-        catch (ClassNotFoundException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+    private final int val;
+    // protected static Class ownClass = null;
+    // static
+    // {
+    // try
+    // {
+    // ownClass = Class.forName("SudokuStepper.LegalValuesGenClass");
+    // }
+    // catch (ClassNotFoundException e)
+    // {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // }
 
     // All dummy initializations
     // protected static int RECTANGLELENGTH = 1;
@@ -53,7 +53,7 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
     // protected static int CELLSPERCOL = 1;
     // protected static int LOWBOUND = 1;
     // protected static int HIGHBOUND = 2;
-    protected static int getBound(String methodName)
+    protected static int getBound(Class ownClass, String methodName)
     {
         int retVal = 0;
         try
@@ -68,12 +68,12 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         return (retVal);
     }
 
-    private static List<String> getValuesPatternList()
+    private static List<String> getValuesPatternList(Class myClass)
     {
         List<String> retVal = null;
         try
         {
-            retVal = (List<String>) ownClass.getField("valuesPattern").get(null);
+            retVal = (List<String>) myClass.getField("valuesPattern").get(null);
         }
         catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchFieldException e)
         {
@@ -82,14 +82,14 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         return (retVal);
     }
 
-    LegalValuesGenClass(String valueStr) throws IllegalArgumentException
+    LegalValuesGenClass(Class myClass, String valueStr) throws IllegalArgumentException
     {
-        this(getValuesPatternList().indexOf(valueStr.toLowerCase()) + 1);
+        this(myClass, getValuesPatternList(myClass).indexOf(valueStr.toLowerCase()) + 1);
     }
 
-    LegalValuesGenClass(int value) throws IllegalArgumentException
+    LegalValuesGenClass(Class myClass, int value) throws IllegalArgumentException
     {
-        checkRange(value);
+        checkRange(myClass, value);
         val = value;
     }
 
@@ -97,10 +97,10 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
      * @param value
      * @throws IllegalArgumentException
      */
-    protected void checkRange(int value) throws IllegalArgumentException
+    protected void checkRange(Class myClass, int value) throws IllegalArgumentException
     {
-        int lowBound = getBound("getLowBound");
-        int highBound = getBound("getHighBound");
+        int lowBound = getBound(myClass, "getLowBound");
+        int highBound = getBound(myClass, "getHighBound");
         if (value < lowBound || value > highBound)
         {
             throw new IllegalArgumentException("Value " + Integer.toString(value) + " is not between "
@@ -123,9 +123,10 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
             {
 
                 // Class currClass = MethodHandles.lookup().getClass();
-                int lowBound = getBound("getLowBound");
-                int highBound = getBound("getHighBound");
-                System.out.println("LegalValue current class : " + currClass.getSimpleName());
+                int lowBound = getBound(currClass, "getLowBound");
+                int highBound = getBound(currClass, "getHighBound");
+                System.out.println("LegalValue current class : " + currClass.getSimpleName() + " lowBound: " + lowBound
+                        + ", highBound: " + highBound);
                 List<Integer> intVals = Stream.iterate(lowBound, n -> n + 1).limit(highBound - lowBound + 1)
                         .collect(Collectors.toList());
                 List<LegalValuesGenClass> newList = new ArrayList<LegalValuesGenClass>();
@@ -234,13 +235,12 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
     // // TODO Auto-generated method stub
     // return null;
     // }
-
-    public static Class getOwnClass()
-    {
-        Class retVal = ownClass;
-        return (retVal);
-    }
-
+    // public static Class getOwnClass()
+    // {
+    // Class retVal = null;
+    // return (retVal);
+    // }
+    //
     // return the correct display value (must match the newInstance functionnal
     // behaviour)
     public static String toDisplayString(int val)

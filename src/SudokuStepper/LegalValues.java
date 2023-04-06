@@ -16,26 +16,26 @@ public class LegalValues extends LegalValuesGenClass
 {
     // ONE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), SIX(6), SEVEN(7), EIGHT(8),
     // NINE(9);
-    private static int                          RECTANGLELENGTH     = 3;
-    private static int                          CANDIDATESNUMBER    = 9;
-    private static int                          CANDIDATESPERROW    = 3;
-    private static int                          CANDIDATESPERCOL    = 3;
-    private static int                          OVERALLMAXROWS      = 21;                                             // Samurai
+    private static int               RECTANGLELENGTH     = 3;
+    private static int               CANDIDATESNUMBER    = 9;
+    private static int               CANDIDATESPERROW    = 3;
+    private static int               CANDIDATESPERCOL    = 3;
+    private static int               OVERALLMAXROWS      = 21;                                                        // Samurai
                                                                                                                       // sudoku
                                                                                                                       // supported
-    private static int                          OVERALLMAXCOLS      = 21;                                             // Samurai
+    private static int               OVERALLMAXCOLS      = 21;                                                        // Samurai
                                                                                                                       // sudoku
                                                                                                                       // supported
-    private static int                          SINGLESUDOKUMAXROWS = 9;
-    private static int                          SINGLESUDOKUMAXCOLS = 9;
-    private static int                          CELLSPERROW         = 3;
-    private static int                          CELLSPERCOL         = 3;
-    private static int                          LOWBOUND            = 1;
-    private static int                          HIGHBOUND           = 9;
-    public static final List<String>            valuesPattern       = Arrays.asList("1", "2", "3", "4", "5", "6", "7",
-            "8", "9");
-//    public static final HashMap<String, String> alternatePatterns   = new HashMap<String, String>();
-
+    private static int               SINGLESUDOKUMAXROWS = 9;
+    private static int               SINGLESUDOKUMAXCOLS = 9;
+    private static int               CELLSPERROW         = 3;
+    private static int               CELLSPERCOL         = 3;
+    private static int               LOWBOUND            = 1;
+    private static int               HIGHBOUND           = 9;
+    public static final List<String> valuesPattern       = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
+    // public static final HashMap<String, String> alternatePatterns = new
+    // HashMap<String, String>();
+    private static Class             ownClass            = null;
     static
     {
         try
@@ -47,21 +47,21 @@ public class LegalValues extends LegalValuesGenClass
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-//        alternatePatterns.put("00", "1");
-//        alternatePatterns.put("01", "2");
-//        alternatePatterns.put("02", "3");
-//        alternatePatterns.put("03", "4");
-//        alternatePatterns.put("04", "5");
-//        alternatePatterns.put("05", "6");
-//        alternatePatterns.put("07", "7");
-//        alternatePatterns.put("08", "8");
-//        alternatePatterns.put("09", "9");
+        // alternatePatterns.put("00", "1");
+        // alternatePatterns.put("01", "2");
+        // alternatePatterns.put("02", "3");
+        // alternatePatterns.put("03", "4");
+        // alternatePatterns.put("04", "5");
+        // alternatePatterns.put("05", "6");
+        // alternatePatterns.put("07", "7");
+        // alternatePatterns.put("08", "8");
+        // alternatePatterns.put("09", "9");
     }
 
-//    public static HashMap getAlternatePatterns()
-//    {
-//        return (alternatePatterns);
-//    }
+    // public static HashMap getAlternatePatterns()
+    // {
+    // return (alternatePatterns);
+    // }
 
     public static int getLowBound()
     {
@@ -73,14 +73,21 @@ public class LegalValues extends LegalValuesGenClass
         return (HIGHBOUND);
     }
 
+    // @Override
+    // public static Class getOwnClass()
+    // {
+    // Class retVal = ownClass;
+    // return (retVal);
+    // }
+
     public LegalValues(String value) throws IllegalArgumentException
     {
-        super(value);
+        super(ownClass, value);
     }
 
     public LegalValues(int value) throws IllegalArgumentException
     {
-        super(value);
+        super(ownClass, value);
     }
 
     public static int getCandidatesNumber()

@@ -24,7 +24,7 @@ public class FreezeSudokuAction extends SudokuAction
             if (newSudoku != null)
             {
                 newSudoku.setSaved(false);
-                newSudoku.resetCandidates();
+                newSudoku.resetCandidates(app.getLegalValClassUi());
                 app.updateSudokuFields(true, true, false);
             }
         }

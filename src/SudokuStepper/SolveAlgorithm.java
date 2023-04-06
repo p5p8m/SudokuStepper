@@ -301,7 +301,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         SolutionProgress retVal = SolutionProgress.NONE;
         try
         {
-            int numCandidates = LegalValuesGen.values(LegalValuesGen.getOwnClass()).size();
+            int numCandidates = LegalValuesGen.values(masterSudoku.getLegalValueClass()).size();
             Integer globalRowMarked = null;
             Integer globalColMarked = null;
             for (SubSudoku subSudoku : masterSudoku.getSudoku().getSubSudokus())
@@ -805,7 +805,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
             {
                 for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
                 {
-                    for (LegalValuesGenClass val : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+                    for (LegalValuesGenClass val : LegalValuesGen.values(masterSudoku.getLegalValueClass()))
                     {
                         List<Integer> cols = new ArrayList<Integer>();
                         for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
@@ -830,7 +830,8 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                             }
                             else
                             {
-                                for (LegalValuesGenClass otherVal : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+                                for (LegalValuesGenClass otherVal : LegalValuesGen
+                                        .values(masterSudoku.getLegalValueClass()))
                                 {
                                     if (otherVal != val)
                                     {
@@ -865,7 +866,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                 // same column
                 for (int col = 0; col < AppMain.getSingleSudokuMaxCols(); col++)
                 {
-                    for (LegalValuesGenClass val : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+                    for (LegalValuesGenClass val : LegalValuesGen.values(masterSudoku.getLegalValueClass()))
                     {
                         List<Integer> rows = new ArrayList<Integer>();
                         for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
@@ -890,7 +891,8 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                             }
                             else
                             {
-                                for (LegalValuesGenClass otherVal : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+                                for (LegalValuesGenClass otherVal : LegalValuesGen
+                                        .values(masterSudoku.getLegalValueClass()))
                                 {
                                     if (otherVal != val)
                                     {
@@ -926,7 +928,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                     for (int colBlock = 0; colBlock < AppMain.getSingleSudokuMaxCols()
                             / AppMain.getRectangleLength(); colBlock++)
                     {
-                        for (LegalValuesGenClass val : LegalValuesGen.values(LegalValuesGen.getOwnClass()))
+                        for (LegalValuesGenClass val : LegalValuesGen.values(masterSudoku.getLegalValueClass()))
                         {
                             List<Integer[]> cells = new ArrayList<Integer[]>();
                             // Same block
@@ -964,7 +966,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                 else
                                 {
                                     for (LegalValuesGenClass otherVal : LegalValuesGen
-                                            .values(LegalValuesGen.getOwnClass()))
+                                            .values(masterSudoku.getLegalValueClass()))
                                     {
                                         if (otherVal != val)
                                         {

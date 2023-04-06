@@ -294,9 +294,9 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (getSudoku().getRowCol(globalRow, globalCol));
     }
 
-    public void resetCell(int globalRow, int globalCol)
+    public void resetCell(Class legalValClass, int globalRow, int globalCol)
     {
-        getSudoku().resetCell(globalRow, globalCol);
+        getSudoku().resetCell(legalValClass, globalRow, globalCol);
     }
 
     public Values(SudokuType type, Class legalValClass, AppMain app)
@@ -305,7 +305,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         sudokuType = type;
         legalValuesClass = legalValClass;
         appMain = app;
-        reset();
+        reset(legalValClass);
     }
 
     public Values()
@@ -420,7 +420,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (retVal);
     }
 
-    void resetCandidates()
+    void resetCandidates(Class legalValuesClass)
     {
         for (int globalRow = 0; globalRow < AppMain.getMaxRows(); globalRow++)
         {
@@ -429,7 +429,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 SingleCellValue cell = getCell(globalRow, globalCol);
                 if (cell.getSolution() == null)
                 {
-                    cell.initCandidates();
+                    cell.initCandidates(legalValuesClass);
                 }
             }
         }
@@ -616,9 +616,9 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (retVal);
     }
 
-    public void reset()
+    public void reset(Class legalValClass)
     {
-        getSudoku().reset();
+        getSudoku().reset(legalValClass);
     }
 
     private static String SCHEMAFILENAMEDBG  = "SudokuStepper\\SudokuStepper.xsd";
@@ -640,7 +640,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             throws InvalidValueException, ParserConfigurationException, SAXException, IOException
     {
         SudokuType retVal = SudokuType.SINGLE;
-        reset();
+        reset(this.appMain.getLegalValClassUi()); // as a default initialization
         if (validateXmlSchema(fromFile))
         {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -665,7 +665,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             String highestValueInCell = doc.getDocumentElement().getAttribute(HIGHESTVALUEINCELL);
             try
             {
-                switch (Integer.parseInt(highestValueInCell))
+                int highestValueInCellInt = Integer.parseInt(highestValueInCell);
+                switch (highestValueInCellInt)
                 {
                 case 16:
                     legalValuesClass = LegalValues_16.class;
@@ -675,6 +676,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                     legalValuesClass = LegalValues.class;
                     break;
                 }
+                getSudoku().updateCandidatesNumber(legalValuesClass, highestValueInCellInt);
             }
             catch (IllegalArgumentException ex) // also occurs when no explicit attribute present
             {
