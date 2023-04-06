@@ -1334,10 +1334,12 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
-    private Action            use16ValuesAction           = new UpdateNumOfValuesAction(this, LegalValues_16.class,
-            Values.SubAreaWidth.FOUR, "&4x4 Fields", SWT.CTRL + KeyEvent.VK_6);
-    private Action            use9ValuesAction            = new UpdateNumOfValuesAction(this, LegalValues.class,
-            Values.SubAreaWidth.THREE, "&3x3 Fields", SWT.CTRL + KeyEvent.VK_9);
+    // private Action use16ValuesAction = new UpdateNumOfValuesAction(this,
+    // LegalValues_16.class,
+    // Values.SubAreaWidth.FOUR, "&4x4 Fields", SWT.CTRL + KeyEvent.VK_6);
+    // private Action use9ValuesAction = new UpdateNumOfValuesAction(this,
+    // LegalValues.class,
+    // Values.SubAreaWidth.THREE, "&3x3 Fields", SWT.CTRL + KeyEvent.VK_9);
 
     private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
             SWT.CTRL + KeyEvent.VK_R);
