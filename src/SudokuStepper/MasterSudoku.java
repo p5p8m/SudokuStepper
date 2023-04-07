@@ -11,22 +11,22 @@ import SudokuStepper.Values.SudokuType;
  * @author Pascal
  *
  */
-public class MasterSudoku
+public class MasterSudoku<LegalValuesGen extends LegalValuesGenClass>
 {
-    private SingleCellValue[][]  masterSudoku     = new SingleCellValue[AppMain.OVERALLMAXROWS][AppMain.OVERALLMAXCOLS];
-    private ArrayList<SubSudoku> subSudokus       = new ArrayList<SubSudoku>();
-    private Values               values           = null;
-    private int                  candidatesNumber = 0;                                                                  // Dummy
-                                                                                                                        // Initialization
+    private SingleCellValue[][]    masterSudoku     = new SingleCellValue[AppMain.OVERALLMAXROWS][AppMain.OVERALLMAXCOLS];
+    private ArrayList<SubSudoku>   subSudokus       = new ArrayList<SubSudoku>();
+    private Values<LegalValuesGen> values           = null;
+    private int                    candidatesNumber = 0;                                                                  // Dummy
+                                                                                                                          // Initialization
 
-    public MasterSudoku(SudokuType type, Values valuesIn, int candNbr)
+    public MasterSudoku(SudokuType type, Values<LegalValuesGen> valuesIn, int candNbr)
     {
         setSudokuType(type);
         values = valuesIn;
         candidatesNumber = candNbr;
     }
 
-    public void updateCandidatesNumber(Class legalValuesClass, int newVal)
+    public void updateCandidatesNumber(Class<?> legalValuesClass, int newVal)
     {
         candidatesNumber = newVal;
         reset(legalValuesClass);
@@ -50,7 +50,7 @@ public class MasterSudoku
 
     }
 
-    public Values getValues()
+    public Values<LegalValuesGen> getValues()
     {
         return (values);
     }
@@ -94,13 +94,12 @@ public class MasterSudoku
         return masterSudoku;
     }
 
-    public void resetCell(Class legalValuesClass, int globalRow, int globalCol)
+    public void resetCell(Class<?> legalValuesClass, int globalRow, int globalCol)
     {
-        masterSudoku[globalRow][globalCol] = new SingleCellValue<LegalValuesGenClass>(legalValuesClass,
-                candidatesNumber);
+        masterSudoku[globalRow][globalCol] = new SingleCellValue<LegalValuesGen>(legalValuesClass, candidatesNumber);
     }
 
-    public void reset(Class legalValuesClass)
+    public void reset(Class<?> legalValuesClass)
     {
         for (int globalRow = 0; globalRow < getHeight(); globalRow++)
         {

@@ -27,7 +27,7 @@ public class LegalValues_4 extends LegalValuesGenClass
     public static final List<String> valuesPattern       = Arrays.asList("1", "2", "3", "4");
     // public static final HashMap<String, String> alternatePatterns = new
     // HashMap<String, String>(); // just
-    private static Class             ownClass            = null;
+    private static Class<?>          ownClass            = null;
     static
     {
         try

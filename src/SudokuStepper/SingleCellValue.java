@@ -3,19 +3,17 @@ package SudokuStepper;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
 
 public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
 {
-    private boolean              isInput          = false;
-    private boolean              isTryNError      = false;
-    private boolean              isAConflict      = false;
-    private List<LegalValuesGen> candidates       = null;
-    private int                  candidatesNumber = 0;    // Dummy initialization
-    private LegalValuesGen       solution         = null;
+    private boolean                   isInput          = false;
+    private boolean                   isTryNError      = false;
+    private boolean                   isAConflict      = false;
+    private ArrayList<LegalValuesGen> candidates       = null;
+    private int                       candidatesNumber = 0;    // Dummy initialization
+    private LegalValuesGen            solution         = null;
 
-    public void setSolution(LegalValuesGen val, int row, int col, List<SolutionListener> solutionListeners,
+    public void setSolution(LegalValuesGen val, int row, int col, ArrayList<SolutionListener> solutionListeners,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
         solution = val;
@@ -30,7 +28,7 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
 
     public SingleCellValue(SingleCellValue<LegalValuesGen> src)
     {
-        candidates = new Vector<LegalValuesGen>(candidatesNumber);
+        candidates = new ArrayList<LegalValuesGen>(candidatesNumber);
         for (LegalValuesGen val : src.getCandidates())
         {
             getCandidates().add(val);
@@ -96,12 +94,12 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
         this.isAConflict = isAConflict;
     }
 
-    public List<LegalValuesGen> getCandidates()
+    public ArrayList<LegalValuesGen> getCandidates()
     {
         return candidates;
     }
 
-    public void setCandidates(List<LegalValuesGen> newCandidates)
+    public void setCandidates(ArrayList<LegalValuesGen> newCandidates)
     {
         this.candidates = newCandidates;
     }

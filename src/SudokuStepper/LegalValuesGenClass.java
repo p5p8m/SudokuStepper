@@ -53,12 +53,12 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
     // protected static int CELLSPERCOL = 1;
     // protected static int LOWBOUND = 1;
     // protected static int HIGHBOUND = 2;
-    protected static int getBound(Class ownClass, String methodName)
+    protected static int getBound(Class<?> ownClass, String methodName)
     {
         int retVal = 0;
         try
         {
-            retVal = (int) ownClass.getMethod(methodName, null).invoke(null, null);
+            retVal = (int) ownClass.getMethod(methodName, (Class<?>[]) null).invoke(null, (Object[]) null);
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                 | SecurityException e)
@@ -68,7 +68,8 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         return (retVal);
     }
 
-    private static List<String> getValuesPatternList(Class myClass)
+    @SuppressWarnings("unchecked")
+    private static List<String> getValuesPatternList(Class<?> myClass)
     {
         List<String> retVal = null;
         try
@@ -82,12 +83,12 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         return (retVal);
     }
 
-    LegalValuesGenClass(Class myClass, String valueStr) throws IllegalArgumentException
+    LegalValuesGenClass(Class<?> myClass, String valueStr) throws IllegalArgumentException
     {
         this(myClass, getValuesPatternList(myClass).indexOf(valueStr.toLowerCase()) + 1);
     }
 
-    LegalValuesGenClass(Class myClass, int value) throws IllegalArgumentException
+    LegalValuesGenClass(Class<?> myClass, int value) throws IllegalArgumentException
     {
         checkRange(myClass, value);
         val = value;
@@ -97,7 +98,7 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
      * @param value
      * @throws IllegalArgumentException
      */
-    protected void checkRange(Class myClass, int value) throws IllegalArgumentException
+    protected void checkRange(Class<?> myClass, int value) throws IllegalArgumentException
     {
         int lowBound = getBound(myClass, "getLowBound");
         int highBound = getBound(myClass, "getHighBound");
@@ -108,9 +109,9 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         }
     }
 
-    private static HashMap<Class, List<LegalValuesGenClass>> vals = new HashMap<Class, List<LegalValuesGenClass>>();
+    private static HashMap<Class<?>, List<LegalValuesGenClass>> vals = new HashMap<Class<?>, List<LegalValuesGenClass>>();
 
-    public static List<LegalValuesGenClass> values(Class currClass)
+    public static List<LegalValuesGenClass> values(Class<?> currClass)
     {
         List<LegalValuesGenClass> retVal = null;
         try

@@ -1,18 +1,13 @@
 package SudokuStepper;
 
-import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Pascal
  *
  */
-public class LegalValues extends LegalValuesGenClass
+public class LegalValues_9 extends LegalValuesGenClass
 {
     // ONE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), SIX(6), SEVEN(7), EIGHT(8),
     // NINE(9);
@@ -35,12 +30,12 @@ public class LegalValues extends LegalValuesGenClass
     public static final List<String> valuesPattern       = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
     // public static final HashMap<String, String> alternatePatterns = new
     // HashMap<String, String>();
-    private static Class             ownClass            = null;
+    private static Class<?>          ownClass            = null;
     static
     {
         try
         {
-            ownClass = Class.forName("SudokuStepper.LegalValues");
+            ownClass = Class.forName("SudokuStepper.LegalValues_9");
         }
         catch (ClassNotFoundException e)
         {
@@ -80,12 +75,12 @@ public class LegalValues extends LegalValuesGenClass
     // return (retVal);
     // }
 
-    public LegalValues(String value) throws IllegalArgumentException
+    public LegalValues_9(String value) throws IllegalArgumentException
     {
         super(ownClass, value);
     }
 
-    public LegalValues(int value) throws IllegalArgumentException
+    public LegalValues_9(int value) throws IllegalArgumentException
     {
         super(ownClass, value);
     }

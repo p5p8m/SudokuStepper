@@ -6,17 +6,8 @@ package SudokuStepper;
 import java.io.Console;
 import java.util.List;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
@@ -74,12 +65,14 @@ public abstract class OpenSudokuAction extends SudokuAction
                     try
                     {
                         app.setState(AppState.OPENING);
-                        app.setSudokuPb(new Values(SudokuType.SINGLE, LegalValues.class, app)); // default to be
+                        app.setSudokuPb(new Values<LegalValuesGenClass>(SudokuType.SINGLE, LegalValues_9.class, app)); // default
+                        // to
+                        // be
                         // overwritten when
                         // reading
                         // in
                         SudokuType newSudokuType = app.getSudokuPb().read(fileToOpen, alsoReadSolution);
-                        Class newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
+                        Class<?> newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
                         app.startUpdatingNumOfFields(newLegalValuesClass, newSudokuType);
                         app.updateSudokuFields(false, true, false);
                         app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously

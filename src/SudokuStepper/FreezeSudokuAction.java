@@ -1,12 +1,10 @@
 package SudokuStepper;
 
-import java.awt.event.KeyEvent;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-public class FreezeSudokuAction extends SudokuAction
+public class FreezeSudokuAction<LegalValuesGen extends LegalValuesGenClass> extends SudokuAction
 {
     public FreezeSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
@@ -20,7 +18,7 @@ public class FreezeSudokuAction extends SudokuAction
         try
         {
             app.setState(AppState.EMPTY); // Disables the modifyListener on the combo box
-            Values newSudoku = app.getSudokuPb();
+            Values<LegalValuesGen> newSudoku = (Values<LegalValuesGen>) (app.getSudokuPb());
             if (newSudoku != null)
             {
                 newSudoku.setSaved(false);

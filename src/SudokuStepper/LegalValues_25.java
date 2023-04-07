@@ -1,9 +1,7 @@
 package SudokuStepper;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Pascal For values from 1 to 25
@@ -33,7 +31,7 @@ public class LegalValues_25 extends LegalValuesGenClass
     // Only a to g expected as non-digit values
     public static final List<String> valuesPattern       = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9",
             "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p");
-    private static Class             ownClass            = null;
+    private static Class<?>          ownClass            = null;
     static
     {
         try
