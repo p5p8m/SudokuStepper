@@ -1,5 +1,6 @@
 package SudokuStepper;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -8,8 +9,8 @@ public class ListOfSolTraces<LegalValuesGen extends LegalValuesGenClass> impleme
 {
     private List<SolutionTrace> listTraces = new Vector<SolutionTrace>();
 
-    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValuesGen eliminatedVal,
-            List<LegalValuesGen> candidates)
+    public void addToSolutionTrace(Values<LegalValuesGen> values, int globalRow, int globalCol,
+            LegalValuesGen eliminatedVal, ArrayList<LegalValuesGen> candidates)
     {
         listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
         System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "

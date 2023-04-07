@@ -5,9 +5,6 @@ import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Cursor;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
@@ -16,9 +13,9 @@ import SudokuStepper.Values.SudokuType;
 public class NewSudokuAction extends SudokuAction
 {
     private SudokuType newSudokuType = SudokuType.SINGLE;
-    private Class      newValClass   = null;
+    private Class<?>   newValClass   = null;
 
-    public NewSudokuAction(AppMain appMain, Values.SudokuType type, Class newLegalValuesClass, String text,
+    public NewSudokuAction(AppMain appMain, Values.SudokuType type, Class<?> newLegalValuesClass, String text,
             Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
@@ -53,8 +50,11 @@ public class NewSudokuAction extends SudokuAction
                 FreezeSudokuAction freezeSudokuAction = new FreezeSudokuAction(app, null, null);
                 freezeSudokuAction.run();
 
-                app.setSudokuPb(new Values(newSudokuType, app.getLegalValClassUi(), app)); // Ewige Schleife beim 2.
-                                                                                           // Aufruf
+                app.setSudokuPb(new Values<LegalValuesGenClass>(newSudokuType, app.getLegalValClassUi(), app)); // Ewige
+                // Schleife
+                // beim
+                // 2.
+                // Aufruf
                 app.setState(AppState.CREATING);
                 app.updateSudokuFields(false, true, false);
                 // app.setSlideShowMode(app.getSlideShowEnabled());

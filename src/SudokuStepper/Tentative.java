@@ -2,8 +2,7 @@ package SudokuStepper;
 
 import SudokuStepper.Values;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.ArrayList;
 
 import SudokuStepper.ListOfSolTraces;
 import SudokuStepper.Values.SudokuType;
@@ -14,7 +13,7 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
     private MasterSudoku                sudoku      = null;
 
     private Bifurcation<LegalValuesGen> bifurcation = null;
-    private Values                      values      = null;
+    // private Values<LegalValuesGenClass> values = null;
 
     public MasterSudoku getSudoku()
     {
@@ -47,7 +46,7 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
 
     public LegalValuesGen setBifurcation(int globalRow, int globalCol)
     {
-        List<LegalValuesGen> candidates = sudoku.getRowCol(globalRow, globalCol).getCandidates();
+        ArrayList<LegalValuesGen> candidates = sudoku.getRowCol(globalRow, globalCol).getCandidates();
         LegalValuesGen eliminatedVal = candidates
                 .get(sudoku.getRowCol(globalRow, globalCol).getCandidates().size() - 1); // .get(0);
         // Interested to see if the other solution is also legal?
@@ -59,13 +58,13 @@ public class Tentative<LegalValuesGen extends LegalValuesGenClass> // Contains t
         return (eliminatedVal);
     }
 
-    public Tentative(Tentative src, SudokuType type)
+    public Tentative(Tentative<?> src, SudokuType type)
     {
         bifurcation = null;
         sudoku = new MasterSudoku(src.sudoku, type);
     }
 
-    public Tentative(SudokuType type, Values valuesIn, int candNbr)
+    public Tentative(SudokuType type, Values<LegalValuesGen> valuesIn, int candNbr)
     {
         sudoku = new MasterSudoku(type, valuesIn, candNbr);
     }

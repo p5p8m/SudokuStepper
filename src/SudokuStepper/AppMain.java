@@ -3,8 +3,6 @@ package SudokuStepper;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-// import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +14,6 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
-import org.eclipse.osgi.container.Module.Settings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.StackLayout;
@@ -50,32 +47,30 @@ import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 
-import com.ibm.icu.impl.duration.TimeUnit;
-
 import SudokuStepper.Values.SudokuType;
 import SudokuStepper.ListOfSolTraces;
 
 public class AppMain extends ApplicationWindow
         implements SolutionListener, CandidatesListener, CandidatesResetListener, SavedListener, RollbackListener
 {
-    private Action        action;
-    private Values        mySudoku                  = null;
+    private Action                      action;
+    private Values<LegalValuesGenClass> mySudoku                  = null;
     // remember the last candidate whose status was changed
-    private Text          lastUpdatedCandText       = null;
-    private Font          solutionFont              = null; // SWTResourceManager.getFont("Segoe
-                                                            // UI",
-                                                            // 30,
-                                                            // SWT.BOLD);
+    private Text                        lastUpdatedCandText       = null;
+    private Font                        solutionFont              = null; // SWTResourceManager.getFont("Segoe
+                                                                          // UI",
+                                                                          // 30,
+                                                                          // SWT.BOLD);
     // null means: image by image, 0 means no pause
-    private Integer       slideShowPause            = null;
-    private boolean       stopSlideShow             = false;
-    private Thread        solvingThread             = null;
-    private Composite     appParent                 = null;
-    private Composite[][] cellCompositesPtr         = null;
-    private Group         grpSudokuScrolledContents = null;
+    private Integer                     slideShowPause            = null;
+    private boolean                     stopSlideShow             = false;
+    private Thread                      solvingThread             = null;
+    private Composite                   appParent                 = null;
+    private Composite[][]               cellCompositesPtr         = null;
+    private Group                       grpSudokuScrolledContents = null;
     // For performance useTripleRecognition should be true. False is to be used for
     // debugging
-    static final boolean  useTripleRecognition      = true;
+    static final boolean                useTripleRecognition      = true;
 
     void setSolvingThread(Thread solvingTh)
     {
@@ -288,7 +283,7 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private static Class<?> legalValClassUi = LegalValues.class;
+    private static Class<?> legalValClassUi = LegalValues_9.class;
     private AppState        status          = AppState.EMPTY;
 
     public void setState(AppState val)
@@ -340,12 +335,12 @@ public class AppMain extends ApplicationWindow
         return (myShell);
     }
 
-    public Values getSudokuPb()
+    public Values<LegalValuesGenClass> getSudokuPb()
     {
         return (mySudoku);
     }
 
-    public <LegalValuesGen extends LegalValuesGenClass> void setSudokuPb(Values newSudoku)
+    public <LegalValuesGen extends LegalValuesGenClass> void setSudokuPb(Values<LegalValuesGenClass> newSudoku)
     {
         mySudoku = newSudoku;
         if (mySudoku != null)
@@ -355,10 +350,10 @@ public class AppMain extends ApplicationWindow
                 for (int col = 0; col < getMaxCols(); col++)
                 {
                     SolNCandTexts uiField = uiFields.get(row).get(col);
-                    SingleCellValue sVal = mySudoku.getCell(row, col);
+                    SingleCellValue<?> sVal = mySudoku.getCell(row, col);
                     if (sVal != null)
                     {
-                        LegalValuesGen value = (LegalValuesGen) sVal.getSolution();
+                        LegalValuesGenClass value = sVal.getSolution();
                         if (value != null)
                         {
                             uiField.solution.setText(LegalValuesGenClass.toDisplayString(value.val()));
@@ -413,7 +408,7 @@ public class AppMain extends ApplicationWindow
             {
                 for (int colBlock = 0; colBlock < getMaxCols() / getRectangleLength(); colBlock++)
                 {
-                    Class legalClass = getLegalValClassUi();
+                    Class<?> legalClass = getLegalValClassUi();
                     if (legalClass == SudokuStepper.LegalValues_4.class
                             || legalClass == SudokuStepper.LegalValues_16.class
                             || legalClass == SudokuStepper.LegalValues_25.class)
@@ -421,7 +416,7 @@ public class AppMain extends ApplicationWindow
                         // Only SINGLE supported
                         cellCompositesPtr[rowBlock][colBlock].setVisible(true);
                     }
-                    else if (legalClass == SudokuStepper.LegalValues.class)
+                    else if (legalClass == SudokuStepper.LegalValues_9.class)
                     {
                         switch (type)
                         {
@@ -550,7 +545,7 @@ public class AppMain extends ApplicationWindow
         rl_grpButtons.justify = true;
         rl_grpButtons.fill = true;
         grpButtons.setLayout(rl_grpButtons);
-        AppMain app = this;
+        // AppMain app = this;
         btnFreeze = new Button(grpButtons, SWT.NONE);
         btnFreeze.addSelectionListener(new SelectionAdapter()
         {
@@ -1095,7 +1090,7 @@ public class AppMain extends ApplicationWindow
                                                 break;
                                             }
                                         }
-                                        Class valClass = legalValClassUi;
+                                        // Class<?> valClass = legalValClassUi;
                                         LegalValuesGen val = null;
                                         try
                                         {
@@ -1283,20 +1278,20 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private class fileExitItemListener implements SelectionListener
-    {
-        public void widgetSelected(SelectionEvent event)
-        {
-            // shell.close();
-            // display.dispose();
-        }
-
-        public void widgetDefaultSelected(SelectionEvent event)
-        {
-            // shell.close();
-            // display.dispose();
-        }
-    }
+    // private class fileExitItemListener implements SelectionListener
+    // {
+    // public void widgetSelected(SelectionEvent event)
+    // {
+    // // shell.close();
+    // // display.dispose();
+    // }
+    //
+    // public void widgetDefaultSelected(SelectionEvent event)
+    // {
+    // // shell.close();
+    // // display.dispose();
+    // }
+    // }
 
     class fileSaveItemListener implements SelectionListener
     {
@@ -1339,13 +1334,13 @@ public class AppMain extends ApplicationWindow
     private Action            newSudokuSingleAction2x2    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
             LegalValues_4.class, "&New Single 2x2", SWT.CTRL + KeyEvent.VK_2);
     private Action            newSudokuSingleAction3x3    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues.class, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_3);
+            LegalValues_9.class, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_3);
     private Action            newSudokuSingleAction4x4    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
             LegalValues_16.class, "&New Single 4x4", SWT.CTRL + KeyEvent.VK_4);
     private Action            newSudokuSingleAction5x5    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
             LegalValues_25.class, "&New Single 5x5", SWT.CTRL + KeyEvent.VK_5);
     private Action            newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI,
-            LegalValues.class, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
+            LegalValues_9.class, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
     private Action            openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open",
             SWT.CTRL + KeyEvent.VK_O, false);
     private Action            openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
@@ -1563,7 +1558,7 @@ public class AppMain extends ApplicationWindow
             for (Integer col : uiFields.get(row).keySet())
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
-                SingleCellValue sVal = mySudoku.getCell(row, col);
+                SingleCellValue<?> sVal = mySudoku.getCell(row, col);
                 if (sVal != null && sVal.getCandidates().isEmpty())
                 {
                     solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
@@ -1571,8 +1566,8 @@ public class AppMain extends ApplicationWindow
                 else
                 {
                     uiField.solution.setVisible(false);
-                    Combo c = uiField.input;
-                    String t = uiField.input.getText();
+                    // Combo c = uiField.input;
+                    // String t = uiField.input.getText();
                     // uiField.input.setText(StringUtils.EMPTY);
                     uiField.solution.setText(StringUtils.EMPTY);
                     uiField.input.setVisible(false);
@@ -1794,7 +1789,7 @@ public class AppMain extends ApplicationWindow
     {
         uiFields.get(row).get(col).input.setVisible(false);
         uiFields.get(row).get(col).solution.setVisible(true);
-        LegalValuesGen solutionVal = (LegalValuesGen) mySudoku.getCell(row, col).getSolution();
+        LegalValuesGenClass solutionVal = mySudoku.getCell(row, col).getSolution();
         uiFields.get(row).get(col).solution.setText(LegalValuesGenClass.toDisplayString(solutionVal.val()));
         setSolutionNInputBckgrdColor(row, col, markLastSolutionFound);
         // Also update the solution trace (even if not necessary in the case of
@@ -1810,7 +1805,7 @@ public class AppMain extends ApplicationWindow
     {
         if (markLastSolutionFound && !runsInUiThread)
         { // we are only updating the UI so no need to update the trace
-            LegalValuesGen solutionVal = (LegalValuesGen) mySudoku.getCell(row, col).getSolution();
+            LegalValuesGenClass solutionVal = mySudoku.getCell(row, col).getSolution();
             mySudoku.addToSolutionTrace(mySudoku, row, col, solutionVal, null);
         }
         // myDisplay.asyncExec(new Runnable()
@@ -1868,7 +1863,7 @@ public class AppMain extends ApplicationWindow
 
     private void setSolutionNInputBckgrdColor(int row, int col, boolean markLastSolutionFound)
     {
-        SingleCellValue sVal = mySudoku.getCell(row, col);
+        SingleCellValue<?> sVal = mySudoku.getCell(row, col);
         if (sVal != null)
         {
             if (sVal.isInput())
@@ -2018,9 +2013,9 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    public void startUpdatingNumOfFields(Class newLegalValClassUi, SudokuType newSudokuType)
+    public void startUpdatingNumOfFields(Class<?> newLegalValClassUi, SudokuType newSudokuType)
     {
-        Class oldClassUi = this.getLegalValClassUi();
+        Class<?> oldClassUi = this.getLegalValClassUi();
         if (newLegalValClassUi != oldClassUi)
         {
             Display display = this.getDisplay();
@@ -2064,7 +2059,7 @@ public class AppMain extends ApplicationWindow
     // return singleSudokuWidth;
     // }
 
-    public Class getLegalValClassUi()
+    public Class<?> getLegalValClassUi()
     {
         return legalValClassUi;
 
@@ -2075,7 +2070,7 @@ public class AppMain extends ApplicationWindow
         int retVal = 0;
         try
         {
-            retVal = (int) legalValClassUi.getMethod(methodName, null).invoke(null, null);
+            retVal = (int) legalValClassUi.getMethod(methodName, (Class<?>[]) null).invoke(null, (Object[]) null);
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                 | SecurityException e)

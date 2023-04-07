@@ -1,15 +1,15 @@
 package SudokuStepper;
 
-import java.util.List;
+import java.util.ArrayList;
 
 public class SolutionTrace<LegalValuesGen extends LegalValuesGenClass>
 {
-    private int                  row;
-    private int                  col;
-    private LegalValuesGen       val;
-    private List<LegalValuesGen> choices;
+    private int                       row;
+    private int                       col;
+    private LegalValuesGen            val;
+    private ArrayList<LegalValuesGen> choices;
 
-    public SolutionTrace(int rowIn, int colIn, LegalValuesGen valIn, List<LegalValuesGen> choicesIn)
+    public SolutionTrace(int rowIn, int colIn, LegalValuesGen valIn, ArrayList<LegalValuesGen> choicesIn)
     {
         row = rowIn;
         col = colIn;
@@ -27,12 +27,12 @@ public class SolutionTrace<LegalValuesGen extends LegalValuesGenClass>
         return (col);
     }
 
-    public LegalValuesGen getValue()
+    public LegalValuesGenClass getValue()
     {
         return (val);
     }
 
-    public List<LegalValuesGen> getChoices()
+    public ArrayList<LegalValuesGen> getChoices()
     {
         return (choices);
     }

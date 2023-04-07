@@ -99,20 +99,20 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         SINGLE, SAMURAI
     }
 
-    private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
-    private String                        sudokuName               = null;
-    private SudokuType                    sudokuType               = SudokuType.SINGLE;
-    private Class                         legalValuesClass         = LegalValues.class;
-    private String                        inputFile                = null;
-    private boolean                       saved                    = true;
-    private AppMain                       appMain                  = null;
-    private ListOfSolTraces               solutionTrace            = new ListOfSolTraces();
+    private Stack<Tentative<LegalValuesGen>>   sudokuCands              = new Stack<Tentative<LegalValuesGen>>();
+    private String                             sudokuName               = null;
+    private SudokuType                         sudokuType               = SudokuType.SINGLE;
+    private Class<?>                           legalValuesClass         = LegalValues_9.class;
+    private String                             inputFile                = null;
+    private boolean                            saved                    = true;
+    private AppMain                            appMain                  = null;
+    private ListOfSolTraces<LegalValuesGen>    solutionTrace            = new ListOfSolTraces<LegalValuesGen>();
 
-    private List<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
-    private List<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
-    private List<CandidatesResetListener> candidatesResetListeners = new ArrayList<CandidatesResetListener>();
-    private List<RollbackListener>        rollbackListeners        = new ArrayList<RollbackListener>();
-    private List<SavedListener>           savedListeners           = new ArrayList<SavedListener>();
+    private ArrayList<SolutionListener>        solutionListeners        = new ArrayList<SolutionListener>();
+    private ArrayList<CandidatesListener>      candidatesListeners      = new ArrayList<CandidatesListener>();
+    private ArrayList<CandidatesResetListener> candidatesResetListeners = new ArrayList<CandidatesResetListener>();
+    private ArrayList<RollbackListener>        rollbackListeners        = new ArrayList<RollbackListener>();
+    private ArrayList<SavedListener>           savedListeners           = new ArrayList<SavedListener>();
 
     // private List<NewStartListener> newStartListeners = new
     // ArrayList<NewStartListener>();
@@ -133,8 +133,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (retVal);
     }
 
-    public void addToSolutionTrace(Values values, int globalRow, int globalCol, LegalValuesGen eliminatedVal,
-            List<LegalValuesGen> candidates)
+    public void addToSolutionTrace(Values<LegalValuesGen> values, int globalRow, int globalCol,
+            LegalValuesGen eliminatedVal, ArrayList<LegalValuesGen> candidates)
     {
         solutionTrace.addToSolutionTrace(values, globalRow, globalCol, eliminatedVal, candidates);
     }
@@ -169,7 +169,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (sudokuType);
     }
 
-    public Class getLegalValueClass()
+    public Class<?> getLegalValueClass()
     {
         return (legalValuesClass);
     }
@@ -210,8 +210,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         // }
         // // end of debugging section
         SolutionProgress retVal = SolutionProgress.NONE;
-        Tentative oldSudoku = sudokuCands.peek();
-        Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
+        Tentative<LegalValuesGen> oldSudoku = sudokuCands.peek();
+        Tentative<LegalValuesGen> newSudoku = new Tentative<LegalValuesGen>(oldSudoku, sudokuType);
         LegalValuesGen toBeEliminatedVal = (LegalValuesGen) oldSudoku.setBifurcation(globalRow, globalCol);
         System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
                 + toBeEliminatedVal);
@@ -226,11 +226,11 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (sudokuCands.size() > 1);
     }
 
-    public <LegalValuesGen extends LegalValuesGenClass> SolutionProgress bifurqueOnceMore()
+    public SolutionProgress bifurqueOnceMore()
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         Bifurcation<LegalValuesGen> nextTry = null;
-        Tentative oldSudoku = null;
+        Tentative<LegalValuesGen> oldSudoku = null;
         while (nextTry == null && sudokuCands.size() > 1)
         {
             sudokuCands.pop();
@@ -239,7 +239,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         }
         if (nextTry != null)
         {
-            Tentative newSudoku = new Tentative(oldSudoku, sudokuType);
+            Tentative<LegalValuesGen> newSudoku = new Tentative<LegalValuesGen>(oldSudoku, sudokuType);
             sudokuCands.push(newSudoku);
             for (RollbackListener listener : rollbackListeners)
             {
@@ -268,7 +268,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         }
     }
 
-    public MasterSudoku getSudoku()
+    public MasterSudoku<?> getSudoku()
     {
         return (sudokuCands.peek().getSudoku());
     }
@@ -283,19 +283,19 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (retVal);
     }
 
-    public SingleCellValue getCell(int globalRow, int globalCol)
+    public SingleCellValue<LegalValuesGen> getCell(int globalRow, int globalCol)
     {
         return (getSudoku().getRowCol(globalRow, globalCol));
     }
 
-    public void resetCell(Class legalValClass, int globalRow, int globalCol)
+    public void resetCell(Class<?> legalValClass, int globalRow, int globalCol)
     {
         getSudoku().resetCell(legalValClass, globalRow, globalCol);
     }
 
-    public Values(SudokuType type, Class legalValClass, AppMain app)
+    public Values(SudokuType type, Class<?> legalValClass, AppMain app)
     {
-        sudokuCands.push(new Tentative(type, this, app.getCandidatesNumber()));
+        sudokuCands.push(new Tentative<LegalValuesGen>(type, this, AppMain.getCandidatesNumber()));
         sudokuType = type;
         legalValuesClass = legalValClass;
         appMain = app;
@@ -307,16 +307,15 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
 
     }
 
-    public <LegalValuesGen extends LegalValuesGenClass> void initCell(int row, int col, int value,
-            boolean runsInUiThread, boolean markLastSolutionFound, boolean isAnInput, boolean isATry)
-            throws InvalidValueException
+    public void initCell(int row, int col, int value, boolean runsInUiThread, boolean markLastSolutionFound,
+            boolean isAnInput, boolean isATry) throws InvalidValueException
     {
         try
         {
             row -= 1;
             col -= 1;
             LegalValuesGen val = (LegalValuesGen) (legalValuesClass.getConstructor(int.class).newInstance(value));
-            MasterSudoku sudoku = getSudoku();
+            MasterSudoku<?> sudoku = getSudoku();
             sudoku.getRowCol(row, col).setSolution(val, row, col, null, runsInUiThread, markLastSolutionFound);
             sudoku.getRowCol(row, col).setInput(isAnInput);
             sudoku.getRowCol(row, col).setTryNError(isATry);
@@ -366,12 +365,11 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // If values to eliminate (=val) is null, only check if we can set the only
     // remaining candidate as a solution
 
-    public <LegalValuesGen extends LegalValuesGenClass> SolutionProgress eliminateCandidate(int globalRow,
-            int globalCol, LegalValuesGen val, boolean alsoSetSolution, boolean runsInUiThread,
-            boolean markLastSolutionFound, boolean isATry)
+    public SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValuesGen val,
+            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        MasterSudoku sudoku = getSudoku();
+        MasterSudoku<?> sudoku = getSudoku();
         if (val == null || sudoku.getRowCol(globalRow, globalCol).getCandidates().contains(val))
         {
             retVal = retVal.combineWith(SolutionProgress.CANDIDATES);
@@ -406,21 +404,21 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                             solutionListeners, runsInUiThread, markLastSolutionFound);
                 }
                 SolutionProgress newUpdated = reduceInfluencedCellCandidates(globalRow, globalCol,
-                        sudoku.getRowCol(globalRow, globalCol).getSolution(), alsoSetSolution, runsInUiThread,
-                        markLastSolutionFound);
+                        (LegalValuesGen) sudoku.getRowCol(globalRow, globalCol).getSolution(), alsoSetSolution,
+                        runsInUiThread, markLastSolutionFound);
                 retVal = retVal.combineWith(newUpdated);
             }
         }
         return (retVal);
     }
 
-    void resetCandidates(Class legalValuesClass)
+    void resetCandidates(Class<?> legalValuesClass)
     {
         for (int globalRow = 0; globalRow < AppMain.getMaxRows(); globalRow++)
         {
             for (int globalCol = 0; globalCol < AppMain.getMaxCols(); globalCol++)
             {
-                SingleCellValue cell = getCell(globalRow, globalCol);
+                SingleCellValue<?> cell = getCell(globalRow, globalCol);
                 if (cell.getSolution() == null)
                 {
                     cell.initCandidates(legalValuesClass);
@@ -435,11 +433,11 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
 
     // remove the value just set in the given cell the list of candidates from
     // all influenced cells, for master sudoku
-    public <LegalValuesGen extends LegalValuesGenClass> void updateCandidateList(int globalRow, int globalCol,
-            LegalValuesGen val, boolean runsInUiThread, boolean markLastSolutionFound)
+    public void updateCandidateList(int globalRow, int globalCol, LegalValuesGen val, boolean runsInUiThread,
+            boolean markLastSolutionFound)
     {
-        MasterSudoku masterSudoku = getSudoku();
-        for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
+        MasterSudoku<?> masterSudoku = getSudoku();
+        for (SubSudoku subSudoku : (List<SubSudoku>) (masterSudoku.isRowColShared(globalRow, globalCol)))
         {
             int localRow = subSudoku.getLocalRow(globalRow);
             int localCol = subSudoku.getLocalCol(globalCol);
@@ -492,10 +490,10 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // Check if the value is a possible candidate based on the values already set in
     // all influencing cells, val should not be null
     // Check is performed for a single sudoku, use local coordinates
-    private <LegalValuesGen> boolean isValueACandidate(int localRow, int localCol, LegalValuesGen val)
+    private boolean isValueACandidate(int localRow, int localCol, LegalValuesGen val)
     {
         boolean retVal = true;
-        MasterSudoku sudoku = getSudoku();
+        MasterSudoku<?> sudoku = getSudoku();
         // Same column
         for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
         {
@@ -543,13 +541,12 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // remove unconditionally from the value just set in the given cell the list of
     // candidates from
     // all influenced cells
-    <LegalValuesGen extends LegalValuesGenClass> SolutionProgress reduceInfluencedCellCandidates(int globalRow,
-            int globalCol, LegalValuesGen val, boolean alsoSetSolution, boolean runsInUiThread,
-            boolean markLastSolutionFound)
+    SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValuesGen val,
+            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound)
     {
         SolutionProgress retVal = SolutionProgress.NONE;
-        MasterSudoku masterSudoku = getSudoku();
-        for (SubSudoku subSudoku : masterSudoku.isRowColShared(globalRow, globalCol))
+        MasterSudoku<?> masterSudoku = getSudoku();
+        for (SubSudoku subSudoku : (List<SubSudoku>) (masterSudoku.isRowColShared(globalRow, globalCol)))
         {
             int localRow = subSudoku.getLocalRow(globalRow);
             int localCol = subSudoku.getLocalCol(globalCol);
@@ -610,7 +607,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (retVal);
     }
 
-    public void reset(Class legalValClass)
+    public void reset(Class<?> legalValClass)
     {
         getSudoku().reset(legalValClass);
     }
@@ -673,14 +670,14 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                     break;
                 case 9:
                 default:
-                    legalValuesClass = LegalValues.class;
+                    legalValuesClass = LegalValues_9.class;
                     break;
                 }
                 getSudoku().updateCandidatesNumber(legalValuesClass, highestValueInCellInt);
             }
             catch (IllegalArgumentException ex) // also occurs when no explicit attribute present
             {
-                legalValuesClass = LegalValues.class;
+                legalValuesClass = LegalValues_9.class;
             }
 
             getSudoku().setSudokuType(retVal);
@@ -705,8 +702,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                             for (int ind = 0; ind < contents.getLength(); ind++)
                             {
                                 Node content = contents.item(ind);
-                                Boolean b1 = content.getNodeType() == Node.ELEMENT_NODE;
-                                Boolean b2 = content.getNodeName() == CONTENT;
+                                // Boolean b1 = content.getNodeType() == Node.ELEMENT_NODE;
+                                // Boolean b2 = content.getNodeName() == CONTENT;
                                 // System.out.println("Tests: " + b1 + "/" + b2 + "/" + contents.getLength());
                                 if (content.getNodeType() == Node.ELEMENT_NODE && content.getNodeName() == CONTENT)
                                 {
@@ -757,7 +754,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 getCell(row, col).setAConflict(false);
             }
         }
-        for (SubSudoku subSudoku : getSudoku().getSubSudokus())
+        for (SubSudoku subSudoku : (ArrayList<SubSudoku>) (getSudoku().getSubSudokus()))
         {
             for (int row = 0; row < AppMain.getSingleSudokuMaxRows(); row++)
             {
@@ -838,7 +835,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     {
         Stream<? super SingleCellValue> stream = Arrays.stream(this.getSudoku().getArray())
                 .flatMap(x -> Arrays.stream(x));
-        long retVal = stream.filter(x -> (x == null || ((SingleCellValue) x).getSolution() != null)).count();
+        long retVal = stream.filter(x -> (x == null || ((SingleCellValue<?>) x).getSolution() != null)).count();
         return ((int) retVal);
     }
 
@@ -1009,7 +1006,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
 
             Element[] elts =
             { initialElt, solutionElt };
-            MasterSudoku sudoku = getSudoku();
+            MasterSudoku<?> sudoku = getSudoku();
             for (Element elt : elts)
             {
                 int numberNodes = 0;
@@ -1043,7 +1040,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 {
                     // also save the trace
                     Text text = newDoc.createTextNode("");
-                    for (SolutionTrace singleTrace : trace)
+                    for (SolutionTrace<?> singleTrace : trace)
                     {
                         Element content = newDoc.createElement(CONTENT);
                         content.setAttribute(ROW, Integer.toString(singleTrace.getRow() + 1));
@@ -1052,7 +1049,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                         if (singleTrace.getChoices() != null)
                         {
                             int loopCount = 0;
-                            for (LegalValuesGen val : (List<LegalValuesGen>) singleTrace.getChoices())
+                            for (LegalValuesGen val : (ArrayList<LegalValuesGen>) (singleTrace.getChoices()))
                             {
                                 if (loopCount > 0)
                                 {
@@ -1199,10 +1196,10 @@ class Bifurcation<LegalValuesGen extends LegalValuesGenClass>
         return (this.choices.get(choices.size() - 1));
     }
 
-    public Bifurcation addNewTry(LegalValuesGen toBeEliminatedVal)
+    public Bifurcation<LegalValuesGen> addNewTry(LegalValuesGenClass toBeEliminatedVal)
     {
-        Bifurcation<LegalValuesGen> retVal = this;
-        retVal.choices.add(toBeEliminatedVal);
+        Bifurcation<LegalValuesGen> retVal = (Bifurcation<LegalValuesGen>) this;
+        retVal.choices.add((LegalValuesGen) toBeEliminatedVal);
         return retVal;
     }
 

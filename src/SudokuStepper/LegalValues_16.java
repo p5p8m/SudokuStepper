@@ -1,9 +1,7 @@
 package SudokuStepper;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Pascal For values from 1 to 16
@@ -51,7 +49,7 @@ public class LegalValues_16 extends LegalValuesGenClass
             "a", "b", "c", "d", "e", "f", "g");
     // public static final HashMap<String, String> alternatePatterns = new
     // HashMap<String, String>(); // just
-    private static Class             ownClass            = null;
+    private static Class<?>          ownClass            = null;
     static
     {
         try
