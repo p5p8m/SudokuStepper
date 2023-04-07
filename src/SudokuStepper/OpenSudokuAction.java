@@ -20,7 +20,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 
 /**
@@ -80,23 +79,9 @@ public abstract class OpenSudokuAction extends SudokuAction
                         // reading
                         // in
                         SudokuType newSudokuType = app.getSudokuPb().read(fileToOpen, alsoReadSolution);
-                        Values.SubAreaWidth newVal = Values.SubAreaWidth.THREE;
                         Class newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
-                        if (newLegalValuesClass == LegalValues_25.class)
-                        {
-                            newVal = Values.SubAreaWidth.FIVE;
-                        }
-                        else if (newLegalValuesClass == LegalValues_16.class)
-                        {
-                            newVal = Values.SubAreaWidth.FOUR;
-                        }
-                        else if (newLegalValuesClass == LegalValues_4.class)
-                        {
-                            newVal = Values.SubAreaWidth.TWO;
-                        }
-                        app.startUpdatingNumOfFields(newLegalValuesClass, newVal, newSudokuType);
+                        app.startUpdatingNumOfFields(newLegalValuesClass, newSudokuType);
                         app.updateSudokuFields(false, true, false);
-                        // app.setSlideShowMode(app.getSlideShowEnabled());
                         app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
                         app.toggleSlideShow();
                     }

@@ -34,6 +34,7 @@ public class MasterSudoku
 
     public void setSudokuType(SudokuType type)
     {
+        subSudokus.clear();
         subSudokus.add(new SubSudoku(this, 0, 0));
         switch (type)
         {

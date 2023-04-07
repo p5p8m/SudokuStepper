@@ -11,21 +11,18 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 
 public class NewSudokuAction extends SudokuAction
 {
-    private SudokuType   newSudokuType   = SudokuType.SINGLE;
-    private SubAreaWidth newSubAreaWidth = SubAreaWidth.THREE;
-    private Class        newValClass     = null;
+    private SudokuType newSudokuType = SudokuType.SINGLE;
+    private Class      newValClass   = null;
 
-    public NewSudokuAction(AppMain appMain, Values.SudokuType type, Class newLegalValuesClass,
-            Values.SubAreaWidth subAreaWidth, String text, Integer acceleratorKey)
+    public NewSudokuAction(AppMain appMain, Values.SudokuType type, Class newLegalValuesClass, String text,
+            Integer acceleratorKey)
     {
         super(appMain, text, acceleratorKey);
         newSudokuType = type;
-        newSubAreaWidth = subAreaWidth;
         newValClass = newLegalValuesClass;
     }
 
@@ -42,7 +39,7 @@ public class NewSudokuAction extends SudokuAction
                 // newSubAreaWidth.toString());
                 try
                 {
-                    app.startUpdatingNumOfFields(newValClass, newSubAreaWidth, newSudokuType);
+                    app.startUpdatingNumOfFields(newValClass, newSudokuType);
                     // app.setLegalValuesSwitchEnabled();
                 }
                 catch (Exception ex)

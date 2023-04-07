@@ -52,7 +52,6 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.ibm.icu.impl.duration.TimeUnit;
 
-import SudokuStepper.Values.SubAreaWidth;
 import SudokuStepper.Values.SudokuType;
 import SudokuStepper.ListOfSolTraces;
 
@@ -289,9 +288,8 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    private static Values.SubAreaWidth singleSudokuWidth = Values.SubAreaWidth.THREE; // Must be 3 or 4 currently
-    private static Class<?>            legalValClassUi   = LegalValues.class;         // LegalValues_16.class
-    private AppState                   status            = AppState.EMPTY;
+    private static Class<?> legalValClassUi = LegalValues.class;
+    private AppState        status          = AppState.EMPTY;
 
     public void setState(AppState val)
     {
@@ -415,13 +413,16 @@ public class AppMain extends ApplicationWindow
             {
                 for (int colBlock = 0; colBlock < getMaxCols() / getRectangleLength(); colBlock++)
                 {
-                    switch (singleSudokuWidth)
+                    Class legalClass = getLegalValClassUi();
+                    if (legalClass == SudokuStepper.LegalValues_4.class
+                            || legalClass == SudokuStepper.LegalValues_16.class
+                            || legalClass == SudokuStepper.LegalValues_25.class)
                     {
-                    case FOUR:
                         // Only SINGLE supported
                         cellCompositesPtr[rowBlock][colBlock].setVisible(true);
-                        break;
-                    case THREE:
+                    }
+                    else if (legalClass == SudokuStepper.LegalValues.class)
+                    {
                         switch (type)
                         {
                         case SAMURAI:
@@ -434,7 +435,6 @@ public class AppMain extends ApplicationWindow
                             cellCompositesPtr[rowBlock][colBlock].setVisible(rowBlock < 3 && colBlock < 3);
                             break;
                         }
-                        break;
                     }
                 }
             }
@@ -959,7 +959,6 @@ public class AppMain extends ApplicationWindow
      */
     protected <LegalValuesGen extends LegalValuesGenClass> void createSudokuContents(SudokuType sudokuType)
     {
-        SubAreaWidth subAreaWidth = this.getSubAreaWidth();
         uiFields = new HashMap<Integer, Map<Integer, SolNCandTexts>>(getCandidatesPerRow());
         int textCounter = 0;
         grpSudokuScrolledContents.setLayout(new GridLayout(getMaxCols() / getRectangleLength(), true));
@@ -1335,25 +1334,18 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
-    // private Action use16ValuesAction = new UpdateNumOfValuesAction(this,
-    // LegalValues_16.class,
-    // Values.SubAreaWidth.FOUR, "&4x4 Fields", SWT.CTRL + KeyEvent.VK_6);
-    // private Action use9ValuesAction = new UpdateNumOfValuesAction(this,
-    // LegalValues.class,
-    // Values.SubAreaWidth.THREE, "&3x3 Fields", SWT.CTRL + KeyEvent.VK_9);
-
     private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
             SWT.CTRL + KeyEvent.VK_R);
     private Action            newSudokuSingleAction2x2    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues_4.class, Values.SubAreaWidth.TWO, "&New Single 2x2", SWT.CTRL + KeyEvent.VK_2);
+            LegalValues_4.class, "&New Single 2x2", SWT.CTRL + KeyEvent.VK_2);
     private Action            newSudokuSingleAction3x3    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues.class, Values.SubAreaWidth.THREE, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_3);
+            LegalValues.class, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_3);
     private Action            newSudokuSingleAction4x4    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues_16.class, Values.SubAreaWidth.FOUR, "&New Single 4x4", SWT.CTRL + KeyEvent.VK_4);
+            LegalValues_16.class, "&New Single 4x4", SWT.CTRL + KeyEvent.VK_4);
     private Action            newSudokuSingleAction5x5    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues_25.class, Values.SubAreaWidth.FIVE, "&New Single 5x5", SWT.CTRL + KeyEvent.VK_5);
+            LegalValues_25.class, "&New Single 5x5", SWT.CTRL + KeyEvent.VK_5);
     private Action            newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI,
-            LegalValues.class, Values.SubAreaWidth.THREE, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
+            LegalValues.class, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
     private Action            openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open",
             SWT.CTRL + KeyEvent.VK_O, false);
     private Action            openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
@@ -2026,9 +2018,8 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    public void startUpdatingNumOfFields(Class newLegalValClassUi, Values.SubAreaWidth newVal, SudokuType newSudokuType)
+    public void startUpdatingNumOfFields(Class newLegalValClassUi, SudokuType newSudokuType)
     {
-        Values.SubAreaWidth oldWidth = this.getSubAreaWidth();
         Class oldClassUi = this.getLegalValClassUi();
         if (newLegalValClassUi != oldClassUi)
         {
@@ -2037,7 +2028,7 @@ public class AppMain extends ApplicationWindow
             Cursor cursor = new Cursor(display, SWT.CURSOR_WAIT);
             shell.setCursor(cursor);
             display.update();
-            singleSudokuWidth = newVal;
+            // singleSudokuWidth = newVal;
             legalValClassUi = newLegalValClassUi;
             // condEnableNewSamuraiAction();
             createSudokuContents(newSudokuType);
@@ -2068,10 +2059,10 @@ public class AppMain extends ApplicationWindow
     // }
     // }
 
-    public SubAreaWidth getSubAreaWidth()
-    {
-        return singleSudokuWidth;
-    }
+    // public SubAreaWidth getSubAreaWidth()
+    // {
+    // return singleSudokuWidth;
+    // }
 
     public Class getLegalValClassUi()
     {

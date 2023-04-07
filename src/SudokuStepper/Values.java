@@ -99,16 +99,10 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         SINGLE, SAMURAI
     }
 
-    public enum SubAreaWidth
-    {
-        TWO, THREE, FOUR, FIVE;
-    }
-
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
     private String                        sudokuName               = null;
     private SudokuType                    sudokuType               = SudokuType.SINGLE;
     private Class                         legalValuesClass         = LegalValues.class;
-    // private SubAreaWidth subAreaWidth = SubAreaWidth.THREE;
     private String                        inputFile                = null;
     private boolean                       saved                    = true;
     private AppMain                       appMain                  = null;
