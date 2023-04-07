@@ -38,7 +38,8 @@ public class NewSudokuAction extends SudokuAction
             boolean reallyDo = app.canDiscardOldSudokuIfAnyExists();
             if (reallyDo)
             {
-                System.out.println("UpdateNumOfValuesAction.run: " + newSubAreaWidth.toString());
+                // System.out.println("UpdateNumOfValuesAction.run: " +
+                // newSubAreaWidth.toString());
                 try
                 {
                     app.startUpdatingNumOfFields(newValClass, newSubAreaWidth, newSudokuType);

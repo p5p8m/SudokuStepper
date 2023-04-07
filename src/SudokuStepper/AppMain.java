@@ -404,10 +404,11 @@ public class AppMain extends ApplicationWindow
 
     private void setCompositeVisibility(SudokuType type)
     {
-        System.out
-                .println("SIZE: cellComposites[" + cellCompositesPtr.length + "][" + cellCompositesPtr[0].length + "]");
-        System.out.println("getMaxRows() / getRectangleLength() = " + getMaxRows() + "/" + getRectangleLength());
-        System.out.println("getMaxCols() / getRectangleLength() = " + getMaxCols() + "/" + getRectangleLength());
+        // System.out
+        // .println("SIZE: cellComposites[" + cellCompositesPtr.length + "][" +
+        // cellCompositesPtr[0].length + "]");
+        // System.out.println("getMaxRows() / getRectangleLength() = " + getMaxRows() +
+        // "/" + getRectangleLength());
         if (cellCompositesPtr != null)
         {
             for (int rowBlock = 0; rowBlock < getMaxRows() / getRectangleLength(); rowBlock++)
@@ -1343,10 +1344,14 @@ public class AppMain extends ApplicationWindow
 
     private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
             SWT.CTRL + KeyEvent.VK_R);
+    private Action            newSudokuSingleAction2x2    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
+            LegalValues_4.class, Values.SubAreaWidth.TWO, "&New Single 2x2", SWT.CTRL + KeyEvent.VK_2);
     private Action            newSudokuSingleAction3x3    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues.class, Values.SubAreaWidth.THREE, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_N);
+            LegalValues.class, Values.SubAreaWidth.THREE, "&New Single 3x3", SWT.CTRL + KeyEvent.VK_3);
     private Action            newSudokuSingleAction4x4    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
-            LegalValues_16.class, Values.SubAreaWidth.FOUR, "&New Single 4x4", SWT.CTRL + KeyEvent.VK_N);
+            LegalValues_16.class, Values.SubAreaWidth.FOUR, "&New Single 4x4", SWT.CTRL + KeyEvent.VK_4);
+    private Action            newSudokuSingleAction5x5    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
+            LegalValues_25.class, Values.SubAreaWidth.FIVE, "&New Single 5x5", SWT.CTRL + KeyEvent.VK_5);
     private Action            newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI,
             LegalValues.class, Values.SubAreaWidth.THREE, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
     private Action            openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open",
@@ -1397,8 +1402,10 @@ public class AppMain extends ApplicationWindow
         MenuManager fileMenuMgr = new MenuManager("File");
         fileMenuMgr.setVisible(true);
         menuMgr.add(fileMenuMgr);
+        fileMenuMgr.add(newSudokuSingleAction2x2);
         fileMenuMgr.add(newSudokuSingleAction3x3);
         fileMenuMgr.add(newSudokuSingleAction4x4);
+        fileMenuMgr.add(newSudokuSingleAction5x5);
         fileMenuMgr.add(newSudokuSamuraiAction);
         // condEnableNewSamuraiAction();
         fileMenuMgr.add(openProblemSudokuAction);

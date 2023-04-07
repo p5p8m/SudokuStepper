@@ -82,9 +82,17 @@ public abstract class OpenSudokuAction extends SudokuAction
                         SudokuType newSudokuType = app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                         Values.SubAreaWidth newVal = Values.SubAreaWidth.THREE;
                         Class newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
-                        if (newLegalValuesClass == LegalValues_16.class)
+                        if (newLegalValuesClass == LegalValues_25.class)
+                        {
+                            newVal = Values.SubAreaWidth.FIVE;
+                        }
+                        else if (newLegalValuesClass == LegalValues_16.class)
                         {
                             newVal = Values.SubAreaWidth.FOUR;
+                        }
+                        else if (newLegalValuesClass == LegalValues_4.class)
+                        {
+                            newVal = Values.SubAreaWidth.TWO;
                         }
                         app.startUpdatingNumOfFields(newLegalValuesClass, newVal, newSudokuType);
                         app.updateSudokuFields(false, true, false);

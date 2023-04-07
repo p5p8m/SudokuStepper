@@ -79,7 +79,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                 loopCount++;
                 System.out.println("====loopCount: " + loopCount);
                 System.out.println("updated: " + updated);
-                System.out.println("loopCnewNumOfSolutionsount: " + newNumOfSolutions);
+                System.out.println("loopCnewNumOfSolutionsCount: " + newNumOfSolutions);
                 System.out.println("oldNumOfSolutions: " + oldNumOfSolutions);
                 System.out.println("errorDetected: " + errorDetected);
             }
@@ -376,9 +376,9 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                         && sudoku.getCell(row, col).getCandidates().size() == 2)
                                 {
                                     // Make a deep copy to avoid problems when the list is modified within the loop
-                                    List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                    List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                             sudoku.getCell(row, col).getCandidates());
-                                    for (LegalValues val : locCandidates)
+                                    for (LegalValuesGenClass val : locCandidates)
                                     {
                                         for (int cleanedCol = 0; cleanedCol < AppMain
                                                 .getSingleSudokuMaxCols(); cleanedCol++)
@@ -432,9 +432,9 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                         && sudoku.getCell(row, col).getCandidates().size() == 2)
                                 {
                                     // Make a deep copy to avoid problems when the list is modified whithin the loop
-                                    List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                    List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                             sudoku.getCell(row, col).getCandidates());
-                                    for (LegalValues val : locCandidates)
+                                    for (LegalValuesGenClass val : locCandidates)
                                     {
                                         for (int cleanedRow = 0; cleanedRow < AppMain
                                                 .getSingleSudokuMaxRows(); cleanedRow++)
@@ -509,9 +509,9 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                         && sudoku.getCell(rowInBlock, colInBlock).getCandidates()
                                                                 .size() == 2)
                                                 {
-                                                    List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                    List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                                             sudoku.getCell(rowInBlock, colInBlock).getCandidates());
-                                                    for (LegalValues val : locCandidates)
+                                                    for (LegalValuesGenClass val : locCandidates)
                                                     {
                                                         for (int cleanedRowInBlock = AppMain.getRectangleLength()
                                                                 * rowBlock; cleanedRowInBlock < AppMain
@@ -576,7 +576,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                 {
                                     if (!sudoku.getCell(row, thrdCol).getCandidates().isEmpty())
                                     {
-                                        List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                        List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                                 contentsUnion(sudoku.getCell(row, col).getCandidates(),
                                                         sudoku.getCell(row, scndCol).getCandidates(),
                                                         sudoku.getCell(row, thrdCol).getCandidates()));
@@ -584,7 +584,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                         {
                                             // Make a deep copy to avoid problems when the list is modified within the
                                             // loop
-                                            for (LegalValues val : locCandidates)
+                                            for (LegalValuesGenClass val : locCandidates)
                                             {
                                                 for (int cleanedCol = 0; cleanedCol < AppMain
                                                         .getSingleSudokuMaxCols(); cleanedCol++)
@@ -622,7 +622,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                 {
                                     if (!sudoku.getCell(thrdRow, col).getCandidates().isEmpty())
                                     {
-                                        List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                        List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                                 contentsUnion(sudoku.getCell(row, col).getCandidates(),
                                                         sudoku.getCell(scndRow, col).getCandidates(),
                                                         sudoku.getCell(thrdRow, col).getCandidates()));
@@ -630,7 +630,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                         {
                                             // Make a deep copy to avoid problems when the list is modified within the
                                             // loop
-                                            for (LegalValues val : locCandidates)
+                                            for (LegalValuesGenClass val : locCandidates)
                                             {
                                                 for (int cleanedRow = 0; cleanedRow < AppMain
                                                         .getSingleSudokuMaxCols(); cleanedRow++)
@@ -699,7 +699,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                             if (!sudoku.getCell(thrdRowInBlock, thrdColInBlock)
                                                                     .getCandidates().isEmpty())
                                                             {
-                                                                List<LegalValues> locCandidates = new ArrayList<LegalValues>(
+                                                                List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                                                         contentsUnion(
                                                                                 sudoku.getCell(rowInBlock, colInBlock)
                                                                                         .getCandidates(),
@@ -713,7 +713,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                                     // Make a deep copy to avoid problems when the list
                                                                     // is
                                                                     // modified within the loop
-                                                                    for (LegalValues val : locCandidates)
+                                                                    for (LegalValuesGenClass val : locCandidates)
                                                                     {
                                                                         for (int cleanedRowInBlock = AppMain
                                                                                 .getRectangleLength()

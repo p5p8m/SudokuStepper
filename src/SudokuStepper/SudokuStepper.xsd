@@ -6,7 +6,7 @@
    attributeFormDefault="unqualified" elementFormDefault="qualified">
    <xs:simpleType name="rangeValue">
       <xs:annotation>
-         <xs:documentation>maximum value is 21 if samurai type, else 9
+         <xs:documentation>maximum value is 21 if samurai type, else 4, 9, 16, 25
          </xs:documentation>
       </xs:annotation>
       <xs:restriction base="xs:byte">
@@ -25,7 +25,7 @@
    </xs:simpleType>
    <xs:simpleType name="nullableRangeValue">
       <xs:annotation>
-         <xs:documentation>maximum value is 21 if samurai type, else 9, and it may be empty
+         <xs:documentation>maximum value is 21 if samurai type, else 4, 9, 16, 25 and it may be empty
          </xs:documentation>
       </xs:annotation>
       <xs:union memberTypes="tns:rangeValue tns:noValue"/>
@@ -106,8 +106,8 @@
          <xs:attribute name="highestValueInCell" type="xs:integer"
             use="optional">
             <xs:annotation>
-               <xs:documentation>Expected to be 9 (implicit
-                  default) or 16
+               <xs:documentation>Expected to be 4, 9 (implicit
+                  default) or 16 or 25
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>

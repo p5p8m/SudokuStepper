@@ -101,7 +101,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
 
     public enum SubAreaWidth
     {
-        THREE, FOUR;
+        TWO, THREE, FOUR, FIVE;
     }
 
     private Stack<Tentative>              sudokuCands              = new Stack<Tentative>();
@@ -668,8 +668,14 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 int highestValueInCellInt = Integer.parseInt(highestValueInCell);
                 switch (highestValueInCellInt)
                 {
+                case 25:
+                    legalValuesClass = LegalValues_25.class;
+                    break;
                 case 16:
                     legalValuesClass = LegalValues_16.class;
+                    break;
+                case 4:
+                    legalValuesClass = LegalValues_4.class;
                     break;
                 case 9:
                 default:
@@ -989,9 +995,17 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             rootElement.setAttribute(SUDOKUNAME, sudokuName);
             rootElement.setAttribute(SUDOKUTYPE, sudokuType.name().toLowerCase());
             int attrValInt = 9;
-            if (legalValuesClass == LegalValues_16.class)
+            if (legalValuesClass == LegalValues_25.class)
+            {
+                attrValInt = 25;
+            }
+            else if (legalValuesClass == LegalValues_16.class)
             {
                 attrValInt = 16;
+            }
+            else if (legalValuesClass == LegalValues_4.class)
+            {
+                attrValInt = 4;
             }
             rootElement.setAttribute(HIGHESTVALUEINCELL, Integer.toString(attrValInt));
             newDoc.appendChild(rootElement);
