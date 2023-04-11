@@ -1212,8 +1212,19 @@ public class AppMain extends ApplicationWindow
                             {
                                 for (int colSub = 1; colSub <= getRectangleLength(); colSub++)
                                 {
-                                    uiFields.get(totalRow).get(totalCol).toolTip += LegalValuesGenClass.toDisplayString(
-                                            legalValClassUi, (rowSub - 1) * getRectangleLength() + colSub) + " ";
+                                    String tooltip = "";
+                                    boolean notEmpty = false;
+                                    for (LegalValuesGenClass val : LegalValuesGen.values(legalValClassUi))
+                                    {
+                                        if (notEmpty)
+                                        {
+                                            tooltip += ", ";
+                                        }
+                                        tooltip += val.toDisplayString();
+                                        notEmpty = true;
+                                    }
+                                    // Need parent in next line to display while there are no solution yet
+                                    uiFields.get(totalRow).get(totalCol).solution.getParent().setToolTipText(tooltip);
                                 }
                             }
                         }
@@ -1558,12 +1569,14 @@ public class AppMain extends ApplicationWindow
                 uiField.input.setVisible(true);
                 if (uiField.candidatesWidgets != null)
                 {
-                    for (int ind = 0; ind < getCandidatesNumber(); ind++)
-                    {
-                        Text cand = uiField.candidatesWidgets.get(ind);
-                        // cand.setVisible(false);
-                        cand.getParent().setVisible(false);
-                    }
+                    Text cand = uiField.candidatesWidgets.get(0);
+                    cand.getParent().setVisible(false);
+                    // for (int ind = 0; ind < getCandidatesNumber(); ind++)
+                    // {
+                    // Text cand = uiField.candidatesWidgets.get(ind);
+                    // // cand.setVisible(false);
+                    // cand.getParent().setVisible(false);
+                    // }
                 }
             }
         }
@@ -1740,11 +1753,19 @@ public class AppMain extends ApplicationWindow
                     // Better is to look for the text contents and mask the one
                     for (Text candText : uiFields.get(row).get(col).candidatesWidgets)
                     {
-                        if (LegalValuesGenClass.toDisplayString(legalValClassUi, val.val()).equals(candText.getText()))
+                        if (val.toDisplayString().equals(candText.getText()))
                         {
                             candText.setVisible(false);
                         }
                     }
+                }
+                else
+                {
+                    String toolTip = uiFields.get(row).get(col).solution.getParent().getToolTipText();
+                    String valStr = val.toDisplayString();
+                    toolTip = toolTip.replaceFirst("^" + valStr + ",", ",");
+                    toolTip = toolTip.replaceFirst(", " + valStr, ",-");
+                    uiFields.get(row).get(col).solution.getParent().setToolTipText(toolTip);
                 }
             }
         });
