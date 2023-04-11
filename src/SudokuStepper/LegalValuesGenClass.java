@@ -244,20 +244,17 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
     //
     // return the correct display value (must match the newInstance functionnal
     // behaviour)
-    public static String toDisplayString(int val)
+    public String toDisplayString()
     {
-        String retVal = "";
-        if (val == 16)
-        {
-            retVal = "g";
-        }
-        else
-        {
-            retVal = Integer.toHexString(val);
-        }
+        String retVal = getValuesPatternList(this.getClass()).get(val - 1);
         return (retVal);
     }
 
+    public static String toDisplayString(Class currClass, int val)
+    {
+        String retVal = getValuesPatternList(currClass).get(val - 1);
+        return (retVal);
+    }
     // public static LegalValuesGenClass newInstance(int val)
     // {
     // return (null);

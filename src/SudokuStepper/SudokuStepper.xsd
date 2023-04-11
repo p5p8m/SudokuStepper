@@ -11,7 +11,7 @@
       </xs:annotation>
       <xs:restriction base="xs:byte">
          <xs:minInclusive value="1"></xs:minInclusive>
-         <xs:maxInclusive value="21"></xs:maxInclusive>
+         <xs:maxInclusive value="25"></xs:maxInclusive>
       </xs:restriction>
    </xs:simpleType>
    <xs:simpleType name="noValue">
