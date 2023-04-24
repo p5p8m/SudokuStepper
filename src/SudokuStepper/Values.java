@@ -497,7 +497,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         // Same column
         for (int rowInCol = 0; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
         {
-            if (localRow != rowInCol && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution().val()))
+            if (localRow != rowInCol && sudoku.getRowCol(rowInCol, localCol).getSolution() != null
+                    && val.equals(sudoku.getRowCol(rowInCol, localCol).getSolution().val()))
             {
                 retVal = false;
                 break;
@@ -508,7 +509,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         {
             for (int colInRow = 0; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
             {
-                if (localCol != colInRow && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution().val()))
+                if (localCol != colInRow && sudoku.getRowCol(localRow, colInRow).getSolution() != null
+                        && val.equals(sudoku.getRowCol(localRow, colInRow).getSolution().val()))
                 {
                     retVal = false;
                     break;
@@ -527,6 +529,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                                 * (localCol / AppMain.getRectangleLength() + 1); colInBlock++)
                 {
                     if ((localCol != colInBlock || localRow != rowInBlock)
+                            && sudoku.getRowCol(rowInBlock, colInBlock).getSolution() != null
                             && val.equals(sudoku.getRowCol(rowInBlock, colInBlock).getSolution().val()))
                     {
                         retVal = false;

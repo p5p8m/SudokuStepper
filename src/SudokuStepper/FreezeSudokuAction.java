@@ -23,7 +23,7 @@ public class FreezeSudokuAction<LegalValuesGen extends LegalValuesGenClass> exte
             {
                 newSudoku.setSaved(false);
                 newSudoku.resetCandidates(app.getLegalValClassUi());
-                app.updateSudokuFields(true, true, false);
+                app.updateSudokuFields(true, true, false, false);
             }
         }
         catch (Exception ex)

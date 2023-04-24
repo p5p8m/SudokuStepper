@@ -81,7 +81,7 @@ public class SaveAsSudokuAction extends SaveSudokuAction
                 if (reallySave)
                 {
                     app.getSudokuPb().save(fileToWrite, app.getSudokuPb().getSolutionTrace());
-                    app.updateSudokuFields(true, true, false);
+                    app.updateSudokuFields(true, true, false, false);
                 }
             }
         }

@@ -1319,6 +1319,13 @@ public class AppMain extends ApplicationWindow
         }
     }
 
+    private void setUpdateEnabled(boolean enabled)
+    {
+        if (updateProblemSudokuAction != null)
+        {
+            updateProblemSudokuAction.setEnabled(enabled);
+        }
+    }
     // private class fileExitItemListener implements SelectionListener
     // {
     // public void widgetSelected(SelectionEvent event)
@@ -1383,7 +1390,9 @@ public class AppMain extends ApplicationWindow
     private Action            newSudokuSamuraiAction      = new NewSudokuAction(this, Values.SudokuType.SAMURAI,
             LegalValues_9.class, "&New Samurai 3x3", SWT.CTRL + KeyEvent.VK_M);
     private Action            openProblemSudokuAction     = new OpenProblemSudokuAction(this, "&Open",
-            SWT.CTRL + KeyEvent.VK_O, false);
+            SWT.CTRL + KeyEvent.VK_O, false, false);
+    private Action            updateProblemSudokuAction   = new OpenProblemSudokuAction(this, "&Update Sudoku",
+            SWT.CTRL + KeyEvent.VK_U, false, true);
     private Action            openSolutionSudokuAction    = new OpenSolutionSudokuAction(this, "&Open Solution",
             SWT.CTRL + KeyEvent.VK_L, true);
     private Action            saveSudokuAction            = new SaveSudokuAction(this, "&Save",
@@ -1437,6 +1446,8 @@ public class AppMain extends ApplicationWindow
         fileMenuMgr.add(newSudokuSamuraiAction);
         // condEnableNewSamuraiAction();
         fileMenuMgr.add(openProblemSudokuAction);
+        fileMenuMgr.add(updateProblemSudokuAction);
+        setUpdateEnabled(true);
         fileMenuMgr.add(openSolutionSudokuAction);
         fileMenuMgr.add(saveSudokuAction);
         saveSudokuAction.setEnabled(false);
@@ -1546,14 +1557,21 @@ public class AppMain extends ApplicationWindow
         }
     }
 
-    void initGuiForNew()
+    void initGuiForNew(boolean updatingSudoku)
     {
         // It is important to first relayout and then set the uiFields
         setFreezeEnabled(false);
         setSolveEnabled(false, false);
         grpSudokuName.setVisible(true);
         ((FormData) (grpSudokuScrolled.getLayoutData())).top = new FormAttachment(0, TOP_MARGIN + NAME_BOX_HEIGHT);
-        txtName.setText(StringUtils.EMPTY);
+        if (mySudoku != null && mySudoku.getName() != null)
+        {
+            txtName.setText(mySudoku.getName());
+        }
+        else
+        {
+            txtName.setText(StringUtils.EMPTY);
+        }
         txtName.setEditable(true);
         grpSudokuScrolled.getParent().layout(true, true);
         grpSudokuScrolled.redraw();
@@ -1563,6 +1581,14 @@ public class AppMain extends ApplicationWindow
             for (Integer col : uiFields.get(row).keySet())
             {
                 SolNCandTexts uiField = uiFields.get(row).get(col);
+                if (updatingSudoku)
+                {
+                    SingleCellValue<?> cell = mySudoku.getCell(row, col);
+                    if (cell.isInput())
+                    {
+                        uiField.input.setText(cell.getSolution().toDisplayString());
+                    }
+                }
                 setSolutionNInputBckgrdColor(row, col, false);
                 uiField.solution.setVisible(false);
                 // uiField.input.setText(StringUtils.EMPTY);
@@ -1659,29 +1685,42 @@ public class AppMain extends ApplicationWindow
         return;
     }
 
-    void updateSudokuFields(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound)
+    void updateSudokuFields(boolean keepCandidatesVisibility, boolean runsInUiThread, boolean markLastSolutionFound,
+            boolean updateProblemSudoku)
     {
         if (runsInUiThread)
         {
-            updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound);
+            updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound, updateProblemSudoku);
         }
         else
         {
             myDisplay.asyncExec(() ->
             {
-                updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound);
+                updateSudokuFieldsInUiThread(keepCandidatesVisibility, markLastSolutionFound, updateProblemSudoku);
             });
         }
     }
 
-    private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound)
+    private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound,
+            boolean updateProblemSudoku)
     {
         ((Group) (cellCompositesPtr[0][0].getParent())).setText(mySudoku.getName());
         txtName.setText(mySudoku.getName());
         setStatus(mySudoku.getInputFile());
         setCompositeVisibility(mySudoku.getType());
         List<List<int[]>> conflicts = mySudoku.areContentsLegal();
-        freeze(keepCandidatesVisibility, true, markLastSolutionFound);
+        if (updateProblemSudoku)
+        {
+            setState(AppState.CREATING);
+            // updateSudokuFields(false, true, false, updateProblemSudoku);
+            // app.setSlideShowMode(app.getSlideShowEnabled());
+            disableSlideShow();
+            initGuiForNew(updateProblemSudoku);
+        }
+        else
+        {
+            freeze(keepCandidatesVisibility, true, markLastSolutionFound);
+        }
         if (!conflicts.isEmpty())
         {
             for (List<int[]> conflict : conflicts)
@@ -1695,10 +1734,11 @@ public class AppMain extends ApplicationWindow
             errorBox.open();
         }
         grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        setSolveEnabled(status != AppState.SOLVING, false);
+        setSolveEnabled(status != AppState.CREATING && status != AppState.SOLVING, false);
         saveAsSudokuAction.setEnabled(status != AppState.CREATING);
-        condEnableSaveSudokuAction(mySudoku.isSaved());
+        condEnableSaveSudokuAction(mySudoku.isSaved() && status != AppState.CREATING);
         renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);
+        setFreezeEnabled(status == AppState.CREATING);
     }
 
     /**
@@ -1807,7 +1847,7 @@ public class AppMain extends ApplicationWindow
 
     public void rollbackSudoku()
     {
-        updateSudokuFields(false, false, true);
+        updateSudokuFields(false, false, true, false);
     }
 
     public void savedUpdated(boolean saved, boolean runsInUiThread)
@@ -1832,6 +1872,7 @@ public class AppMain extends ApplicationWindow
         {
             saveSudokuAction.setEnabled(true);
         }
+        setUpdateEnabled(saved || status == AppState.CREATING);
     }
 
     // To be called only when manually creating a sudoku

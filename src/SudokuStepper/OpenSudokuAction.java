@@ -21,13 +21,16 @@ public abstract class OpenSudokuAction extends SudokuAction
 {
     String fileFilterPath = "F:/jdk1.5";
 
-    public OpenSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution)
+    public OpenSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution,
+            boolean updateSudokuIn)
     {
         super(appMain, text, acceleratorKey);
         alsoReadSolution = alsoGetSolution;
+        updateSudoku = updateSudokuIn;
     }
 
     private boolean alsoReadSolution = false;
+    private boolean updateSudoku     = false;
 
     @Override
     public void run()
@@ -74,7 +77,7 @@ public abstract class OpenSudokuAction extends SudokuAction
                         SudokuType newSudokuType = app.getSudokuPb().read(fileToOpen, alsoReadSolution);
                         Class<?> newLegalValuesClass = app.getSudokuPb().getLegalValueClass();
                         app.startUpdatingNumOfFields(newLegalValuesClass, newSudokuType);
-                        app.updateSudokuFields(false, true, false);
+                        app.updateSudokuFields(false, true, false, updateSudoku);
                         app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
                         app.toggleSlideShow();
                     }
@@ -102,7 +105,14 @@ public abstract class OpenSudokuAction extends SudokuAction
         }
         finally
         {
-            app.setState(AppState.EMPTY);
+            if (updateSudoku)
+            {
+                app.setState(AppState.CREATING);
+            }
+            else
+            {
+                app.setState(AppState.EMPTY);
+            }
         }
     }
 }

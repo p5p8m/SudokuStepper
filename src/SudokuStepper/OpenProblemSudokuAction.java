@@ -11,9 +11,10 @@ public class OpenProblemSudokuAction extends OpenSudokuAction
 {
     String fileFilterPath = "F:/jdk1.5";
 
-    public OpenProblemSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution)
+    public OpenProblemSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution,
+            boolean updateSudoku)
     {
-        super(appMain, text, acceleratorKey, alsoGetSolution);
+        super(appMain, text, acceleratorKey, alsoGetSolution, updateSudoku);
     }
 
     @Override

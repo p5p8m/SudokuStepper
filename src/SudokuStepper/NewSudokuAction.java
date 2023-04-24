@@ -53,10 +53,10 @@ public class NewSudokuAction extends SudokuAction
                 // 2.
                 // Aufruf
                 app.setState(AppState.CREATING);
-                app.updateSudokuFields(false, true, false);
+                app.updateSudokuFields(false, true, false, false);
                 // app.setSlideShowMode(app.getSlideShowEnabled());
                 app.disableSlideShow();
-                app.initGuiForNew();
+                app.initGuiForNew(false);
             }
         }
         // catch (Exception ex)

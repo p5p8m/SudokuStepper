@@ -94,7 +94,8 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
             // // is not performed at every stage
             // }
             // });
-            app.updateSudokuFields(true, false, false); // needed to make sure conflicts are represented since the check
+            app.updateSudokuFields(true, false, false, false); // needed to make sure conflicts are represented since
+                                                               // the check
             // is not performed at every stage
             if (errorDetected)
             {

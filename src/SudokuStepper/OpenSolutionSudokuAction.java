@@ -13,7 +13,7 @@ public class OpenSolutionSudokuAction extends OpenSudokuAction
 
     public OpenSolutionSudokuAction(AppMain appMain, String text, Integer acceleratorKey, boolean alsoGetSolution)
     {
-        super(appMain, text, acceleratorKey, alsoGetSolution);
+        super(appMain, text, acceleratorKey, alsoGetSolution, false);
     }
 
     @Override
