@@ -214,7 +214,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         Tentative<LegalValuesGen> newSudoku = new Tentative<LegalValuesGen>(oldSudoku, sudokuType);
         LegalValuesGen toBeEliminatedVal = (LegalValuesGen) oldSudoku.setBifurcation(globalRow, globalCol);
         System.out.println("Try and Error with row: " + globalRow + ", col: " + globalCol + ", eliminating value: "
-                + toBeEliminatedVal);
+                + toBeEliminatedVal.val());
         sudokuCands.push(newSudoku);
         retVal = eliminateCandidate(globalRow, globalCol, toBeEliminatedVal, true, false, true, true);
         oldSudoku.getSudoku().getRowCol(globalRow, globalCol).setTryNError(true);
@@ -249,7 +249,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             int col = nextTry.getCol();
             LegalValuesGen toBeEliminatedVal = nextTry.getNextTry();
             System.out.println("Try and Error rollback with row: " + row + ", col: " + col + ", now eliminating value: "
-                    + toBeEliminatedVal);
+                    + toBeEliminatedVal.val());
             retVal = eliminateCandidate(row, col, toBeEliminatedVal, true, false, true, true);
             oldSudoku.getSudoku().getRowCol(row, col).setTryNError(true);
         }
