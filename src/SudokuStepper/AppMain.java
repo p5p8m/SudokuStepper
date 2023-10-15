@@ -1140,7 +1140,7 @@ public class AppMain extends ApplicationWindow
                                                 setStatus(StringUtils.EMPTY);
                                                 val = (LegalValuesGen) (legalValClassUi.getConstructor(String.class)
                                                         .newInstance(input));
-                                                mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
+                                                // mySudoku.updateCandidateList(totalRow, totalCol, val, true, false);
                                                 mySudoku.getCell(totalRow, totalCol).getCandidates().clear();
                                                 mySudoku.getCell(totalRow, totalCol).setSolution(val, totalRow,
                                                         totalCol, null, true, false);
