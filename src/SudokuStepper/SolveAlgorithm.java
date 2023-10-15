@@ -131,12 +131,27 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                 // Check if there are possibly other solutions
                 ListOfSolTraces<LegalValuesGen> firstSolution = (ListOfSolTraces<LegalValuesGen>) (app.getSudokuPb()
                         .getSolutionTrace());
+                ArrayList<SolutionTrace<?>> tracesFound = new ArrayList<SolutionTrace<?>>(0);
                 for (SolutionTrace<?> trace : firstSolution)
                 {
                     ArrayList<LegalValuesGen> choices = (ArrayList<LegalValuesGen>) trace.getChoices();
                     if (choices != null)
                     {
-                        noOfPossibleSolutions += choices.size();
+                        // Check if the same was not already found (because of rollback)
+                        boolean notYetFound = true;
+                        for (SolutionTrace<?> oldTrace : tracesFound)
+                        {
+                            if (oldTrace.getCol() == trace.getCol() && oldTrace.getRow() == trace.getRow())
+                            {
+                                notYetFound = false;
+                                break;
+                            }
+                        }
+                        if (notYetFound)
+                        {
+                            noOfPossibleSolutions += choices.size();
+                            tracesFound.add(trace);
+                        }
                     }
                 }
                 if (noOfPossibleSolutions > 0)
