@@ -389,6 +389,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
             {
                 listener.savedUpdated(isSaved(), runsInUiThread);
             }
+            Thread threadNeedingToWait = null;
             if (sudoku.getRowCol(globalRow, globalCol).getCandidates().size() == 1)
             {
                 if (alsoSetSolution)
@@ -400,13 +401,31 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                     sudoku.getRowCol(globalRow, globalCol).setTryNError(isATry);
                     sudoku.getRowCol(globalRow, globalCol).getCandidates().clear();
                     // Must be the last thing because the thread could end if step by step mode
-                    sudoku.getRowCol(globalRow, globalCol).setSolution(solution, globalRow, globalCol,
-                            solutionListeners, runsInUiThread, markLastSolutionFound);
+                    threadNeedingToWait = sudoku.getRowCol(globalRow, globalCol).setSolution(solution, globalRow,
+                            globalCol, solutionListeners, runsInUiThread, markLastSolutionFound);
                 }
                 SolutionProgress newUpdated = reduceInfluencedCellCandidates(globalRow, globalCol,
                         (LegalValuesGen) sudoku.getRowCol(globalRow, globalCol).getSolution(), alsoSetSolution,
                         runsInUiThread, markLastSolutionFound);
                 retVal = retVal.combineWith(newUpdated);
+                if (threadNeedingToWait != null)
+                {
+                    try
+                    {
+                        // End thread
+                        synchronized (threadNeedingToWait)
+                        {
+                            threadNeedingToWait.wait();
+                        }
+                    }
+                    catch (InterruptedException e)
+                    {
+                        // TODO Auto-generated catch block
+                        System.out
+                                .println("Exception thrown while trying to wait for the \"next\" button to be pressed");
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         return (retVal);

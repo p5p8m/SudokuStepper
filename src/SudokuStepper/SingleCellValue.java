@@ -13,17 +13,24 @@ public class SingleCellValue<LegalValuesGen extends LegalValuesGenClass>
     private int                       candidatesNumber = 0;    // Dummy initialization
     private LegalValuesGen            solution         = null;
 
-    public void setSolution(LegalValuesGen val, int row, int col, ArrayList<SolutionListener> solutionListeners,
+    // Returns a not null value if the thread should wait for "next" being pressed
+    public Thread setSolution(LegalValuesGen val, int row, int col, ArrayList<SolutionListener> solutionListeners,
             boolean runsInUiThread, boolean markLastSolutionFound)
     {
+        Thread retVal = null;
         solution = val;
         if (solutionListeners != null)
         {
             for (SolutionListener listener : solutionListeners)
             {
-                listener.solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
+                Thread retValLoc = listener.solutionUpdated(row, col, runsInUiThread, markLastSolutionFound);
+                if (retVal == null)
+                {
+                    retVal = retValLoc;
+                }
             }
         }
+        return (retVal);
     }
 
     public SingleCellValue(SingleCellValue<LegalValuesGen> src)

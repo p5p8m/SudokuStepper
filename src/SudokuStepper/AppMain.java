@@ -1905,9 +1905,11 @@ public class AppMain extends ApplicationWindow
         // }
     }
 
-    public <LegalValuesGen extends LegalValuesGenClass> void solutionUpdated(int row, int col, boolean runsInUiThread,
+    // Returns a not null value if the thread should wait for "next" being pressed
+    public <LegalValuesGen extends LegalValuesGenClass> Thread solutionUpdated(int row, int col, boolean runsInUiThread,
             boolean markLastSolutionFound)
     {
+        Thread retVal = null;
         if (markLastSolutionFound && !runsInUiThread)
         { // we are only updating the UI so no need to update the trace
             LegalValuesGenClass solutionVal = mySudoku.getCell(row, col).getSolution();
@@ -1944,13 +1946,11 @@ public class AppMain extends ApplicationWindow
                 if (slideShowPause == null || // step by step
                         stopSlideShow)
                 {
-                    // End thread
-                    synchronized (solvingThread)
+                    // Stop thread
+                    if (solvingThread != null)
                     {
-                        if (solvingThread != null)
-                        {
-                            solvingThread.wait();
-                        }
+                        retVal = solvingThread;
+                        // solvingThread.wait();
                     }
                 }
                 else if (slideShowPause > 0)
@@ -1964,6 +1964,7 @@ public class AppMain extends ApplicationWindow
                 System.out.println(ex.getMessage() + "\n" + ex.getLocalizedMessage() + "\n" + ex.toString());
             }
         }
+        return (retVal);
     }
 
     private void setSolutionNInputBckgrdColor(int row, int col, boolean markLastSolutionFound)
