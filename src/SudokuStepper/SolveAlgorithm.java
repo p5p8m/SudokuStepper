@@ -42,13 +42,14 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
             boolean errorDetected = false;
             // Integer slideShowPause = null;
             // boolean slideShowEnabled = false;
+            removeImpossibleCands(sudoku, false);
             int loopCount = 0;
             do
             {
                 // slideShowPause = app.getSlideShowPause();
                 // slideShowEnabled = app.getSlideShowEnabled();
                 oldNumOfSolutions = newNumOfSolutions;
-                updated = removeImpossibleCands(sudoku);
+                updated = removeImpossibleCands(sudoku, true);
                 updated = updated.combineWith(detectSingleCandidates(sudoku));
                 if (updated == SolutionProgress.NONE)
                 {
@@ -1014,7 +1015,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
     }
 
     // Remove candidates who are illegal in a row, column or block
-    private SolutionProgress removeImpossibleCands(Values<LegalValuesGenClass> masterSudoku)
+    SolutionProgress removeImpossibleCands(Values<LegalValuesGenClass> masterSudoku, boolean alsoSetSolution)
     {
         SolutionProgress updatedGlobal = SolutionProgress.NONE;
         SolutionProgress updatedSub = SolutionProgress.NONE;
@@ -1037,7 +1038,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                 {
                                     SolutionProgress nowUpdated = masterSudoku.eliminateCandidate(
                                             subSudoku.getGlobalRow(rowInCol), subSudoku.getGlobalCol(col),
-                                            valToEliminate, true, false, true, false);
+                                            valToEliminate, alsoSetSolution, false, true, false);
                                     updatedSub = updatedSub.combineWith(nowUpdated);
                                 }
                             }
@@ -1051,7 +1052,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                 {
                                     SolutionProgress nowUpdated = masterSudoku.eliminateCandidate(
                                             subSudoku.getGlobalRow(row), subSudoku.getGlobalCol(colInRow),
-                                            valToEliminate, true, false, true, false);
+                                            valToEliminate, alsoSetSolution, false, true, false);
                                     updatedSub = updatedSub.combineWith(nowUpdated);
                                 }
                             }
@@ -1072,7 +1073,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                     {
                                         SolutionProgress nowUpdated = masterSudoku.eliminateCandidate(
                                                 subSudoku.getGlobalRow(rowInBlock), subSudoku.getGlobalCol(colInBlock),
-                                                valToEliminate, true, false, true, false);
+                                                valToEliminate, alsoSetSolution, false, true, false);
                                         updatedSub = updatedSub.combineWith(nowUpdated);
                                     }
                                 }

@@ -1720,6 +1720,8 @@ public class AppMain extends ApplicationWindow
         else
         {
             freeze(keepCandidatesVisibility, true, markLastSolutionFound);
+            SolveAlgorithm algLocal = new SolveAlgorithm(this, "Temporary Solution Thread", null);
+            SolutionProgress updated = algLocal.removeImpossibleCands(mySudoku, false);
         }
         if (!conflicts.isEmpty())
         {
