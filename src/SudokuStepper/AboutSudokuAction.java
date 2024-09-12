@@ -27,7 +27,7 @@ public class AboutSudokuAction extends SudokuAction
             int style = SWT.OK | SWT.ICON_INFORMATION;
             MessageBox messageBox = new MessageBox(app.getShell(), style);
             messageBox.setText("About SudokuStepper");
-            messageBox.setMessage("Version 0.3");
+            messageBox.setMessage("Version 0.4 on September 12, 2024");
             messageBox.open();
         }
         catch (Exception ex)
