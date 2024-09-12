@@ -405,8 +405,8 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                             globalCol, solutionListeners, runsInUiThread, markLastSolutionFound);
                 }
                 SolutionProgress newUpdated = reduceInfluencedCellCandidates(globalRow, globalCol,
-                        (LegalValuesGen) sudoku.getRowCol(globalRow, globalCol).getSolution(), alsoSetSolution,
-                        runsInUiThread, markLastSolutionFound);
+                        (LegalValuesGen) sudoku.getRowCol(globalRow, globalCol).getSolution(),
+                        alsoSetSolution && threadNeedingToWait == null, runsInUiThread, markLastSolutionFound);
                 retVal = retVal.combineWith(newUpdated);
                 if (threadNeedingToWait != null)
                 {
