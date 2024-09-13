@@ -11,7 +11,7 @@ public class XmlErrorHandler implements ErrorHandler
 {
     public XmlErrorHandler()
     {
-        // TODO Auto-generated constructor stub
+        return;
     }
 
     public void warning(SAXParseException e) throws SAXException

@@ -204,7 +204,6 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         // }
         // catch (Exception e)
         // {
-        // // TODO Auto-generated catch block
         // System.out.println(e.getMessage());
         // e.printStackTrace();
         // }
@@ -1102,7 +1101,6 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         }
         catch (Exception e)
         {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

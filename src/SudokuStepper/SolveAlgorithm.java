@@ -181,7 +181,6 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         }
         catch (InterruptedException e)
         {
-            // TODO Auto-generated catch block
             System.out.println("Interrupted while trying to wait for the \"next\" button to be pressed");
             // e.printStackTrace();
             interruptedForNewProblem = true;

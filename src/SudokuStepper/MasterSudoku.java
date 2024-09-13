@@ -90,7 +90,6 @@ public class MasterSudoku<LegalValuesGen extends LegalValuesGenClass>
 
     public SingleCellValue[][] getArray()
     {
-        // TODO Auto-generated method stub
         return masterSudoku;
     }
 

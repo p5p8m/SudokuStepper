@@ -36,7 +36,6 @@ public class LegalValues_4 extends LegalValuesGenClass
         }
         catch (ClassNotFoundException e)
         {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         // alternatePatterns.put("00", "1");

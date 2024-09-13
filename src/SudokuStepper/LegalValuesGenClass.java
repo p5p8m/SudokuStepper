@@ -8,37 +8,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//interface LegalValuesConstr
-//{
-//    public static LegalValuesGenClass newInstance(int val)
-//    {
-//        // TODO Auto-generated method stub
-//        return null;
-//    }
-//
-//    public static LegalValuesGenClass newInstance(String val)
-//    {
-//        // TODO Auto-generated method stub
-//        return null;
-//    }
-//}
-
 public abstract class LegalValuesGenClass // implements LegalValuesConstr
 {
     private final int val;
-    // protected static Class ownClass = null;
-    // static
-    // {
-    // try
-    // {
-    // ownClass = Class.forName("SudokuStepper.LegalValuesGenClass");
-    // }
-    // catch (ClassNotFoundException e)
-    // {
-    // // TODO Auto-generated catch block
-    // e.printStackTrace();
-    // }
-    // }
 
     // All dummy initializations
     // protected static int RECTANGLELENGTH = 1;
@@ -175,72 +147,6 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         return (val);
     }
 
-    // public static int getCandidatesNumber()
-    // {
-    // return (CANDIDATESNUMBER);
-    // }
-
-    // public static int getRectangleLength()
-    // {
-    // return (RECTANGLELENGTH);
-    // }
-    //
-    // public static int getCandidatesPerRow()
-    // {
-    // return (CANDIDATESPERROW);
-    // }
-    //
-    // public static int getCandidatesPerCol()
-    // {
-    // return (CANDIDATESPERCOL);
-    // }
-    //
-    // public static int getMaxRows()
-    // {
-    // return (OVERALLMAXROWS);
-    // }
-    //
-    // public static int getMaxCols()
-    // {
-    // return (OVERALLMAXCOLS);
-    // }
-    //
-    // public static int getSingleSudokuMaxRows()
-    // {
-    // return (SINGLESUDOKUMAXROWS);
-    // }
-    //
-    // public static int getSingleSudokuMaxCols()
-    // {
-    // return (SINGLESUDOKUMAXCOLS);
-    // }
-    //
-    // public static int getCellsPerRow()
-    // {
-    // return (CELLSPERROW);
-    // }
-    //
-    // public static int getCellsPerCol()
-    // {
-    // return (CELLSPERCOL);
-    // }
-
-    // protected static LegalValuesGenClass newInstance(String val)
-    // {
-    // // TODO Auto-generated method stub
-    // return null;
-    // }
-    //
-    // protected static LegalValuesGenClass newInstance(int val)
-    // {
-    // // TODO Auto-generated method stub
-    // return null;
-    // }
-    // public static Class getOwnClass()
-    // {
-    // Class retVal = null;
-    // return (retVal);
-    // }
     //
     // return the correct display value (must match the newInstance functionnal
     // behaviour)
@@ -255,14 +161,4 @@ public abstract class LegalValuesGenClass // implements LegalValuesConstr
         String retVal = getValuesPatternList(currClass).get(val - 1);
         return (retVal);
     }
-    // public static LegalValuesGenClass newInstance(int val)
-    // {
-    // return (null);
-    // }
-    //
-    // public static LegalValuesGenClass newInstance(String val)
-    // {
-    // // TODO Auto-generated method stub
-    // return null;
-    // }
 }

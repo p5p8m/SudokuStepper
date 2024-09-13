@@ -1034,38 +1034,8 @@ public class AppMain extends ApplicationWindow
                             uiFields.get(totalRow).put(totalCol, new SolNCandTexts());
                         }
                         uiFields.get(totalRow).get(totalCol).solution = solutionText;
-                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Hide, new
-                        // Listener()
-                        // {
-                        // public void handleEvent(Event e)
-                        // {
-                        //// System.out.println(e.widget + " just hidden, row: " + totalRow + ", col: "
-                        // + totalCol);
-                        // }
-                        // });
-                        // uiFields.get(totalRow).get(totalCol).solution.addListener(SWT.Show, new
-                        // Listener()
-                        // {
-                        // public void handleEvent(Event e)
-                        // {
-                        //// System.out.println(e.widget + " just shown, row: " + totalRow + ", col: " +
-                        // totalCol);
-                        // }
-                        // });
                         // Create combo box for input of a new Sudoku
                         Combo combo = new Combo(composite_111, SWT.DROP_DOWN);
-                        // HashMap<String, String> alternateInputs = new HashMap<String, String>();
-                        // try
-                        // {
-                        // Method m = legalValClassUi.getMethod("getAlternatePatterns");
-                        // alternateInputs = (HashMap) m.invoke(null);
-                        // }
-                        // catch (IllegalArgumentException | IllegalAccessException | SecurityException
-                        // | NoSuchMethodException | InvocationTargetException e1)
-                        // {
-                        // // TODO Auto-generated catch block
-                        // e1.printStackTrace();
-                        // }
                         String[] items = new String[LegalValuesGen.values(legalValClassUi).size() // +
                                                                                                   // alternateInputs.size()
                         ];
@@ -1157,7 +1127,6 @@ public class AppMain extends ApplicationWindow
                                                 | IllegalArgumentException | InvocationTargetException
                                                 | NoSuchMethodException | SecurityException e)
                                         {
-                                            // TODO Auto-generated catch block
                                             e.printStackTrace();
                                             setStatus(input + " is an invalid value for this cell!");
                                             combo.setText(StringUtils.EMPTY);
@@ -1668,7 +1637,6 @@ public class AppMain extends ApplicationWindow
                                 catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                                         | InvocationTargetException | NoSuchMethodException | SecurityException e)
                                 {
-                                    // TODO Auto-generated catch block
                                     e.printStackTrace();
                                 }
                                 cand.setVisible(visible);
@@ -1751,7 +1719,6 @@ public class AppMain extends ApplicationWindow
         }
         catch (InterruptedException e)
         {
-            // TODO Auto-generated catch block
             System.out.println("Exception thrown while trying to wait for the \"next\" button to be pressed");
             e.printStackTrace();
         }
@@ -1851,7 +1818,6 @@ public class AppMain extends ApplicationWindow
                             catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                                     | InvocationTargetException | NoSuchMethodException | SecurityException e)
                             {
-                                // TODO Auto-generated catch block
                                 e.printStackTrace();
                             }
                         }
@@ -2200,7 +2166,6 @@ public class AppMain extends ApplicationWindow
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                 | SecurityException e)
         {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return (retVal);
