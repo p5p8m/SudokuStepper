@@ -179,7 +179,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // return (singleSu);
     // }
 
-    public SolutionProgress addBifurcationNClone(int globalRow, int globalCol)
+    public SolutionProgress addBifurcationNClone(int globalRow, int globalCol) throws InterruptedException
     {
         // // For debugging
         // try
@@ -226,7 +226,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
         return (sudokuCands.size() > 1);
     }
 
-    public SolutionProgress bifurqueOnceMore()
+    public SolutionProgress bifurqueOnceMore() throws InterruptedException
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         Bifurcation<LegalValuesGen> nextTry = null;
@@ -367,6 +367,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
 
     public SolutionProgress eliminateCandidate(int globalRow, int globalCol, LegalValuesGen val,
             boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound, boolean isATry)
+            throws InterruptedException
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku<?> sudoku = getSudoku();
@@ -410,20 +411,10 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                 retVal = retVal.combineWith(newUpdated);
                 if (threadNeedingToWait != null)
                 {
-                    try
+                    // End thread
+                    synchronized (threadNeedingToWait)
                     {
-                        // End thread
-                        synchronized (threadNeedingToWait)
-                        {
-                            threadNeedingToWait.wait();
-                        }
-                    }
-                    catch (InterruptedException e)
-                    {
-                        // TODO Auto-generated catch block
-                        System.out
-                                .println("Exception thrown while trying to wait for the \"next\" button to be pressed");
-                        e.printStackTrace();
+                        threadNeedingToWait.wait();
                     }
                 }
             }
@@ -453,7 +444,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // remove the value just set in the given cell the list of candidates from
     // all influenced cells, for master sudoku
     public void updateCandidateList(int globalRow, int globalCol, LegalValuesGen val, boolean runsInUiThread,
-            boolean markLastSolutionFound)
+            boolean markLastSolutionFound) throws InterruptedException
     {
         MasterSudoku<?> masterSudoku = getSudoku();
         for (SubSudoku subSudoku : (List<SubSudoku>) (masterSudoku.isRowColShared(globalRow, globalCol)))
@@ -564,7 +555,7 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
     // candidates from
     // all influenced cells
     SolutionProgress reduceInfluencedCellCandidates(int globalRow, int globalCol, LegalValuesGen val,
-            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound)
+            boolean alsoSetSolution, boolean runsInUiThread, boolean markLastSolutionFound) throws InterruptedException
     {
         SolutionProgress retVal = SolutionProgress.NONE;
         MasterSudoku<?> masterSudoku = getSudoku();

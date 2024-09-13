@@ -12,9 +12,12 @@ public class ListOfSolTraces<LegalValuesGen extends LegalValuesGenClass> impleme
     public void addToSolutionTrace(Values<LegalValuesGen> values, int globalRow, int globalCol,
             LegalValuesGen eliminatedVal, ArrayList<LegalValuesGen> candidates)
     {
-        listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
-        System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "
-                + eliminatedVal.val() + ", Candidates: " + (candidates == null ? "null" : candidates.toString()));
+        if (eliminatedVal != null)
+        {
+            listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
+            System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "
+                    + eliminatedVal.val() + ", Candidates: " + (candidates == null ? "null" : candidates.toString()));
+        }
     }
 
     public void clear()

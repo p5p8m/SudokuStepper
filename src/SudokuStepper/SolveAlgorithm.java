@@ -30,6 +30,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
     public void run()
     {
         System.out.println("Running solution algorithm");
+        boolean interruptedForNewProblem = false;
         boolean activateSolveBtn = true;
         int noOfPossibleSolutions = 0;
         try
@@ -42,14 +43,22 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
             boolean errorDetected = false;
             // Integer slideShowPause = null;
             // boolean slideShowEnabled = false;
-            removeImpossibleCands(sudoku, false);
+            updated = removeImpossibleCands(sudoku, false);
             int loopCount = 0;
             do
             {
                 // slideShowPause = app.getSlideShowPause();
                 // slideShowEnabled = app.getSlideShowEnabled();
                 oldNumOfSolutions = newNumOfSolutions;
-                updated = removeImpossibleCands(sudoku, true);
+                SolutionProgress updatedLocal = removeImpossibleCands(sudoku, true);
+                if (loopCount == 0)
+                {
+                    updated = updated.combineWith(updatedLocal);
+                }
+                else
+                {
+                    updated = updatedLocal;
+                }
                 updated = updated.combineWith(detectSingleCandidates(sudoku));
                 if (updated == SolutionProgress.NONE)
                 {
@@ -170,6 +179,13 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                 }
             }
         }
+        catch (InterruptedException e)
+        {
+            // TODO Auto-generated catch block
+            System.out.println("Interrupted while trying to wait for the \"next\" button to be pressed");
+            // e.printStackTrace();
+            interruptedForNewProblem = true;
+        }
         catch (Exception ex)
         {
             ex.printStackTrace();
@@ -187,8 +203,11 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         }
         finally
         {
-            app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn, noOfPossibleSolutions > 0));
-            app.setSolvingThread(null);
+            if (!interruptedForNewProblem)
+            {
+                app.getDisplay().asyncExec(new SolveBtnRunnable(activateSolveBtn, noOfPossibleSolutions > 0));
+                app.setSolvingThread(null);
+            }
             System.out.println("Leaving Solving thread");
         }
     }
@@ -215,6 +234,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
     }
 
     private SolutionProgress detectSingleCandidates(Values<LegalValuesGenClass> masterSudoku)
+            throws InterruptedException
     {
         SolutionProgress updated = SolutionProgress.NONE;
         for (SubSudoku subSudoku : (ArrayList<SubSudoku>) (masterSudoku.getSudoku().getSubSudokus()))
@@ -305,7 +325,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         return (retVal);
     }
 
-    private SolutionProgress rollbackAndTryNext(Values<LegalValuesGenClass> sudoku)
+    private SolutionProgress rollbackAndTryNext(Values<LegalValuesGenClass> sudoku) throws InterruptedException
     {
         SolutionProgress retVal = sudoku.bifurqueOnceMore();
         return (retVal);
@@ -364,7 +384,8 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         return (retVal);
     }
 
-    private SolutionProgress detectTuples(Values<LegalValuesGenClass> sudoku) // Single sudoku
+    private SolutionProgress detectTuples(Values<LegalValuesGenClass> sudoku) throws InterruptedException // Single
+                                                                                                          // sudoku
     {
         // ArrayList<ClosedTuples> retVal1 = new ArrayList<ClosedTuples>();
         SolutionProgress retVal = SolutionProgress.NONE;
@@ -570,7 +591,8 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
         return (retVal);
     }
 
-    private SolutionProgress detectTriples(Values<LegalValuesGenClass> sudoku) // Single sudoku
+    private SolutionProgress detectTriples(Values<LegalValuesGenClass> sudoku) throws InterruptedException // Single
+                                                                                                           // sudoku
     {
         // ArrayList<ClosedTuples> retVal1 = new ArrayList<ClosedTuples>();
         SolutionProgress retVal = SolutionProgress.NONE;
@@ -810,7 +832,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
 
     // Detect if there is only one single cell in a row, column or block that still
     // accepts a given value
-    private SolutionProgress detectUniqueMatches(Values<LegalValuesGenClass> masterSudoku)
+    private SolutionProgress detectUniqueMatches(Values<LegalValuesGenClass> masterSudoku) throws InterruptedException
     {
         SolutionProgress updated = SolutionProgress.NONE;
         // same row
@@ -1016,6 +1038,7 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
 
     // Remove candidates who are illegal in a row, column or block
     SolutionProgress removeImpossibleCands(Values<LegalValuesGenClass> masterSudoku, boolean alsoSetSolution)
+            throws InterruptedException
     {
         SolutionProgress updatedGlobal = SolutionProgress.NONE;
         SolutionProgress updatedSub = SolutionProgress.NONE;

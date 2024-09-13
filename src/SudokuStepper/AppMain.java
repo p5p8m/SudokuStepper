@@ -74,6 +74,21 @@ public class AppMain extends ApplicationWindow
 
     void setSolvingThread(Thread solvingTh)
     {
+        if (solvingThread != null)
+        {
+            try
+            {
+                solvingThread.interrupt();
+            }
+            catch (SecurityException ex)
+            {
+                System.out.println("Old solving thread throws a security exception");
+            }
+            finally
+            {
+                System.out.println("Old solving thread interrupted");
+            }
+        }
         solvingThread = solvingTh;
     }
 
@@ -529,19 +544,9 @@ public class AppMain extends ApplicationWindow
         grpSudokuScrolledContents = new Group(grpSudokuScrolled, SWT.NONE);
         grpSudokuScrolledContents.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        // for (int i = 0; i < 20; i++)
-        // {
-        // Text textSub = new Text(grpSudokuScrolledContents, SWT.BORDER);
-        // textSub.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
-        // }
-
-        // GridLayout layoutData = new GridLayout(MAXCOLS / RECTANGLELENGTH, true);
-        // layoutData.marginRight = 5;
-        // layoutData.marginLeft = 5;
-        // layoutData.marginTop = 5;
-        // layoutData.marginBottom = 5;
-        // grpSudokuBlocks.setLayoutData(layoutData);
-        createSudokuContents(SudokuType.SAMURAI); // Must be compatible with legalValClassUi
+        // createSudokuContents(SudokuType.SAMURAI); // Must be compatible with
+        // legalValClassUi
+        createSudokuContents(SudokuType.SINGLE); // Must be compatible with legalValClassUi
         //
         // Buttons and other rulers...
         //
@@ -1704,43 +1709,52 @@ public class AppMain extends ApplicationWindow
     private void updateSudokuFieldsInUiThread(boolean keepCandidatesVisibility, boolean markLastSolutionFound,
             boolean updateProblemSudoku)
     {
-        ((Group) (cellCompositesPtr[0][0].getParent())).setText(mySudoku.getName());
-        txtName.setText(mySudoku.getName());
-        setStatus(mySudoku.getInputFile());
-        setCompositeVisibility(mySudoku.getType());
-        List<List<int[]>> conflicts = mySudoku.areContentsLegal();
-        if (updateProblemSudoku)
+        try
         {
-            setState(AppState.CREATING);
-            // updateSudokuFields(false, true, false, updateProblemSudoku);
-            // app.setSlideShowMode(app.getSlideShowEnabled());
-            disableSlideShow();
-            initGuiForNew(updateProblemSudoku);
-        }
-        else
-        {
-            freeze(keepCandidatesVisibility, true, markLastSolutionFound);
-            SolveAlgorithm algLocal = new SolveAlgorithm(this, "Temporary Solution Thread", null);
-            SolutionProgress updated = algLocal.removeImpossibleCands(mySudoku, false);
-        }
-        if (!conflicts.isEmpty())
-        {
-            for (List<int[]> conflict : conflicts)
+            ((Group) (cellCompositesPtr[0][0].getParent())).setText(mySudoku.getName());
+            txtName.setText(mySudoku.getName());
+            setStatus(mySudoku.getInputFile());
+            setCompositeVisibility(mySudoku.getType());
+            List<List<int[]>> conflicts = mySudoku.areContentsLegal();
+            if (updateProblemSudoku)
             {
-                System.out.println("conflict between cell ( row: " + (conflict.get(0)[0] + 1) + ", col: "
-                        + (conflict.get(0)[1] + 1) + ") and cell ( row: " + (conflict.get(1)[0] + 1) + ", col: "
-                        + (conflict.get(1)[1] + 1) + ")");
+                setState(AppState.CREATING);
+                // updateSudokuFields(false, true, false, updateProblemSudoku);
+                // app.setSlideShowMode(app.getSlideShowEnabled());
+                disableSlideShow();
+                initGuiForNew(updateProblemSudoku);
             }
-            MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
-            errorBox.setMessage("There are illegal values in the sudoku");
-            errorBox.open();
+            else
+            {
+                freeze(keepCandidatesVisibility, true, markLastSolutionFound);
+                SolveAlgorithm algLocal = new SolveAlgorithm(this, "Temporary Solution Thread", null);
+                SolutionProgress updated = algLocal.removeImpossibleCands(mySudoku, false);
+            }
+            if (!conflicts.isEmpty())
+            {
+                for (List<int[]> conflict : conflicts)
+                {
+                    System.out.println("conflict between cell ( row: " + (conflict.get(0)[0] + 1) + ", col: "
+                            + (conflict.get(0)[1] + 1) + ") and cell ( row: " + (conflict.get(1)[0] + 1) + ", col: "
+                            + (conflict.get(1)[1] + 1) + ")");
+                }
+                MessageBox errorBox = new MessageBox(new Shell(), SWT.ICON_ERROR);
+                errorBox.setMessage("There are illegal values in the sudoku");
+                errorBox.open();
+            }
+            grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
+            setSolveEnabled(status != AppState.CREATING && status != AppState.SOLVING, false);
+            saveAsSudokuAction.setEnabled(status != AppState.CREATING);
+            condEnableSaveSudokuAction(mySudoku.isSaved() && status != AppState.CREATING);
+            renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);
+            setFreezeEnabled(status == AppState.CREATING);
         }
-        grpSudokuScrolled.getContent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        setSolveEnabled(status != AppState.CREATING && status != AppState.SOLVING, false);
-        saveAsSudokuAction.setEnabled(status != AppState.CREATING);
-        condEnableSaveSudokuAction(mySudoku.isSaved() && status != AppState.CREATING);
-        renameSudokuAction.setEnabled(status != AppState.CREATING && status != AppState.RENAMING);
-        setFreezeEnabled(status == AppState.CREATING);
+        catch (InterruptedException e)
+        {
+            // TODO Auto-generated catch block
+            System.out.println("Exception thrown while trying to wait for the \"next\" button to be pressed");
+            e.printStackTrace();
+        }
     }
 
     /**

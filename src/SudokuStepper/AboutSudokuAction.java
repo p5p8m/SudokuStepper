@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.MessageBox;
  */
 public class AboutSudokuAction extends SudokuAction
 {
+    static final String VERSIONMESSAGE = "Version 0.5 on September 13, 2024";
 
     public AboutSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
@@ -27,7 +28,7 @@ public class AboutSudokuAction extends SudokuAction
             int style = SWT.OK | SWT.ICON_INFORMATION;
             MessageBox messageBox = new MessageBox(app.getShell(), style);
             messageBox.setText("About SudokuStepper");
-            messageBox.setMessage("Version 0.4 on September 12, 2024");
+            messageBox.setMessage(VERSIONMESSAGE);
             messageBox.open();
         }
         catch (Exception ex)
