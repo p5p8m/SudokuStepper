@@ -777,9 +777,12 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                         // Same column
                         for (int rowInCol = row + 1; rowInCol < AppMain.getSingleSudokuMaxRows(); rowInCol++)
                         {
-                            if (subSudoku.getRowCol(rowInCol, col).getCandidates().isEmpty()
-                                    && subSudoku.getRowCol(rowInCol, col).getSolution().val() == subSudoku
-                                            .getRowCol(row, col).getSolution().val())
+                            if ((subSudoku.getRowCol(rowInCol, col).getCandidates().isEmpty()
+                                    && subSudoku.getRowCol(rowInCol, col).getSolution() == null)
+                                    || (subSudoku.getRowCol(rowInCol, col).getSolution() != null
+                                            && subSudoku.getRowCol(row, col).getSolution() != null
+                                            && subSudoku.getRowCol(rowInCol, col).getSolution().val() == subSudoku
+                                                    .getRowCol(row, col).getSolution().val()))
                             {
                                 subSudoku.getRowCol(row, col).setAConflict(true);
                                 subSudoku.getRowCol(rowInCol, col).setAConflict(true);
@@ -794,9 +797,12 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                         // Same row
                         for (int colInRow = col + 1; colInRow < AppMain.getSingleSudokuMaxCols(); colInRow++)
                         {
-                            if (subSudoku.getRowCol(row, colInRow).getCandidates().isEmpty()
-                                    && subSudoku.getRowCol(row, colInRow).getSolution().val() == subSudoku
-                                            .getRowCol(row, col).getSolution().val())
+                            if ((subSudoku.getRowCol(row, colInRow).getCandidates().isEmpty()
+                                    && subSudoku.getRowCol(row, colInRow).getSolution() == null)
+                                    || (subSudoku.getRowCol(row, colInRow).getSolution() != null
+                                            && subSudoku.getRowCol(row, col).getSolution() != null
+                                            && subSudoku.getRowCol(row, colInRow).getSolution().val() == subSudoku
+                                                    .getRowCol(row, col).getSolution().val()))
                             {
                                 subSudoku.getRowCol(row, col).setAConflict(true);
                                 subSudoku.getRowCol(row, colInRow).setAConflict(true);
@@ -820,9 +826,13 @@ public class Values<LegalValuesGen extends LegalValuesGenClass>
                                 if ((rowInBlock >= row || colInBlock >= col)
                                         && (rowInBlock != row || colInBlock != col))
                                 {
-                                    if (subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().isEmpty()
-                                            && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution()
-                                                    .val() == subSudoku.getRowCol(row, col).getSolution().val())
+                                    if ((subSudoku.getRowCol(rowInBlock, colInBlock).getCandidates().isEmpty()
+                                            && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution() == null)
+                                            || (subSudoku.getRowCol(rowInBlock, colInBlock).getSolution() != null
+                                                    && subSudoku.getRowCol(row, col).getSolution() != null
+                                                    && subSudoku.getRowCol(rowInBlock, colInBlock).getSolution()
+                                                            .val() == subSudoku.getRowCol(row, col).getSolution()
+                                                                    .val()))
                                     {
                                         subSudoku.getRowCol(row, col).setAConflict(true);
                                         subSudoku.getRowCol(rowInBlock, colInBlock).setAConflict(true);
