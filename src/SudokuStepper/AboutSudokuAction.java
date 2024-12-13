@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.MessageBox;
  */
 public class AboutSudokuAction extends SudokuAction
 {
-    static final String VERSIONMESSAGE = "Version 0.5 on September 13, 2024";
+    static final String VERSIONMESSAGE = "Version 0.6 on December 13, 2024";
 
     public AboutSudokuAction(AppMain appMain, String text, Integer acceleratorKey)
     {
