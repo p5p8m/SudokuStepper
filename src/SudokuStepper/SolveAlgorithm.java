@@ -413,6 +413,9 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                     // Make a deep copy to avoid problems when the list is modified within the loop
                                     List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                             sudoku.getCell(row, col).getCandidates());
+                                    System.out.println(
+                                            "Pair detected: row: " + row + ", cols: " + col + "," + scndCol + ", vals: "
+                                                    + locCandidates.get(0).val() + ", " + locCandidates.get(1).val());
                                     for (LegalValuesGenClass val : locCandidates)
                                     {
                                         for (int cleanedCol = 0; cleanedCol < AppMain
@@ -469,6 +472,9 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                     // Make a deep copy to avoid problems when the list is modified whithin the loop
                                     List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                             sudoku.getCell(row, col).getCandidates());
+                                    System.out.println(
+                                            "Pair detected: col: " + col + ", rows: " + row + "," + scndRow + ", vals: "
+                                                    + locCandidates.get(0).val() + ", " + locCandidates.get(1).val());
                                     for (LegalValuesGenClass val : locCandidates)
                                     {
                                         for (int cleanedRow = 0; cleanedRow < AppMain
@@ -546,6 +552,10 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                 {
                                                     List<LegalValuesGenClass> locCandidates = new ArrayList<LegalValuesGenClass>(
                                                             sudoku.getCell(rowInBlock, colInBlock).getCandidates());
+                                                    System.out.println("Pair detected: row: " + rowInBlock + ", col: "
+                                                            + colInBlock + " and row: " + scndRowInBlock + ", col: "
+                                                            + scndColInBlock + ", vals: " + locCandidates.get(0).val()
+                                                            + ", " + locCandidates.get(1).val());
                                                     for (LegalValuesGenClass val : locCandidates)
                                                     {
                                                         for (int cleanedRowInBlock = AppMain.getRectangleLength()
@@ -618,6 +628,10 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                         sudoku.getCell(row, thrdCol).getCandidates()));
                                         if (locCandidates.size() == 3)
                                         {
+                                            System.out.println("Triple detected: row: " + row + ", cols: " + col + ","
+                                                    + scndCol + "," + thrdCol + ", vals: " + locCandidates.get(0).val()
+                                                    + ", " + locCandidates.get(1).val() + ", "
+                                                    + locCandidates.get(2).val());
                                             // Make a deep copy to avoid problems when the list is modified within the
                                             // loop
                                             for (LegalValuesGenClass val : locCandidates)
@@ -664,6 +678,10 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                         sudoku.getCell(thrdRow, col).getCandidates()));
                                         if (locCandidates.size() == 3)
                                         {
+                                            System.out.println("Triple detected: col: " + col + ", rows: " + row + ","
+                                                    + scndRow + "," + thrdRow + ", vals: " + locCandidates.get(0).val()
+                                                    + ", " + locCandidates.get(1).val() + ", "
+                                                    + locCandidates.get(2).val());
                                             // Make a deep copy to avoid problems when the list is modified within the
                                             // loop
                                             for (LegalValuesGenClass val : locCandidates)
@@ -746,6 +764,16 @@ public class SolveAlgorithm<LegalValuesGen extends LegalValuesGenClass> extends 
                                                                                         .getCandidates()));
                                                                 if (locCandidates.size() == 3)
                                                                 {
+                                                                    System.out.println("Triple detected: row: "
+                                                                            + rowInBlock + ", col: " + colInBlock
+                                                                            + ", row: " + scndRowInBlock + ", col: "
+                                                                            + scndColInBlock + " and row: "
+                                                                            + thrdRowInBlock + ", col: "
+                                                                            + thrdColInBlock + ", vals: "
+                                                                            + locCandidates.get(0).val() + ", "
+                                                                            + locCandidates.get(1).val() + ", "
+                                                                            + locCandidates.get(2).val());
+
                                                                     // Make a deep copy to avoid problems when the list
                                                                     // is
                                                                     // modified within the loop
