@@ -15,7 +15,7 @@ public class ListOfSolTraces<LegalValuesGen extends LegalValuesGenClass> impleme
         if (eliminatedVal != null)
         {
             listTraces.add(new SolutionTrace(globalRow, globalCol, eliminatedVal, candidates));
-            System.out.println("Added  trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "
+            System.out.println("Added trace: row: " + globalRow + ", col: " + globalCol + ", Eliminated: "
                     + eliminatedVal.val() + ", Candidates: " + (candidates == null ? "null" : candidates.toString()));
         }
     }
