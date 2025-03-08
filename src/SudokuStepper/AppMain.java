@@ -3,6 +3,7 @@ package SudokuStepper;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class AppMain extends ApplicationWindow
     private Composite                   appParent                 = null;
     private Composite[][]               cellCompositesPtr         = null;
     private Group                       grpSudokuScrolledContents = null;
+    private boolean                     showHintNbrs              = true;
     // For performance useTripleRecognition should be true. False is to be used for
     // debugging
     static final boolean                useTripleRecognition      = true;
@@ -1351,6 +1353,8 @@ public class AppMain extends ApplicationWindow
         System.out.println("createActions");
     }
 
+    private Action            toggleHintsNbrsAction       = new ToggleHintNbrsAction(this, "&Toggle Hint Numbers",
+            SWT.CTRL + KeyEvent.VK_T);
     private Action            renameSudokuAction          = new RenameSudokuAction(this, "&Rename",
             SWT.CTRL + KeyEvent.VK_R);
     private Action            newSudokuSingleAction2x2    = new NewSudokuAction(this, Values.SudokuType.SINGLE,
@@ -1444,6 +1448,9 @@ public class AppMain extends ApplicationWindow
         actionMenuMgr.add(renameSudokuAction);
         renameSudokuAction.setEnabled(false);
 
+        actionMenuMgr.add(toggleHintsNbrsAction);
+        toggleHintsNbrsAction.setEnabled(true);
+
         // MenuManager settingsMenuMgr = new MenuManager("Settings");
         // settingsMenuMgr.setVisible(true);
         // menuMgr.add(settingsMenuMgr);
@@ -1526,6 +1533,57 @@ public class AppMain extends ApplicationWindow
                 if (!uiFields.get(row).get(col).solution.getText().isEmpty())
                 {
                     uiFields.get(row).get(col).solution.setVisible(true);
+                }
+            }
+        }
+    }
+
+    void toggleHintsVisibility()
+    {
+        showHintNbrs = !showHintNbrs;
+        setHintsVisibility();
+    }
+
+    /**
+     * 
+     */
+    void setHintsVisibility()
+    {
+        if (showHintNbrs)
+        {
+            for (Integer row : uiFields.keySet())
+            {
+                for (Integer col : uiFields.get(row).keySet())
+                {
+                    ArrayList<LegalValuesGenClass> candList = this.mySudoku.getCell(row, col).getCandidates();
+                    List<String> candListSring = new Vector<>(candList.size() < 0 ? candList.size() : 1);
+                    for (LegalValuesGenClass val : candList)
+                    {
+                        candListSring.add(val.toDisplayString(legalValClassUi, val.val()));
+                    }
+                    SolNCandTexts uiField = uiFields.get(row).get(col);
+                    for (Text hint : uiField.candidatesWidgets)
+                    {
+                        String candVal = hint.getText();
+                        if (candListSring.contains(hint.getText()))
+                        {
+                            hint.setVisible(true);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (Integer row : uiFields.keySet())
+            {
+                for (Integer col : uiFields.get(row).keySet())
+                {
+                    SolNCandTexts uiField = uiFields.get(row).get(col);
+                    for (Text hint : uiField.candidatesWidgets)
+                    {
+                        hint.setVisible(false);
+                    }
                 }
             }
         }

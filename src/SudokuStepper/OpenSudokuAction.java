@@ -80,6 +80,7 @@ public abstract class OpenSudokuAction extends SudokuAction
                         app.updateSudokuFields(false, true, false, updateSudoku);
                         app.toggleSlideShow(); // Twice to make sure it is correctly reset as it was previously
                         app.toggleSlideShow();
+                        app.setHintsVisibility();
                     }
                     catch (Exception ex)
                     {
